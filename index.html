@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dr. Nicole Beaulieu — Computer Science</title>
+<meta name="description" content="Nicole Beaulieu, Ph.D. — Software engineer with 33+ years industry experience, now part-time faculty at University of Nevada, Reno. Teaching data structures and building interactive learning tools.">
+<meta name="keywords" content="computer science, data structures, algorithms, CS education, University of Nevada Reno, interactive visualizations">
+<meta name="author" content="Nicole Beaulieu">
+
+<!-- Open Graph / Social Media -->
+<meta property="og:title" content="Dr. Nicole Beaulieu — Computer Science">
+<meta property="og:description" content="Software engineer with 33+ years in industry, now part-time faculty teaching data structures. Building interactive learning tools and making CS education accessible.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://nbeaulieu.github.io/unr-cs302-data-structures/">
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Dr. Nicole Beaulieu — Computer Science">
+<meta name="twitter:description" content="Software engineer with 33+ years in industry, now part-time faculty teaching data structures. Building interactive learning tools.">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Source+Serif+4:ital,wght@0,400;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0A0F1A;
+    --bg-hero: linear-gradient(165deg, #0A0F1A 0%, #0F1829 40%, #111D30 100%);
+    --surface: #111B2E;
+    --surface-hover: #162240;
+    --border: #1C2D4A;
+    --border-hover: #C8D84A;
+    --green: #C8D84A;
+    --green-soft: rgba(200,216,74,0.12);
+    --green-dim: #7A8530;
+    --blue: #6BB8D6;
+    --orange: #E8864A;
+    --text: #B8C4D4;
+    --text-bright: #E2E8F0;
+    --white: #F4F7FA;
+    --muted: #5E7088;
+    --font-sans: 'DM Sans', sans-serif;
+    --font-serif: 'Source Serif 4', Georgia, serif;
+    --font-mono: 'JetBrains Mono', monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body { background: var(--bg); color: var(--text); font-family: var(--font-sans); font-size: 16px; line-height: 1.6; -webkit-font-smoothing: antialiased; }
+  .container { max-width: 960px; margin: 0 auto; padding: 0 28px; }
+
+  /* ═══ HERO ═══ */
+  .hero { background: var(--bg-hero); position: relative; overflow: hidden; padding: 80px 0 72px; }
+  .hero::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 1px; background: linear-gradient(90deg, transparent, var(--border), transparent); }
+  .hero-glow { position: absolute; top: -120px; right: -80px; width: 400px; height: 400px; background: radial-gradient(circle, rgba(200,216,74,0.06) 0%, transparent 65%); pointer-events: none; }
+  .hero-content { position: relative; z-index: 1; }
+  .hero-eyebrow { font-family: var(--font-mono); font-size: 13px; font-weight: 500; letter-spacing: 2px; color: var(--green); text-transform: uppercase; margin-bottom: 20px; opacity: 0; animation: fadeUp 0.6s ease 0.1s forwards; }
+  .hero h1 { font-family: var(--font-serif); font-size: clamp(40px, 6vw, 60px); font-weight: 700; color: var(--white); line-height: 1.08; letter-spacing: -0.5px; margin-bottom: 20px; opacity: 0; animation: fadeUp 0.6s ease 0.2s forwards; }
+  .hero-bio { font-size: 18px; font-weight: 300; color: var(--text); max-width: 580px; line-height: 1.65; margin-bottom: 32px; opacity: 0; animation: fadeUp 0.6s ease 0.3s forwards; }
+  .hero-bio strong { color: var(--text-bright); font-weight: 500; }
+  .hero-links { display: flex; gap: 12px; flex-wrap: wrap; opacity: 0; animation: fadeUp 0.6s ease 0.4s forwards; }
+  .hero-link { font-family: var(--font-sans); font-size: 14px; font-weight: 500; text-decoration: none; padding: 10px 22px; border-radius: 6px; transition: all 0.2s; display: inline-block; }
+  .hero-link.primary { background: var(--green); color: var(--bg); }
+  .hero-link.primary:hover, .hero-link.primary:focus { filter: brightness(1.1); transform: translateY(-1px); }
+  .hero-link.secondary { border: 1px solid var(--border); color: var(--text-bright); }
+  .hero-link.secondary:hover, .hero-link.secondary:focus { border-color: var(--green); color: var(--green); }
+  .hero-link:focus-visible { outline: 2px solid var(--green); outline-offset: 2px; }
+  .hero-link .ext { font-size: 11px; margin-left: 4px; opacity: 0.5; }
+
+  /* ═══ NAV ═══ */
+  .sticky-nav { position: sticky; top: 0; z-index: 100; background: rgba(10,15,26,0.85); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border-bottom: 1px solid var(--border); }
+  .sticky-nav .container { display: flex; align-items: center; justify-content: space-between; padding-top: 12px; padding-bottom: 12px; }
+  .nav-name { font-family: var(--font-serif); font-size: 16px; font-weight: 600; color: var(--white); text-decoration: none; transition: color 0.2s; }
+  .nav-name:hover { color: var(--green); }
+  .nav-links { display: flex; gap: 24px; }
+  .nav-links a { font-size: 13px; font-weight: 500; color: var(--muted); text-decoration: none; transition: color 0.2s; letter-spacing: 0.3px; }
+  .nav-links a:hover, .nav-links a:focus { color: var(--green); }
+  .nav-links a:focus-visible { outline: 2px solid var(--green); outline-offset: 2px; border-radius: 2px; }
+
+  /* ═══ SECTIONS ═══ */
+  section { padding: 64px 0; }
+  section + section { border-top: 1px solid var(--border); }
+  .section-label { font-family: var(--font-mono); font-size: 12px; letter-spacing: 2px; color: var(--green); text-transform: uppercase; margin-bottom: 12px; }
+  .section-title { font-family: var(--font-serif); font-size: 28px; font-weight: 700; color: var(--white); margin-bottom: 8px; }
+  .section-desc { font-size: 15px; color: var(--muted); max-width: 600px; margin-bottom: 32px; }
+  .section-desc a { color: var(--blue); text-decoration: none; }
+  .section-desc a:hover { text-decoration: underline; }
+
+  /* ═══ COURSE CARDS ═══ */
+  .course-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+  .course-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 28px; text-decoration: none; color: inherit; transition: all 0.25s; display: block; }
+  .course-card:hover, .course-card:focus { border-color: var(--border-hover); background: var(--surface-hover); transform: translateY(-2px); }
+  .course-card:focus-visible { outline: 2px solid var(--green); outline-offset: 2px; }
+  .course-card .semester { font-family: var(--font-mono); font-size: 11px; color: var(--green); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 10px; }
+  .course-card h3 { font-family: var(--font-serif); font-size: 20px; font-weight: 600; color: var(--white); margin-bottom: 8px; }
+  .course-card .course-desc { font-size: 14px; color: var(--muted); line-height: 1.55; margin-bottom: 16px; }
+  .course-card .course-meta { font-family: var(--font-mono); font-size: 12px; color: var(--green-dim); }
+
+  /* ═══ MODULE CARDS ═══ */
+  .module-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; margin-top: 16px; }
+  .module-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 20px; text-decoration: none; color: inherit; transition: all 0.2s; display: block; }
+  .module-card:hover, .module-card:focus { border-color: var(--border-hover); background: var(--surface-hover); }
+  .module-card:focus-visible { outline: 2px solid var(--green); outline-offset: 2px; }
+  .module-card h4 { font-size: 15px; font-weight: 600; color: var(--white); margin-bottom: 4px; }
+  .module-card .mod-desc { font-size: 13px; color: var(--muted); line-height: 1.5; margin-bottom: 8px; }
+  .module-card .mod-meta { font-family: var(--font-mono); font-size: 11px; color: var(--green-dim); }
+  .coming-soon { opacity: 0.35; pointer-events: none; }
+  .coming-soon h4::after { content: 'SOON'; font-family: var(--font-mono); font-size: 9px; color: var(--muted); border: 1px solid var(--border); padding: 1px 5px; border-radius: 3px; margin-left: 6px; vertical-align: middle; }
+
+  /* ═══ PUBLICATIONS ═══ */
+  .pub-list { list-style: none; }
+  .pub-item { padding: 20px 0; border-bottom: 1px solid rgba(28,45,74,0.5); }
+  .pub-item:last-child { border-bottom: none; }
+  .pub-title { font-family: var(--font-serif); font-size: 17px; font-weight: 600; color: var(--text-bright); margin-bottom: 4px; line-height: 1.4; }
+  .pub-venue { font-size: 14px; color: var(--muted); font-style: italic; margin-bottom: 4px; }
+  .pub-authors { font-size: 13px; color: var(--muted); }
+  .pub-authors .me { color: var(--text-bright); font-weight: 500; }
+  .pub-links { margin-top: 6px; display: flex; gap: 10px; }
+  .pub-links a { font-family: var(--font-mono); font-size: 11px; color: var(--green-dim); text-decoration: none; border: 1px solid var(--border); padding: 2px 8px; border-radius: 4px; transition: all 0.2s; }
+  .pub-links a:hover { border-color: var(--green); color: var(--green); }
+  .pub-placeholder { font-size: 14px; color: var(--muted); font-style: italic; padding: 20px 0; }
+
+  /* ═══ FOOTER ═══ */
+  footer { padding: 40px 0; border-top: 1px solid var(--border); }
+  .footer-inner { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; }
+  .footer-info { font-size: 13px; color: var(--muted); line-height: 1.6; }
+  .footer-info strong { color: var(--text); }
+  .footer-links { display: flex; gap: 20px; }
+  .footer-links a { font-size: 13px; color: var(--muted); text-decoration: none; transition: color 0.2s; }
+  .footer-links a:hover { color: var(--green); }
+
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
+  
+  /* Skip to main content for accessibility */
+  .skip-link { position: absolute; top: -40px; left: 0; background: var(--green); color: var(--bg); padding: 8px 16px; text-decoration: none; z-index: 1000; font-weight: 600; }
+  .skip-link:focus { top: 0; }
+  
+  /* Print styles */
+  @media print {
+    .sticky-nav, .hero-links, footer { display: none; }
+    body { background: white; color: black; }
+  }
+  
+  @media (max-width: 640px) { 
+    .hero { padding: 52px 0 48px; } 
+    .hero h1 { font-size: 34px; } 
+    .nav-links { gap: 14px; font-size: 12px; } 
+    .footer-inner { flex-direction: column; align-items: flex-start; }
+    .module-grid { grid-template-columns: 1fr; }
+    .course-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<a href="#main-content" class="skip-link">Skip to main content</a>
+
+<div class="hero">
+  <div class="hero-glow"></div>
+  <div class="container hero-content">
+    <div class="hero-eyebrow">Computer Science &amp; Engineering · University of Nevada, Reno</div>
+    <h1>Nicole Beaulieu, Ph.D.</h1>
+    <p class="hero-bio">
+      Software engineer with 33+ years in industry, now part-time faculty teaching data structures. Passionate about sharing industry knowledge with the next generation of <strong>software engineers and computer scientists</strong>.
+    </p>
+    <div class="hero-links">
+      <a class="hero-link primary" href="#courses">Current Courses</a>
+      <a class="hero-link secondary" href="#research">Research</a>
+      <a class="hero-link secondary" href="https://www.linkedin.com/in/beaulieunicole" target="_blank" rel="noopener noreferrer">LinkedIn <span class="ext">↗</span></a>
+    </div>
+  </div>
+</div>
+
+<nav class="sticky-nav" role="navigation" aria-label="Main navigation">
+  <div class="container">
+    <a class="nav-name" href="#" aria-label="Home">N. Beaulieu</a>
+    <div class="nav-links">
+      <a href="#about">About</a>
+      <a href="#courses">Courses</a>
+      <a href="#research">Research</a>
+    </div>
+  </div>
+</nav>
+
+<main id="main-content">
+<section id="about" aria-labelledby="about-heading">
+  <div class="container">
+    <div class="section-label">About</div>
+    <h2 class="section-title" id="about-heading">Hello.</h2>
+    <p style="max-width:660px; font-size:16px; line-height:1.7; color:var(--text); margin-bottom: 16px;">
+      I'm a software engineer with over 33 years of industry experience, now serving as part-time faculty at the University of Nevada, Reno. My teaching focuses on making abstract concepts — data structures, algorithms, computational thinking — concrete and intuitive through visualization, active learning, and materials that meet students where they are.
+    </p>
+    <p style="max-width:660px; font-size:16px; line-height:1.7; color:var(--text);">
+      I hold a Ph.D. in Computer Science &amp; Engineering and bring real-world perspective from decades in software development. When I'm not in the classroom, you'll find me building interactive tools, mentoring students, and exploring how technology can make education more accessible.
+    </p>
+  </div>
+</section>
+
+<section id="courses" aria-labelledby="courses-heading">
+  <div class="container">
+    <div class="section-label">Teaching</div>
+    <h2 class="section-title" id="courses-heading">Current Courses</h2>
+    <p class="section-desc">Course materials, interactive visualizations, and resources.</p>
+
+    <div class="course-grid">
+      <div class="course-card" style="cursor:default;">
+        <div class="semester">Spring 2026</div>
+        <h3>CS 302 — Data Structures</h3>
+        <p class="course-desc">Arrays, linked lists, stacks, queues, trees, sorting, searching, and algorithmic analysis. Emphasis on understanding through visualization and hands-on practice.</p>
+        <span class="course-meta">Walls &amp; Mirrors · Ch. 1–19</span>
+      </div>
+    </div>
+
+    <div style="margin-top: 28px;">
+      <h3 style="font-size: 16px; font-weight: 600; color: var(--text-bright); margin-bottom: 4px;">CS 302 — Interactive Visualizations</h3>
+      <p style="font-size: 13px; color: var(--muted); margin-bottom: 16px;">Step-through animations. Play, pause, or advance one operation at a time.</p>
+      <div class="module-grid">
+        <a class="module-card" href="sorting/selection_sort.html">
+          <h4>Selection Sort</h4>
+          <p class="mod-desc">Find largest → swap to end. Sorted region grows right to left.</p>
+          <span class="mod-meta">O(n²) all cases · O(n) moves</span>
+        </a>
+        <a class="module-card" href="sorting/bubble_sort.html">
+          <h4>Bubble Sort</h4>
+          <p class="mod-desc">Adjacent swaps with boolean flag for early termination.</p>
+          <span class="mod-meta">O(n²) worst · O(n) best</span>
+        </a>
+        <a class="module-card" href="sorting/insertion_sort.html">
+          <h4>Insertion Sort</h4>
+          <p class="mod-desc">Save item, shift right, insert into gap. Shifts, not swaps.</p>
+          <span class="mod-meta">O(n²) worst · O(n) best</span>
+        </a>
+        <a class="module-card" href="data-structures/binary_search_tree.html">
+          <h4>Binary Search Trees</h4>
+          <p class="mod-desc">Insert, search, and compare balanced vs degenerate trees. See how shape drives performance.</p>
+          <span class="mod-meta">O(log n) best · O(n) worst</span>
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="research" aria-labelledby="research-heading">
+  <div class="container">
+    <div class="section-label">Research</div>
+    <h2 class="section-title" id="research-heading">Publications</h2>
+    <p class="section-desc">Selected work. Full list on <a href="https://www.linkedin.com/in/beaulieunicole" target="_blank" rel="noopener noreferrer">LinkedIn</a>.</p>
+    <ul class="pub-list">
+      <li class="pub-item">
+        <div class="pub-title">[Paper title here]</div>
+        <div class="pub-venue">[Conference or journal], [year]</div>
+        <div class="pub-authors"><span class="me">N. Beaulieu</span>, [co-authors]</div>
+      </li>
+      <li class="pub-item">
+        <div class="pub-title">[Another paper title]</div>
+        <div class="pub-venue">[Venue], [year]</div>
+        <div class="pub-authors"><span class="me">N. Beaulieu</span>, [co-authors]</div>
+      </li>
+    </ul>
+    <p class="pub-placeholder">Full publication list coming soon.</p>
+  </div>
+</section>
+</main>
+
+<footer role="contentinfo">
+  <div class="container">
+    <div class="footer-inner">
+      <div class="footer-info">
+        <strong>Nicole Beaulieu, Ph.D.</strong><br>
+        Part-Time Faculty · Department of Computer Science &amp; Engineering<br>
+        University of Nevada, Reno
+      </div>
+      <div class="footer-links">
+        <a href="https://www.linkedin.com/in/beaulieunicole" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn profile">LinkedIn</a>
+        <a href="https://github.com/nbeaulieu" target="_blank" rel="noopener noreferrer" aria-label="GitHub profile">GitHub</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

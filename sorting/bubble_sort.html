@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bubble Sort — Adjacent Swaps | CS 302</title>
+<meta name="description" content="Interactive visualization of Bubble Sort algorithm with early termination. Compare adjacent pairs, swap if out of order. Largest bubbles to end each pass.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0E1E3A; color: #fff; font-family: 'Segoe UI', system-ui, sans-serif; padding: 24px; min-height: 100vh; }
+  .back-link { font-family: system-ui; font-size: 13px; color: #75CEEC; text-decoration: none; display: inline-block; margin-bottom: 10px; transition: color 0.2s; }
+  .back-link:hover, .back-link:focus { color: #ACD433; text-decoration: underline; }
+  .back-link:focus-visible { outline: 2px solid #ACD433; outline-offset: 2px; border-radius: 2px; }
+  h1 { font-size: 24px; margin-bottom: 4px; }
+  .subtitle { color: #ACD433; font-size: 14px; margin-bottom: 18px; line-height: 1.5; }
+  .subtitle .orange { color: #EF7A24; font-weight: bold; }
+  .subtitle .bold { font-weight: bold; }
+  .legend { display: flex; gap: 16px; margin-bottom: 18px; flex-wrap: wrap; }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 13px; color: #8BAEC0; }
+  .legend-swatch { width: 16px; height: 16px; border-radius: 3px; border: 1px solid #4A7AB5; flex-shrink: 0; }
+  .controls { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+  .btn { background: #1A3A6A; color: #ACD433; border: 1px solid #4A7AB5; border-radius: 6px; padding: 6px 16px; font-size: 13px; cursor: pointer; font-family: inherit; transition: all 0.2s; }
+  .btn:hover, .btn:focus { background: #244A7A; }
+  .btn:focus-visible { outline: 2px solid #ACD433; outline-offset: 2px; }
+  .btn.active { background: #0D5E3A; border-color: #ACD433; }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .controls label { color: #8BAEC0; font-size: 13px; }
+  .controls span { color: #fff; font-size: 13px; }
+  .step-row { display: flex; align-items: center; margin-bottom: 4px; min-height: 72px; opacity: 0; transform: translateY(10px); transition: opacity 0.4s ease, transform 0.4s ease; }
+  .step-row.visible { opacity: 1; transform: translateY(0); }
+  .step-label { width: 100px; flex-shrink: 0; font-size: 13px; font-weight: bold; color: #ACD433; line-height: 1.3; }
+  .step-label .pass-num { color: #75CEEC; font-size: 11px; font-weight: normal; }
+  .cells { display: flex; gap: 6px; flex-wrap: wrap; }
+  .cell { width: 64px; height: 46px; display: flex; align-items: center; justify-content: center; border-radius: 4px; border: 1.5px solid #4A7AB5; font-size: 20px; font-weight: bold; position: relative; transition: background 0.3s ease; flex-shrink: 0; }
+  .cell .idx { position: absolute; bottom: -15px; font-size: 10px; color: #8BAEC0; font-weight: normal; }
+  .cell.unsorted { background: #1A3A6A; }
+  .cell.sorted { background: #0D5E3A; }
+  .cell.comparing { background: #5B3A8A; }
+  .cell.swapped { background: #B85A00; }
+  .cell.no-swap { background: #1A5A5A; }
+  .note { margin-left: 16px; font-size: 12px; color: #8BAEC0; max-width: 340px; line-height: 1.4; }
+  .note .swap-text { color: #EF7A24; font-weight: bold; }
+  .note .ok-text { color: #ACD433; font-weight: bold; }
+  .note .flag-text { color: #75CEEC; font-weight: bold; }
+  .divider { border: none; border-top: 1px solid #2A4A6A; margin: 8px 0; }
+  @media (max-width: 640px) {
+    body { padding: 16px; }
+    h1 { font-size: 20px; }
+    .subtitle { font-size: 13px; }
+    .controls { gap: 8px; }
+    .controls input[type=range] { width: 150px; }
+    .btn { padding: 5px 12px; font-size: 12px; }
+    .step-label { width: 80px; font-size: 12px; }
+    .cell { width: 50px; height: 40px; font-size: 18px; }
+    .note { margin-left: 12px; font-size: 11px; max-width: 240px; }
+  }
+</style>
+</head>
+<body>
+
+<a href="../index.html" class="back-link" aria-label="Back to CS 302 Home">← CS 302 Home</a>
+<h1>Bubble Sort — Adjacent Swaps with Early Termination</h1>
+<p class="subtitle">
+  Compare <span class="orange">adjacent pairs</span> left to right. Swap if out of order. Largest <span class="bold">bubbles to the end</span> each pass.<br>
+  Boolean flag: if a pass has <span class="orange">zero swaps</span>, stop early — already sorted!
+</p>
+
+<div class="legend" role="list" aria-label="Color legend">
+  <div class="legend-item" role="listitem"><div class="legend-swatch" style="background:#1A3A6A" aria-hidden="true"></div> Unsorted</div>
+  <div class="legend-item" role="listitem"><div class="legend-swatch" style="background:#B85A00" aria-hidden="true"></div> Swapped</div>
+  <div class="legend-item" role="listitem"><div class="legend-swatch" style="background:#1A5A5A" aria-hidden="true"></div> Compared, no swap</div>
+  <div class="legend-item" role="listitem"><div class="legend-swatch" style="background:#0D5E3A" aria-hidden="true"></div> Sorted (final position)</div>
+</div>
+
+<div class="controls" role="toolbar" aria-label="Animation controls">
+  <button class="btn" id="playBtn" onclick="togglePlay()" aria-label="Play animation">▶ Play</button>
+  <button class="btn" onclick="resetAll()" aria-label="Reset animation">↺ Reset</button>
+  <button class="btn" onclick="stepForward()" aria-label="Step forward">Step →</button>
+  <label for="speedSlider">Speed:</label>
+  <input type="range" id="speedSlider" min="1" max="5" value="3" aria-label="Animation speed">
+  <span id="stepCounter" aria-live="polite">0 / 0</span>
+</div>
+
+<div id="diagram" role="region" aria-label="Sorting visualization"></div>
+
+<script>
+const steps = [
+  // PASS 1
+  { pass: 1, label: "Start", arr: [29,10,14,37,13], sorted: [], compare: null, action: "none", note: "Pass 1 begins. Flag: sorted = true" },
+  { pass: 1, label: "Compare\n0,1", arr: [29,10,14,37,13], sorted: [], compare: [0,1], action: "swap", note: '<span class="swap-text">29 > 10 → swap!</span> Flag: sorted = false' },
+  { pass: 1, label: "Compare\n1,2", arr: [10,29,14,37,13], sorted: [], compare: [1,2], action: "swap", note: '<span class="swap-text">29 > 14 → swap!</span>' },
+  { pass: 1, label: "Compare\n2,3", arr: [10,14,29,37,13], sorted: [], compare: [2,3], action: "no-swap", note: '<span class="ok-text">29 < 37 → no swap</span>' },
+  { pass: 1, label: "Compare\n3,4", arr: [10,14,29,37,13], sorted: [], compare: [3,4], action: "swap", note: '<span class="swap-text">37 > 13 → swap!</span>' },
+  { pass: 1, label: "End Pass 1", arr: [10,14,29,13,37], sorted: [4], compare: null, action: "none", note: '<span class="flag-text">37 bubbled to end.</span> Swaps occurred → continue' },
+  // divider
+  { pass: 0, label: "---", arr: null, sorted: null, compare: null, action: "divider", note: "" },
+  // PASS 2
+  { pass: 2, label: "Start", arr: [10,14,29,13,37], sorted: [4], compare: null, action: "none", note: "Pass 2 begins. Flag: sorted = true" },
+  { pass: 2, label: "Compare\n0,1", arr: [10,14,29,13,37], sorted: [4], compare: [0,1], action: "no-swap", note: '<span class="ok-text">10 < 14 → no swap</span>' },
+  { pass: 2, label: "Compare\n1,2", arr: [10,14,29,13,37], sorted: [4], compare: [1,2], action: "no-swap", note: '<span class="ok-text">14 < 29 → no swap</span>' },
+  { pass: 2, label: "Compare\n2,3", arr: [10,14,29,13,37], sorted: [4], compare: [2,3], action: "swap", note: '<span class="swap-text">29 > 13 → swap!</span> Flag: sorted = false' },
+  { pass: 2, label: "End Pass 2", arr: [10,14,13,29,37], sorted: [3,4], compare: null, action: "none", note: '<span class="flag-text">29 bubbled to position.</span> Swaps occurred → continue' },
+  // divider
+  { pass: 0, label: "---", arr: null, sorted: null, compare: null, action: "divider", note: "" },
+  // PASS 3
+  { pass: 3, label: "Start", arr: [10,14,13,29,37], sorted: [3,4], compare: null, action: "none", note: "Pass 3 begins. Flag: sorted = true" },
+  { pass: 3, label: "Compare\n0,1", arr: [10,14,13,29,37], sorted: [3,4], compare: [0,1], action: "no-swap", note: '<span class="ok-text">10 < 14 → no swap</span>' },
+  { pass: 3, label: "Compare\n1,2", arr: [10,14,13,29,37], sorted: [3,4], compare: [1,2], action: "swap", note: '<span class="swap-text">14 > 13 → swap!</span> Flag: sorted = false' },
+  { pass: 3, label: "End Pass 3", arr: [10,13,14,29,37], sorted: [2,3,4], compare: null, action: "none", note: '<span class="flag-text">14 bubbled to position.</span> Swaps occurred → continue' },
+  // divider
+  { pass: 0, label: "---", arr: null, sorted: null, compare: null, action: "divider", note: "" },
+  // PASS 4
+  { pass: 4, label: "Start", arr: [10,13,14,29,37], sorted: [2,3,4], compare: null, action: "none", note: "Pass 4 begins. Flag: sorted = true" },
+  { pass: 4, label: "Compare\n0,1", arr: [10,13,14,29,37], sorted: [2,3,4], compare: [0,1], action: "no-swap", note: '<span class="ok-text">10 < 13 → no swap</span>' },
+  { pass: 4, label: "End Pass 4", arr: [10,13,14,29,37], sorted: [0,1,2,3,4], compare: null, action: "none", note: '<span class="flag-text">No swaps! sorted = true → STOP EARLY!</span>' },
+  // final
+  { pass: 0, label: "---", arr: null, sorted: null, compare: null, action: "divider", note: "" },
+  { pass: 0, label: "Final", arr: [10,13,14,29,37], sorted: [0,1,2,3,4], compare: null, action: "none", note: '✓ Sorted! Early termination saved work on Pass 4.' },
+];
+
+let currentStep = -1;
+let playing = false;
+let timer = null;
+
+function getSpeed() {
+  const v = document.getElementById('speedSlider').value;
+  return [1800, 1300, 900, 550, 300][v - 1];
+}
+
+function updateButtons() {
+  const playBtn = document.getElementById('playBtn');
+  playBtn.disabled = currentStep >= steps.length - 1 && !playing;
+}
+
+document.getElementById('stepCounter').textContent = '0 / ' + steps.length;
+
+function renderStep(step, index) {
+  if (step.action === "divider") {
+    const hr = document.createElement('hr');
+    hr.className = 'divider';
+    hr.setAttribute('aria-hidden', 'true');
+    return hr;
+  }
+
+  const row = document.createElement('div');
+  row.className = 'step-row';
+  row.id = 'row-' + index;
+  row.setAttribute('aria-label', `Step ${index + 1}, Pass ${step.pass || 'Final'}: ${step.label}`);
+
+  const label = document.createElement('div');
+  label.className = 'step-label';
+  if (step.pass > 0) {
+    label.innerHTML = '<span class="pass-num">Pass ' + step.pass + '</span><br>' + step.label.replace('\n','<br>');
+  } else {
+    label.textContent = step.label;
+  }
+  row.appendChild(label);
+
+  const cells = document.createElement('div');
+  cells.className = 'cells';
+  cells.setAttribute('role', 'list');
+  cells.setAttribute('aria-label', `Array state: ${step.arr.join(', ')}`);
+
+  step.arr.forEach((val, i) => {
+    const cell = document.createElement('div');
+    cell.className = 'cell';
+    cell.setAttribute('role', 'listitem');
+    cell.setAttribute('aria-label', `Index ${i}, value ${val}`);
+    
+    if (step.sorted.includes(i)) {
+      cell.classList.add('sorted');
+      cell.setAttribute('aria-label', cell.getAttribute('aria-label') + ', sorted');
+    } else if (step.compare && (i === step.compare[0] || i === step.compare[1])) {
+      cell.classList.add(step.action === 'swap' ? 'swapped' : 'no-swap');
+      cell.setAttribute('aria-label', cell.getAttribute('aria-label') + ', ' + (step.action === 'swap' ? 'swapped' : 'compared'));
+    } else {
+      cell.classList.add('unsorted');
+    }
+
+    cell.textContent = val;
+    const idx = document.createElement('span');
+    idx.className = 'idx';
+    idx.textContent = i;
+    idx.setAttribute('aria-hidden', 'true');
+    cell.appendChild(idx);
+    cells.appendChild(cell);
+  });
+
+  row.appendChild(cells);
+
+  const note = document.createElement('div');
+  note.className = 'note';
+  note.innerHTML = step.note;
+  note.setAttribute('aria-live', 'polite');
+  row.appendChild(note);
+
+  return row;
+}
+
+function stepForward() {
+  if (currentStep >= steps.length - 1) {
+    updateButtons();
+    return;
+  }
+  currentStep++;
+  const diagram = document.getElementById('diagram');
+  const el = renderStep(steps[currentStep], currentStep);
+  diagram.appendChild(el);
+  if (el.classList && el.classList.contains('step-row')) {
+    requestAnimationFrame(() => { requestAnimationFrame(() => { el.classList.add('visible'); }); });
+  }
+  document.getElementById('stepCounter').textContent = (currentStep + 1) + ' / ' + steps.length;
+  updateButtons();
+}
+
+function togglePlay() {
+  const btn = document.getElementById('playBtn');
+  if (playing) {
+    playing = false; clearInterval(timer);
+    btn.textContent = '▶ Play'; 
+    btn.setAttribute('aria-label', 'Play animation');
+    btn.classList.remove('active');
+  } else {
+    if (currentStep >= steps.length - 1) resetAll();
+    playing = true;
+    btn.textContent = '⏸ Pause'; 
+    btn.setAttribute('aria-label', 'Pause animation');
+    btn.classList.add('active');
+    timer = setInterval(() => {
+      if (currentStep >= steps.length - 1) { togglePlay(); return; }
+      stepForward();
+    }, getSpeed());
+  }
+  updateButtons();
+}
+
+function resetAll() {
+  playing = false; clearInterval(timer);
+  document.getElementById('playBtn').textContent = '▶ Play';
+  document.getElementById('playBtn').setAttribute('aria-label', 'Play animation');
+  document.getElementById('playBtn').classList.remove('active');
+  currentStep = -1;
+  document.getElementById('diagram').innerHTML = '';
+  document.getElementById('stepCounter').textContent = '0 / ' + steps.length;
+  updateButtons();
+}
+
+// Keyboard navigation
+document.addEventListener('keydown', (e) => {
+  if (e.target.tagName === 'INPUT') return;
+  if (e.key === 'ArrowRight' || e.key === ' ') {
+    e.preventDefault();
+    if (playing) togglePlay();
+    else stepForward();
+  } else if (e.key === 'ArrowLeft') {
+    e.preventDefault();
+    if (playing) togglePlay();
+    resetAll();
+  } else if (e.key === 'r' || e.key === 'R') {
+    resetAll();
+  }
+});
+
+stepForward();
+</script>
+</body>
+</html>

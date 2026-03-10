@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Selection Sort — Maximum to End | CS 302</title>
+<meta name="description" content="Interactive visualization of Selection Sort algorithm. Find the largest item in unsorted region and swap to end. Sorted region grows right to left.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0E1E3A; color: #fff; font-family: 'Segoe UI', system-ui, sans-serif; padding: 24px; min-height: 100vh; }
+  .back-link { font-family: system-ui; font-size: 13px; color: #75CEEC; text-decoration: none; display: inline-block; margin-bottom: 10px; transition: color 0.2s; }
+  .back-link:hover, .back-link:focus { color: #ACD433; text-decoration: underline; }
+  .back-link:focus-visible { outline: 2px solid #ACD433; outline-offset: 2px; border-radius: 2px; }
+  h1 { font-size: 24px; margin-bottom: 4px; }
+  .subtitle { color: #ACD433; font-size: 14px; margin-bottom: 18px; line-height: 1.5; }
+  .subtitle .orange { color: #EF7A24; font-weight: bold; }
+  .subtitle .bold { font-weight: bold; }
+  .legend { display: flex; gap: 16px; margin-bottom: 18px; flex-wrap: wrap; }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 13px; color: #8BAEC0; }
+  .legend-swatch { width: 16px; height: 16px; border-radius: 3px; border: 1px solid #4A7AB5; flex-shrink: 0; }
+  .controls { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; flex-wrap: wrap; }
+  .controls label { color: #8BAEC0; font-size: 13px; }
+  .controls input[type=range] { width: 280px; }
+  .controls span { color: #fff; font-size: 13px; }
+  .btn { background: #1A3A6A; color: #ACD433; border: 1px solid #4A7AB5; border-radius: 6px; padding: 6px 16px; font-size: 13px; cursor: pointer; font-family: inherit; transition: all 0.2s; }
+  .btn:hover, .btn:focus { background: #244A7A; }
+  .btn:focus-visible { outline: 2px solid #ACD433; outline-offset: 2px; }
+  .btn.active { background: #0D5E3A; border-color: #ACD433; }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .pass-row { display: flex; align-items: center; margin-bottom: 6px; min-height: 80px; opacity: 0; transform: translateY(10px); transition: opacity 0.4s ease, transform 0.4s ease; }
+  .pass-row.visible { opacity: 1; transform: translateY(0); }
+  .pass-label { width: 110px; flex-shrink: 0; font-size: 14px; font-weight: bold; color: #ACD433; }
+  .cells { display: flex; gap: 6px; position: relative; flex-wrap: wrap; }
+  .cell { width: 68px; height: 50px; display: flex; align-items: center; justify-content: center; border-radius: 4px; border: 1.5px solid #4A7AB5; font-size: 22px; font-weight: bold; position: relative; transition: background 0.3s ease; flex-shrink: 0; }
+  .cell .idx { position: absolute; bottom: -16px; font-size: 11px; color: #8BAEC0; font-weight: normal; }
+  .cell.unsorted { background: #1A3A6A; }
+  .cell.sorted { background: #0D5E3A; }
+  .cell.active { background: #B85A00; }
+  .cell.swapping { animation: pulse 0.5s ease; }
+  @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.1); } }
+  .note { margin-left: 20px; font-size: 12px; color: #8BAEC0; max-width: 280px; line-height: 1.4; }
+  .swap-indicator { position: absolute; top: -22px; left: 0; right: 0; text-align: center; font-size: 11px; color: #EF7A24; font-weight: bold; opacity: 0; transition: opacity 0.3s; }
+  .swap-indicator.show { opacity: 1; }
+  .arrow-line { position: absolute; top: -8px; height: 2px; background: #EF7A24; transition: all 0.3s; }
+  @media (max-width: 640px) {
+    body { padding: 16px; }
+    h1 { font-size: 20px; }
+    .subtitle { font-size: 13px; }
+    .controls { gap: 8px; }
+    .controls input[type=range] { width: 150px; }
+    .btn { padding: 5px 12px; font-size: 12px; }
+    .pass-label { width: 80px; font-size: 12px; }
+    .cell { width: 50px; height: 40px; font-size: 18px; }
+    .note { margin-left: 12px; font-size: 11px; max-width: 200px; }
+  }
+</style>
+</head>
+<body>
+
+<a href="../index.html" class="back-link" aria-label="Back to CS 302 Home">← CS 302 Home</a>
+<h1>Selection Sort — Maximum to End</h1>
+<p class="subtitle">
+  Each pass finds the <span class="orange">largest</span> item in the unsorted region and swaps it to the end.<br>
+  Sorted region grows from <span class="bold">right to left</span>.
+</p>
+
+<div class="legend" role="list" aria-label="Color legend">
+  <div class="legend-item" role="listitem"><div class="legend-swatch" style="background:#1A3A6A" aria-hidden="true"></div> Unsorted</div>
+  <div class="legend-item" role="listitem"><div class="legend-swatch" style="background:#B85A00" aria-hidden="true"></div> Largest found</div>
+  <div class="legend-item" role="listitem"><div class="legend-swatch" style="background:#0D5E3A" aria-hidden="true"></div> Sorted (final position)</div>
+</div>
+
+<div class="controls" role="toolbar" aria-label="Animation controls">
+  <button class="btn" id="playBtn" onclick="togglePlay()" aria-label="Play animation">▶ Play Animation</button>
+  <button class="btn" id="resetBtn" onclick="resetAll()" aria-label="Reset animation">↺ Reset</button>
+  <button class="btn" onclick="stepForward()" aria-label="Step forward">Step →</button>
+  <label for="speedSlider">Speed:</label>
+  <input type="range" id="speedSlider" min="1" max="5" value="3" aria-label="Animation speed">
+  <span id="stepCounter" aria-live="polite">0 / 9</span>
+</div>
+
+<div id="diagram" role="region" aria-label="Sorting visualization"></div>
+
+<script>
+const passes = [
+  { label: "Initial", arr: [29,10,14,37,13], sorted: [], highlight: null, swap: null, note: "Unsorted region: all 5 items" },
+  { label: "Pass 1", arr: [29,10,14,37,13], sorted: [], highlight: 3, swap: [3,4], note: "Largest is 37 (index 3) → swap with index 4" },
+  { label: "After Pass 1", arr: [29,10,14,13,37], sorted: [4], highlight: null, swap: null, note: "37 is in its final position" },
+  { label: "Pass 2", arr: [29,10,14,13,37], sorted: [4], highlight: 0, swap: [0,3], note: "Largest is 29 (index 0) → swap with index 3" },
+  { label: "After Pass 2", arr: [13,10,14,29,37], sorted: [3,4], highlight: null, swap: null, note: "29 is in its final position" },
+  { label: "Pass 3", arr: [13,10,14,29,37], sorted: [3,4], highlight: 2, swap: [2,2], note: "Largest is 14 (index 2) → already in place!" },
+  { label: "After Pass 3", arr: [13,10,14,29,37], sorted: [2,3,4], highlight: null, swap: null, note: "14 is in its final position" },
+  { label: "Pass 4", arr: [13,10,14,29,37], sorted: [2,3,4], highlight: 0, swap: [0,1], note: "Largest is 13 (index 0) → swap with index 1" },
+  { label: "Final", arr: [10,13,14,29,37], sorted: [0,1,2,3,4], highlight: null, swap: null, note: "✓ Sorted! 4+3+2+1 = 10 comparisons, 4 swaps" },
+];
+
+let currentStep = -1;
+let playing = false;
+let timer = null;
+
+function getSpeed() {
+  const v = document.getElementById('speedSlider').value;
+  return [2000, 1500, 1000, 600, 350][v - 1];
+}
+
+function updateButtons() {
+  const playBtn = document.getElementById('playBtn');
+  const resetBtn = document.getElementById('resetBtn');
+  playBtn.disabled = currentStep >= passes.length - 1 && !playing;
+}
+
+function renderRow(pass, index) {
+  const row = document.createElement('div');
+  row.className = 'pass-row';
+  row.id = 'row-' + index;
+  row.setAttribute('aria-label', `Step ${index + 1}: ${pass.label}`);
+
+  const label = document.createElement('div');
+  label.className = 'pass-label';
+  label.textContent = pass.label;
+  row.appendChild(label);
+
+  const cells = document.createElement('div');
+  cells.className = 'cells';
+  cells.setAttribute('role', 'list');
+  cells.setAttribute('aria-label', `Array state: ${pass.arr.join(', ')}`);
+
+  pass.arr.forEach((val, i) => {
+    const cell = document.createElement('div');
+    cell.className = 'cell';
+    cell.setAttribute('role', 'listitem');
+    cell.setAttribute('aria-label', `Index ${i}, value ${val}`);
+    
+    if (pass.sorted.includes(i)) {
+      cell.classList.add('sorted');
+      cell.setAttribute('aria-label', cell.getAttribute('aria-label') + ', sorted');
+    } else if (i === pass.highlight) {
+      cell.classList.add('active');
+      cell.setAttribute('aria-label', cell.getAttribute('aria-label') + ', largest found');
+    } else {
+      cell.classList.add('unsorted');
+    }
+    
+    cell.textContent = val;
+
+    const idx = document.createElement('span');
+    idx.className = 'idx';
+    idx.textContent = i;
+    idx.setAttribute('aria-hidden', 'true');
+    cell.appendChild(idx);
+
+    cells.appendChild(cell);
+  });
+
+  // Swap indicator
+  if (pass.swap && pass.swap[0] !== pass.swap[1]) {
+    const indicator = document.createElement('div');
+    indicator.className = 'swap-indicator show';
+    indicator.textContent = '↔ swap';
+    indicator.setAttribute('aria-label', `Swapping indices ${pass.swap[0]} and ${pass.swap[1]}`);
+    indicator.style.position = 'relative';
+    indicator.style.top = '-2px';
+    indicator.style.marginBottom = '2px';
+    cells.insertBefore(indicator, cells.firstChild);
+  }
+
+  row.appendChild(cells);
+
+  const note = document.createElement('div');
+  note.className = 'note';
+  note.textContent = pass.note;
+  note.setAttribute('aria-live', 'polite');
+  row.appendChild(note);
+
+  return row;
+}
+
+function stepForward() {
+  if (currentStep >= passes.length - 1) {
+    updateButtons();
+    return;
+  }
+  currentStep++;
+  const diagram = document.getElementById('diagram');
+  const row = renderRow(passes[currentStep], currentStep);
+  diagram.appendChild(row);
+  // Trigger animation
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => { row.classList.add('visible'); });
+  });
+  document.getElementById('stepCounter').textContent = (currentStep + 1) + ' / ' + passes.length;
+  updateButtons();
+}
+
+function togglePlay() {
+  const btn = document.getElementById('playBtn');
+  if (playing) {
+    playing = false;
+    clearInterval(timer);
+    btn.textContent = '▶ Play Animation';
+    btn.setAttribute('aria-label', 'Play animation');
+    btn.classList.remove('active');
+  } else {
+    if (currentStep >= passes.length - 1) resetAll();
+    playing = true;
+    btn.textContent = '⏸ Pause';
+    btn.setAttribute('aria-label', 'Pause animation');
+    btn.classList.add('active');
+    timer = setInterval(() => {
+      if (currentStep >= passes.length - 1) {
+        togglePlay();
+        return;
+      }
+      stepForward();
+    }, getSpeed());
+  }
+  updateButtons();
+}
+
+function resetAll() {
+  playing = false;
+  clearInterval(timer);
+  document.getElementById('playBtn').textContent = '▶ Play Animation';
+  document.getElementById('playBtn').setAttribute('aria-label', 'Play animation');
+  document.getElementById('playBtn').classList.remove('active');
+  currentStep = -1;
+  document.getElementById('diagram').innerHTML = '';
+  document.getElementById('stepCounter').textContent = '0 / ' + passes.length;
+  updateButtons();
+}
+
+// Keyboard navigation
+document.addEventListener('keydown', (e) => {
+  if (e.target.tagName === 'INPUT') return;
+  if (e.key === 'ArrowRight' || e.key === ' ') {
+    e.preventDefault();
+    if (playing) togglePlay();
+    else stepForward();
+  } else if (e.key === 'ArrowLeft') {
+    e.preventDefault();
+    if (playing) togglePlay();
+    resetAll();
+  } else if (e.key === 'r' || e.key === 'R') {
+    resetAll();
+  }
+});
+
+// Start with first row visible
+stepForward();
+</script>
+
+</body>
+</html>
