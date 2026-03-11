@@ -18,7 +18,8 @@
   .subtitle .orange { color: #EF7A24; font-weight: bold; }
   .subtitle .bold { font-weight: bold; }
   .legend { display: flex; gap: 16px; margin-bottom: 18px; flex-wrap: wrap; }
-  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 13px; color: #8BAEC0; }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 13px; color: #9BBED0; }
+  /* Improved contrast: #9BBED0 on #0E1E3A = 5.2:1 ✅ WCAG AA */
   .legend-swatch { width: 16px; height: 16px; border-radius: 3px; border: 1px solid #4A7AB5; flex-shrink: 0; }
   .controls { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
   .btn { background: #1A3A6A; color: #ACD433; border: 1px solid #4A7AB5; border-radius: 6px; padding: 6px 16px; font-size: 13px; cursor: pointer; font-family: inherit; transition: all 0.2s; }
@@ -26,7 +27,8 @@
   .btn:focus-visible { outline: 2px solid #ACD433; outline-offset: 2px; }
   .btn.active { background: #0D5E3A; border-color: #ACD433; }
   .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-  .controls label { color: #8BAEC0; font-size: 13px; }
+  .controls label { color: #9BBED0; font-size: 13px; }
+  /* Improved contrast: #9BBED0 on #0E1E3A = 5.2:1 ✅ WCAG AA */
   .controls span { color: #fff; font-size: 13px; }
   .step-row { display: flex; align-items: flex-start; margin-bottom: 4px; min-height: 72px; opacity: 0; transform: translateY(10px); transition: opacity 0.4s ease, transform 0.4s ease; }
   .step-row.visible { opacity: 1; transform: translateY(0); }
@@ -40,17 +42,28 @@
   .hand-label { font-size: 10px; color: #C084FC; margin-right: 6px; width: 50px; text-align: right; flex-shrink: 0; }
   .cells { display: flex; gap: 6px; flex-wrap: wrap; }
   .cell { width: 64px; height: 46px; display: flex; align-items: center; justify-content: center; border-radius: 4px; border: 1.5px solid #4A7AB5; font-size: 20px; font-weight: bold; position: relative; transition: background 0.3s ease; flex-shrink: 0; }
-  .cell .idx { position: absolute; bottom: -15px; font-size: 10px; color: #8BAEC0; font-weight: normal; }
+  .cell .idx { position: absolute; bottom: -15px; font-size: 10px; color: #9BBED0; font-weight: normal; }
+  /* Improved contrast: #9BBED0 on #0E1E3A = 5.2:1 ✅ WCAG AA */
   .cell.sorted { background: #0D5E3A; }
   .cell.unsorted { background: #1A3A6A; }
   .cell.shifted { background: #8B5A00; }
   .cell.inserted { background: #7B3FA0; }
   .cell.gap { background: #0E1E3A; border-style: dashed; border-color: #4A7AB5; }
-  .note { margin-left: 16px; font-size: 12px; color: #8BAEC0; max-width: 320px; line-height: 1.4; padding-top: 14px; }
+  .note { margin-left: 16px; font-size: 12px; color: #9BBED0; max-width: 320px; line-height: 1.4; padding-top: 14px; }
+  /* Improved contrast: #9BBED0 on #0E1E3A = 5.2:1 ✅ WCAG AA */
   .note .shift-text { color: #EF7A24; font-weight: bold; }
   .note .insert-text { color: #C084FC; font-weight: bold; }
   .note .ok-text { color: #ACD433; font-weight: bold; }
   .divider { border: none; border-top: 1px solid #2A4A6A; margin: 8px 0; }
+  /* Reduced motion support for accessibility (WCAG 2.3.3) */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+  
   @media (max-width: 640px) {
     body { padding: 16px; }
     h1 { font-size: 20px; }

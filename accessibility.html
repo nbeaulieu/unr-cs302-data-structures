@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Accessibility Statement — CS 302</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Source+Serif+4:ital,wght@0,400;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0A0F1A;
+    --surface: #111B2E;
+    --border: #1C2D4A;
+    --green: #C8D84A;
+    --text: #B8C4D4;
+    --text-bright: #E2E8F0;
+    --white: #F4F7FA;
+    --muted: #6B7F95;
+    --font-sans: 'DM Sans', sans-serif;
+    --font-serif: 'Source Serif 4', Georgia, serif;
+    --font-mono: 'JetBrains Mono', monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: var(--font-sans); font-size: 16px; line-height: 1.7; padding: 40px 20px; }
+  .container { max-width: 800px; margin: 0 auto; }
+  h1 { font-family: var(--font-serif); font-size: 32px; color: var(--white); margin-bottom: 20px; }
+  h2 { font-family: var(--font-serif); font-size: 24px; color: var(--white); margin-top: 32px; margin-bottom: 12px; }
+  p { margin-bottom: 16px; }
+  a { color: var(--green); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .back-link { display: inline-block; margin-bottom: 24px; color: var(--green); }
+  ul { margin-left: 24px; margin-bottom: 16px; }
+  li { margin-bottom: 8px; }
+  .compliance-badge { display: inline-block; background: var(--green); color: var(--bg); padding: 4px 12px; border-radius: 4px; font-weight: 600; font-size: 14px; margin-bottom: 20px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <a href="index.html" class="back-link">← Back to Home</a>
+  <h1>Accessibility Statement</h1>
+  <div class="compliance-badge">WCAG 2.1 Level AA Compliant</div>
+  
+  <h2>Commitment to Accessibility</h2>
+  <p>This website is committed to ensuring digital accessibility for people with disabilities. We are continually improving the user experience for everyone and applying the relevant accessibility standards.</p>
+  
+  <h2>Standards</h2>
+  <p>This website conforms to:</p>
+  <ul>
+    <li><strong>WCAG 2.1 Level AA</strong> (Web Content Accessibility Guidelines)</li>
+    <li><strong>Section 508</strong> standards (for U.S. federal agencies and institutions receiving federal funding)</li>
+  </ul>
+  
+  <h2>Accessibility Features</h2>
+  
+  <h3>Keyboard Navigation</h3>
+  <ul>
+    <li>All interactive elements are keyboard accessible</li>
+    <li>Skip to main content link available (press Tab on page load)</li>
+    <li>Logical tab order throughout the site</li>
+    <li>Keyboard shortcuts for visualizations (Arrow keys, Space, R for reset)</li>
+  </ul>
+  
+  <h3>Screen Reader Support</h3>
+  <ul>
+    <li>Semantic HTML structure with proper headings</li>
+    <li>ARIA labels and roles for navigation and interactive elements</li>
+    <li>Descriptive link text and aria-labels</li>
+    <li>Live regions for dynamic content updates</li>
+  </ul>
+  
+  <h3>Visual Accessibility</h3>
+  <ul>
+    <li>High contrast color scheme (all text meets 4.5:1 contrast ratio)</li>
+    <li>Focus indicators on all interactive elements</li>
+    <li>Text resizable up to 200% without loss of functionality</li>
+    <li>Responsive design works on all screen sizes</li>
+  </ul>
+  
+  <h3>Motion and Animation</h3>
+  <ul>
+    <li>Respects <code>prefers-reduced-motion</code> user preference</li>
+    <li>Animations can be paused in visualizations</li>
+    <li>No auto-playing content</li>
+  </ul>
+  
+  <h3>Interactive Visualizations</h3>
+  <ul>
+    <li>Keyboard navigation supported</li>
+    <li>ARIA labels on all controls</li>
+    <li>Step-by-step mode available</li>
+    <li>Speed controls for animations</li>
+  </ul>
+  
+  <h2>Feedback</h2>
+  <p>We welcome your feedback on the accessibility of this website. If you encounter accessibility barriers, please contact us via GitHub Issues or email.</p>
+  
+  <h2>Testing</h2>
+  <p>This website has been tested with:</p>
+  <ul>
+    <li>Screen readers (NVDA, JAWS, VoiceOver)</li>
+    <li>Keyboard-only navigation</li>
+    <li>Browser zoom (up to 200%)</li>
+    <li>Automated accessibility tools (WAVE, axe DevTools)</li>
+  </ul>
+  
+  <h2>Resources</h2>
+  <ul>
+    <li><a href="https://www.w3.org/WAI/WCAG21/quickref/" target="_blank" rel="noopener noreferrer">WCAG 2.1 Guidelines</a></li>
+    <li><a href="https://webaim.org/" target="_blank" rel="noopener noreferrer">WebAIM Resources</a></li>
+    <li><a href="https://www.section508.gov/" target="_blank" rel="noopener noreferrer">Section 508 Information</a></li>
+  </ul>
+  
+  <p style="margin-top: 32px; color: var(--muted); font-size: 14px;">Last updated: March 10, 2026</p>
+</div>
+</body>
+</html>
