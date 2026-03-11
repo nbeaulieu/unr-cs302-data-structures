@@ -64,6 +64,7 @@
   .hero-link.secondary:hover, .hero-link.secondary:focus { border-color: var(--green); color: var(--green); }
   .hero-link:focus-visible { outline: 2px solid var(--green); outline-offset: 2px; }
   .hero-link .ext { font-size: 11px; margin-left: 4px; opacity: 0.5; }
+  .module-card .ext { font-size: 10px; margin-left: 4px; opacity: 0.6; }
 
   /* ═══ NAV ═══ */
   .sticky-nav { position: sticky; top: 0; z-index: 100; background: rgba(10,15,26,0.85); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border-bottom: 1px solid var(--border); }
@@ -232,6 +233,33 @@
           <h4>Binary Search Trees</h4>
           <p class="mod-desc">Insert, search, and compare balanced vs degenerate trees. See how shape drives performance.</p>
           <span class="mod-meta">O(log n) best · O(n) worst</span>
+        </a>
+      </div>
+    </div>
+
+    <div style="margin-top: 28px;">
+      <h3 style="font-size: 16px; font-weight: 600; color: var(--text-bright); margin-bottom: 4px;">CS 302 — Code Examples</h3>
+      <p style="font-size: 13px; color: var(--muted); margin-bottom: 16px;">Well-documented C++ implementations with step-by-step visualizations. Perfect for studying and reference.</p>
+      <div class="module-grid">
+        <a class="module-card" href="https://github.com/nbeaulieu/unr-cs302-data-structures/blob/main/code/selection_sort.cpp" target="_blank" rel="noopener noreferrer">
+          <h4>Selection Sort (C++)</h4>
+          <p class="mod-desc">Maximum-to-end variant. Comprehensive documentation, examples, and step-by-step visualization.</p>
+          <span class="mod-meta">O(n²) all cases · O(n) moves</span>
+        </a>
+        <a class="module-card" href="https://github.com/nbeaulieu/unr-cs302-data-structures/blob/main/code/bubble_sort.cpp" target="_blank" rel="noopener noreferrer">
+          <h4>Bubble Sort (C++)</h4>
+          <p class="mod-desc">Adjacent swaps with early termination. Demonstrates O(n) best case with already-sorted data.</p>
+          <span class="mod-meta">O(n²) worst · O(n) best</span>
+        </a>
+        <a class="module-card" href="https://github.com/nbeaulieu/unr-cs302-data-structures/blob/main/code/insertion_sort.cpp" target="_blank" rel="noopener noreferrer">
+          <h4>Insertion Sort (C++)</h4>
+          <p class="mod-desc">Uses shifts, not swaps. Excellent for nearly-sorted data. Shows O(n) best case efficiency.</p>
+          <span class="mod-meta">O(n²) worst · O(n) best</span>
+        </a>
+        <a class="module-card" href="https://github.com/nbeaulieu/unr-cs302-data-structures/tree/main/code" target="_blank" rel="noopener noreferrer">
+          <h4>All Code Examples</h4>
+          <p class="mod-desc">Browse all C++ implementations in the code directory. Includes README with compilation instructions.</p>
+          <span class="mod-meta">View on GitHub <span class="ext">↗</span></span>
         </a>
       </div>
     </div>
