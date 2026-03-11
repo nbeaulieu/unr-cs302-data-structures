@@ -11,6 +11,10 @@
  * Key Feature: Efficient for nearly-sorted data. Best case O(n) when array is
  * already sorted (only comparisons, no shifts needed).
  * 
+ * Key Difference: Uses SHIFTS, not SWAPS!
+ * - Shift: Moves one element right to make space (a → b, leaves gap)
+ * - Swap: Exchanges two elements (a ↔ b)
+ * 
  * Time Complexity: O(n²) worst case, O(n) best case (nearly sorted)
  * Space Complexity: O(1) - in-place sorting
  * 
@@ -19,10 +23,43 @@
 
 #include <iostream>
 #include <vector>
-#include <algorithm>  // for std::swap (C++11+)
+#include <algorithm>  // for std::swap (C++11+) - not used here, we use shifts instead
 #include <cassert>    // for assertions
 
 using namespace std;
+
+/**
+ * @brief Shifts an element one position to the right
+ * 
+ * This function moves an element from position 'from' to position 'to' (where to = from + 1).
+ * This is used in Insertion Sort to make space for inserting a new element.
+ * 
+ * Key Difference from Swap:
+ * - Swap: Exchanges two values (a ↔ b)
+ * - Shift: Moves one value to make space (a → b, leaving a's position empty)
+ * 
+ * @param arr The array containing the element to shift
+ * @param from Index of element to shift (source position)
+ * @param to Index where element should be moved (destination position, typically from + 1)
+ * 
+ * @note This is different from swap! Shift moves one element, swap exchanges two.
+ * @note In Insertion Sort, we shift elements RIGHT to make space for insertion.
+ * @note The element at position 'from' is copied to position 'to'
+ */
+void shiftRight(int arr[], int from, int to) {
+    // Move element from 'from' position to 'to' position
+    // This leaves the 'from' position available for insertion
+    arr[to] = arr[from];
+    // Note: The original value at 'to' should have already been moved
+    // (or is the gap where we're inserting)
+}
+
+/**
+ * @brief Overloaded version for vector
+ */
+void shiftRight(vector<int>& vec, int from, int to) {
+    vec[to] = vec[from];
+}
 
 /**
  * @brief Sorts an array using Insertion Sort algorithm
@@ -67,7 +104,9 @@ using namespace std;
  * @param n The number of elements in the array
  * 
  * @note This function modifies the input array directly (in-place sorting)
- * @note Uses shifts instead of swaps - more efficient for nearly-sorted data
+ * @note Uses SHIFTS (via shiftRight()) instead of SWAPS - key difference!
+ * @note Shift: moves element right to make space (a → b)
+ * @note Swap: exchanges two elements (a ↔ b)
  * @note Best case O(n) when array is already sorted (only comparisons, no shifts)
  * @note For empty arrays or single-element arrays, function returns immediately
  * 
@@ -101,7 +140,8 @@ void insertionSort(int arr[], int n) {
         //   2. The current element is greater than what we're inserting
         while (j >= 0 && arr[j] > valueToInsert) {
             // Shift the element right to make space
-            arr[j + 1] = arr[j];
+            shiftRight(arr, j, j + 1);
+            // Alternative direct assignment: arr[j + 1] = arr[j];
             j--;  // Move left to check the next element
         }
         
@@ -138,7 +178,8 @@ void insertionSort(vector<int>& vec) {
         int j = i - 1;
         
         while (j >= 0 && vec[j] > valueToInsert) {
-            vec[j + 1] = vec[j];
+            shiftRight(vec, j, j + 1);
+            // Alternative direct assignment: vec[j + 1] = vec[j];
             j--;
         }
         
@@ -205,7 +246,8 @@ void insertionSortWithSteps(int arr[], int n) {
         while (j >= 0 && arr[j] > valueToInsert) {
             cout << "    " << valueToInsert << " < " << arr[j] 
                  << " → shift " << arr[j] << " right" << endl;
-            arr[j + 1] = arr[j];
+            shiftRight(arr, j, j + 1);
+            // Alternative direct assignment: arr[j + 1] = arr[j];
             j--;
             shifts++;
         }
@@ -372,9 +414,21 @@ int main() {
  *    - Example: [3₁, 3₂, 1] → after insertion: [1, 3₁, 3₂]
  *    - The relative order of 3₁ and 3₂ is preserved
  * 
- * 5. SHIFTS VS SWAPS:
+ * 5. SHIFTS VS SWAPS (KEY TEACHING POINT):
  *    - Insertion Sort uses SHIFTS (moving elements right)
- *    - More efficient than swaps for nearly-sorted data
+ *    - Selection/Bubble Sort use SWAPS (exchanging pairs)
+ *    
+ *    SHIFT (Insertion Sort):
+ *      arr[j+1] = arr[j]  // Move element right, leaves gap
+ *      Example: [10, 20, _, 30] → shift 20 right → [10, _, 20, 30]
+ *      Purpose: Make space for insertion
+ *    
+ *    SWAP (Selection/Bubble Sort):
+ *      temp = a; a = b; b = temp  // Exchange two values
+ *      Example: [10, 20] → swap → [20, 10]
+ *      Purpose: Exchange positions of two elements
+ *    
+ *    - Shifts are more efficient for nearly-sorted data
  *    - Each shift is O(1), but we may need many shifts
  *    - Key insight: We're not swapping pairs, we're making space for insertion
  * 

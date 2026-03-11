@@ -19,10 +19,27 @@
 
 #include <iostream>
 #include <vector>
-#include <algorithm>  // for std::swap (C++11+)
+#include <algorithm>  // for std::swap (C++11+) - see swapElements() function below
 #include <cassert>    // for assertions
 
 using namespace std;
+
+/**
+ * @brief Swaps two integer values
+ * 
+ * This function exchanges the values of two integer variables.
+ * 
+ * @param a Reference to first integer (will contain b's value after swap)
+ * @param b Reference to second integer (will contain a's value after swap)
+ * 
+ * @note This is equivalent to: std::swap(a, b)
+ * @note Uses a temporary variable to hold one value during the swap
+ */
+void swapElements(int& a, int& b) {
+    int temp = a;  // Save value of a in temporary variable
+    a = b;         // Copy value of b to a
+    b = temp;      // Copy saved value (original a) to b
+}
 
 /**
  * @brief Sorts an array using Selection Sort algorithm (MAXIMUM-TO-END variant)
@@ -94,7 +111,8 @@ void selectionSort(int arr[], int n) {
         // Only swap if the largest element isn't already at the end
         // This optimization avoids unnecessary swaps (though it doesn't change O(n²))
         if (indexOfLargest != rightmostUnsortedIndex) {
-            swap(arr[indexOfLargest], arr[rightmostUnsortedIndex]);
+            swapElements(arr[indexOfLargest], arr[rightmostUnsortedIndex]);
+            // Alternative using standard library: std::swap(arr[indexOfLargest], arr[rightmostUnsortedIndex]);
         }
         
         // At this point, arr[rightmostUnsortedIndex] contains the maximum
@@ -133,7 +151,8 @@ void selectionSort(vector<int>& vec) {
         
         int rightmostUnsortedIndex = n - 1 - pass;
         if (indexOfLargest != rightmostUnsortedIndex) {
-            swap(vec[indexOfLargest], vec[rightmostUnsortedIndex]);
+            swapElements(vec[indexOfLargest], vec[rightmostUnsortedIndex]);
+            // Alternative using standard library: std::swap(vec[indexOfLargest], vec[rightmostUnsortedIndex]);
         }
     }
 }
@@ -200,7 +219,8 @@ void selectionSortWithSteps(int arr[], int n) {
         
         if (indexOfLargest != rightmostUnsortedIndex) {
             cout << " → swapping to END (index " << rightmostUnsortedIndex << ")";
-            swap(arr[indexOfLargest], arr[rightmostUnsortedIndex]);
+            swapElements(arr[indexOfLargest], arr[rightmostUnsortedIndex]);
+            // Alternative using standard library: std::swap(arr[indexOfLargest], arr[rightmostUnsortedIndex]);
         } else {
             cout << " → already at END (correct position)";
         }

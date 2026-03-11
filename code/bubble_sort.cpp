@@ -18,10 +18,27 @@
 
 #include <iostream>
 #include <vector>
-#include <algorithm>  // for std::swap (C++11+)
+#include <algorithm>  // for std::swap (C++11+) - see swapElements() function below
 #include <cassert>    // for assertions
 
 using namespace std;
+
+/**
+ * @brief Swaps two integer values
+ * 
+ * This function exchanges the values of two integer variables.
+ * 
+ * @param a Reference to first integer (will contain b's value after swap)
+ * @param b Reference to second integer (will contain a's value after swap)
+ * 
+ * @note This is equivalent to: std::swap(a, b)
+ * @note Uses a temporary variable to hold one value during the swap
+ */
+void swapElements(int& a, int& b) {
+    int temp = a;  // Save value of a in temporary variable
+    a = b;         // Copy value of b to a
+    b = temp;      // Copy saved value (original a) to b
+}
 
 /**
  * @brief Sorts an array using Bubble Sort algorithm with early termination
@@ -87,7 +104,8 @@ void bubbleSort(int arr[], int n) {
             // If left element is greater than right element, they're out of order
             if (arr[i] > arr[i + 1]) {
                 // Swap the elements to put them in correct order
-                swap(arr[i], arr[i + 1]);
+                swapElements(arr[i], arr[i + 1]);
+                // Alternative using standard library: std::swap(arr[i], arr[i + 1]);
                 swapped = true;  // Mark that a swap occurred
             }
         }
@@ -129,7 +147,8 @@ void bubbleSort(vector<int>& vec) {
         
         for (int i = 0; i < n - 1 - pass; i++) {
             if (vec[i] > vec[i + 1]) {
-                swap(vec[i], vec[i + 1]);
+                swapElements(vec[i], vec[i + 1]);
+                // Alternative using standard library: std::swap(vec[i], vec[i + 1]);
                 swapped = true;
             }
         }
@@ -194,7 +213,8 @@ void bubbleSortWithSteps(int arr[], int n) {
             
             if (arr[i] > arr[i + 1]) {
                 cout << arr[i] << " > " << arr[i + 1] << " → SWAP";
-                swap(arr[i], arr[i + 1]);
+                swapElements(arr[i], arr[i + 1]);
+                // Alternative using standard library: std::swap(arr[i], arr[i + 1]);
                 swapped = true;
             } else {
                 cout << arr[i] << " ≤ " << arr[i + 1] << " → no swap";
