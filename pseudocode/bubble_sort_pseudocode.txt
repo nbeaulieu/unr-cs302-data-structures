@@ -1,0 +1,159 @@
+================================================================================
+BUBBLE SORT - Pseudocode
+================================================================================
+Algorithm: Bubble Sort with Early Termination
+Strategy: Compare adjacent pairs, swap if out of order. Largest "bubbles" to end.
+Sorted Region: Grows from RIGHT TO LEFT
+Complexity: O(n²) worst case, O(n) best case (with early termination)
+
+================================================================================
+BASIC ALGORITHM
+================================================================================
+
+BUBBLE_SORT(array, n)
+    // Edge case: empty or single element is already sorted
+    IF n <= 1 THEN
+        RETURN
+    END IF
+    
+    // Outer loop: maximum (n-1) passes needed
+    FOR pass = 0 TO n - 2 DO
+        
+        // Flag to track if any swaps occurred in this pass
+        // If no swaps, array is sorted (early termination)
+        swapped ← FALSE
+        
+        // Inner loop: compare adjacent pairs in unsorted region
+        // Unsorted region: indices [0] to [n - 1 - pass]
+        // Compare arr[i] with arr[i+1], so loop goes to n-2-pass
+        FOR i = 0 TO n - 2 - pass DO
+            
+            // Compare adjacent elements
+            IF array[i] > array[i + 1] THEN
+                // Elements are out of order, swap them
+                SWAP(array[i], array[i + 1])
+                swapped ← TRUE  // Mark that a swap occurred
+            END IF
+        END FOR
+        
+        // Early termination optimization
+        // If no swaps occurred, array is already sorted
+        IF NOT swapped THEN
+            BREAK  // Exit outer loop early
+        END IF
+        
+        // At this point, largest element in unsorted region has
+        // "bubbled" to the end (rightmost position)
+        // Sorted region has grown by one element (right to left)
+    END FOR
+    
+    // Array is now completely sorted
+END BUBBLE_SORT
+
+================================================================================
+STEP-BY-STEP EXAMPLE
+================================================================================
+
+Initial: [29, 10, 14, 37, 13]
+         Unsorted: [29, 10, 14, 37, 13]  Sorted: []
+
+Pass 1:
+    Compare 29 and 10: 29 > 10 → SWAP → [10, 29, 14, 37, 13]
+    Compare 29 and 14: 29 > 14 → SWAP → [10, 14, 29, 37, 13]
+    Compare 29 and 37: 29 < 37 → no swap → [10, 14, 29, 37, 13]
+    Compare 37 and 13: 37 > 13 → SWAP → [10, 14, 29, 13, 37]
+    Swaps occurred → continue
+    Result: [10, 14, 29, 13, 37]
+    Unsorted: [10, 14, 29, 13]  Sorted: [37]
+
+Pass 2:
+    Compare 10 and 14: 10 < 14 → no swap → [10, 14, 29, 13, 37]
+    Compare 14 and 29: 14 < 29 → no swap → [10, 14, 29, 13, 37]
+    Compare 29 and 13: 29 > 13 → SWAP → [10, 14, 13, 29, 37]
+    Swaps occurred → continue
+    Result: [10, 14, 13, 29, 37]
+    Unsorted: [10, 14, 13]  Sorted: [29, 37]
+
+Pass 3:
+    Compare 10 and 14: 10 < 14 → no swap → [10, 14, 13, 29, 37]
+    Compare 14 and 13: 14 > 13 → SWAP → [10, 13, 14, 29, 37]
+    Swaps occurred → continue
+    Result: [10, 13, 14, 29, 37]
+    Unsorted: [10, 13]  Sorted: [14, 29, 37]
+
+Pass 4:
+    Compare 10 and 13: 10 < 13 → no swap → [10, 13, 14, 29, 37]
+    No swaps occurred → EARLY TERMINATION ✓
+    Result: [10, 13, 14, 29, 37]
+    Unsorted: []  Sorted: [10, 13, 14, 29, 37]
+
+Final: [10, 13, 14, 29, 37] ✓
+
+================================================================================
+KEY POINTS FOR TEACHING
+================================================================================
+
+1. ADJACENT PAIR COMPARISON
+   - Always compare arr[i] with arr[i+1]
+   - Swap if left > right (out of order)
+   - Move left to right through unsorted region
+
+2. BUBBLING EFFECT
+   - Largest element "bubbles" to the end each pass
+   - Like bubbles rising in a liquid
+   - Sorted region grows from right to left
+
+3. EARLY TERMINATION OPTIMIZATION
+   - Boolean flag tracks if swaps occurred
+   - If pass completes with zero swaps → array is sorted
+   - Makes best case O(n) instead of O(n²)
+   - Critical optimization!
+
+4. STABLE ALGORITHM
+   - Equal elements maintain relative order
+   - Example: [3₁, 3₂, 1] → [1, 3₁, 3₂]
+   - Important property for some applications
+
+5. COMPARISON WITH SELECTION SORT
+   - Both O(n²) worst case
+   - Bubble Sort can be O(n) best case (early termination)
+   - But Bubble Sort typically does more swaps
+   - Selection Sort: at most n swaps
+   - Bubble Sort: potentially n² swaps
+
+================================================================================
+COMPLEXITY ANALYSIS
+================================================================================
+
+Time Complexity:
+    Worst case (reverse sorted):
+        Outer loop: (n-1) iterations
+        Inner loop: (n-1), (n-2), ..., 1 iterations
+        Total comparisons: n(n-1)/2 = O(n²)
+        Total swaps: n(n-1)/2 = O(n²)
+    
+    Best case (already sorted):
+        Outer loop: 1 iteration (early termination)
+        Inner loop: (n-1) comparisons
+        Total comparisons: (n-1) = O(n)
+        Total swaps: 0
+    
+    Average case (random data):
+        O(n²) comparisons and swaps
+
+Space Complexity:
+    O(1) - only uses variables: pass, i, swapped
+    Sorts "in-place" - no extra memory needed
+
+================================================================================
+WHEN TO USE
+================================================================================
+
+✓ Teaching/learning purposes (simple to understand)
+✓ Small datasets where O(n²) is acceptable
+✓ When stability is required (maintains relative order)
+✓ Demonstrating early termination concept
+✗ NOT recommended for large datasets
+✗ NOT recommended for production code
+
+================================================================================

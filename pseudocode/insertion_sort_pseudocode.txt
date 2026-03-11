@@ -1,0 +1,200 @@
+================================================================================
+INSERTION SORT - Pseudocode
+================================================================================
+Algorithm: Insertion Sort
+Strategy: Build sorted region left-to-right. Save element, shift sorted elements
+          right to make space, insert into correct position.
+Sorted Region: Grows from LEFT TO RIGHT
+Complexity: O(n²) worst case, O(n) best case (nearly sorted)
+Key: Uses SHIFTS, not swaps
+
+================================================================================
+BASIC ALGORITHM
+================================================================================
+
+INSERTION_SORT(array, n)
+    // Edge case: empty or single element is already sorted
+    IF n <= 1 THEN
+        RETURN
+    END IF
+    
+    // Outer loop: process each unsorted element
+    // Start at index 1 because index 0 is initial sorted region
+    FOR i = 1 TO n - 1 DO
+        
+        // Save the element we're going to insert
+        // This element is currently "out of place"
+        valueToInsert ← array[i]
+        
+        // Find correct position in sorted region (indices 0 to i-1)
+        // Start from rightmost element of sorted region
+        j ← i - 1
+        
+        // Shift elements RIGHT while they're greater than valueToInsert
+        // Continue until we find correct insertion point
+        WHILE j >= 0 AND array[j] > valueToInsert DO
+            // Shift element right to make space
+            array[j + 1] ← array[j]
+            j ← j - 1  // Move left to check next element
+        END WHILE
+        
+        // At this point, we've found correct insertion position
+        // j+1 is where we should insert valueToInsert
+        // (j might be -1 if we need to insert at beginning)
+        array[j + 1] ← valueToInsert
+        
+        // Sorted region has grown by one element (left to right)
+        // Elements from index 0 to i are now sorted
+    END FOR
+    
+    // Array is now completely sorted
+END INSERTION_SORT
+
+================================================================================
+STEP-BY-STEP EXAMPLE
+================================================================================
+
+Initial: [29, 10, 14, 37, 13]
+         Sorted: [29]  Unsorted: [10, 14, 37, 13]
+
+Insert 10 (index 1):
+    Save: valueToInsert = 10
+    Compare with 29: 10 < 29 → shift 29 right
+    Array: [_, 29, 14, 37, 13]
+    Compare with start (j = -1) → stop
+    Insert 10 at index 0
+    Result: [10, 29, 14, 37, 13]
+    Sorted: [10, 29]  Unsorted: [14, 37, 13]
+
+Insert 14 (index 2):
+    Save: valueToInsert = 14
+    Compare with 29: 14 < 29 → shift 29 right
+    Array: [10, _, 29, 37, 13]
+    Compare with 10: 14 > 10 → stop
+    Insert 14 at index 1
+    Result: [10, 14, 29, 37, 13]
+    Sorted: [10, 14, 29]  Unsorted: [37, 13]
+
+Insert 37 (index 3):
+    Save: valueToInsert = 37
+    Compare with 29: 37 > 29 → already in position
+    No shifts needed
+    Result: [10, 14, 29, 37, 13]
+    Sorted: [10, 14, 29, 37]  Unsorted: [13]
+
+Insert 13 (index 4):
+    Save: valueToInsert = 13
+    Compare with 37: 13 < 37 → shift 37 right
+    Array: [10, 14, 29, _, 37]
+    Compare with 29: 13 < 29 → shift 29 right
+    Array: [10, 14, _, 29, 37]
+    Compare with 14: 13 < 14 → shift 14 right
+    Array: [10, _, 14, 29, 37]
+    Compare with 10: 13 > 10 → stop
+    Insert 13 at index 1
+    Result: [10, 13, 14, 29, 37]
+    Sorted: [10, 13, 14, 29, 37]  Unsorted: []
+
+Final: [10, 13, 14, 29, 37] ✓
+
+================================================================================
+KEY POINTS FOR TEACHING
+================================================================================
+
+1. SHIFTS, NOT SWAPS
+   - We SHIFT elements right to make space
+   - More efficient than swapping pairs
+   - Each shift is O(1), but we may need many shifts
+   - Key difference from Selection/Bubble Sort
+
+2. SORTED REGION GROWS LEFT-TO-RIGHT
+   - Unlike Selection/Bubble Sort (right-to-left)
+   - After each iteration, leftmost i+1 elements are sorted
+   - Natural progression from start to end
+
+3. ANALOGY: SORTING PLAYING CARDS
+   - Like sorting a hand of cards
+   - Pick up one card at a time
+   - Insert it into correct position in sorted hand
+   - Shift other cards to make space
+
+4. EFFICIENT FOR NEARLY-SORTED DATA
+   - Best case O(n) when already sorted
+   - Only comparisons needed, no shifts
+   - Very efficient for "almost sorted" arrays
+   - Makes it useful in practice (hybrid algorithms)
+
+5. STABLE ALGORITHM
+   - Equal elements maintain relative order
+   - Example: [3₁, 3₂, 1] → [1, 3₁, 3₂]
+   - Important property for some applications
+
+6. COMPARISON WITH OTHER SORTS
+   - vs Selection Sort: Both O(n²), but Insertion Sort faster in practice
+     Better constants, O(n) best case
+   - vs Bubble Sort: Insertion Sort generally faster
+     Both stable, both O(n) best case, but Insertion has better average
+   - Often fastest for small datasets (n < 10-20)
+
+================================================================================
+COMPLEXITY ANALYSIS
+================================================================================
+
+Time Complexity:
+    Worst case (reverse sorted):
+        Each element needs to shift all previous elements
+        Shifts: 1 + 2 + 3 + ... + (n-1) = n(n-1)/2 = O(n²)
+        Comparisons: Same = O(n²)
+    
+    Best case (already sorted):
+        Only comparisons needed, no shifts
+        Comparisons: (n-1) = O(n)
+        Shifts: 0
+    
+    Average case (random data):
+        O(n²) comparisons and shifts
+    
+    Nearly sorted:
+        Very efficient! Close to O(n)
+
+Space Complexity:
+    O(1) - only uses variables: i, j, valueToInsert
+    Sorts "in-place" - no extra memory needed
+
+================================================================================
+WHEN TO USE
+================================================================================
+
+✓ Teaching/learning purposes (intuitive algorithm)
+✓ Small datasets (often fastest for n < 10-20)
+✓ Nearly-sorted data (excellent performance)
+✓ Online sorting (sorting data as it arrives)
+✓ Hybrid algorithms (used in Timsort, Introsort)
+✗ NOT recommended for large, random datasets
+
+================================================================================
+COMMON MISTAKES TO AVOID
+================================================================================
+
+1. Forgetting to save valueToInsert before shifting
+   - Loses the value we're trying to insert
+   - Must save BEFORE the while loop
+
+2. Incorrect loop bounds
+   - Should start at i = 1, not i = 0
+   - Index 0 is already our sorted region
+
+3. Wrong comparison direction
+   - Should be array[j] > valueToInsert
+   - Not array[j] < valueToInsert
+
+4. Not handling j = -1 case
+   - When inserting at beginning, j becomes -1
+   - Must use j+1 for insertion index
+
+5. Confusing shifts with swaps
+   - Shifts move elements right sequentially
+   - Swaps exchange two elements
+   - Different operations!
+
+================================================================================
