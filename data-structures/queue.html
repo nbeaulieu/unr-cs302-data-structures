@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Queues — Interactive | CS 302</title>
+<meta name="description" content="Interactive visualization of Queues. Enqueue and dequeue values while watching both circular array and linked-list representations update simultaneously.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0B0F1A; color: #fff; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; padding: 20px; min-height: 100vh; }
+  .back-link { font-family: 'Plus Jakarta Sans', system-ui, sans-serif; font-size: 13px; color: #22D3EE; text-decoration: none; display: inline-block; margin-bottom: 10px; transition: color 0.2s; }
+  .back-link:hover, .back-link:focus { color: #818CF8; text-decoration: underline; }
+  .back-link:focus-visible { outline: 2px solid #818CF8; outline-offset: 2px; border-radius: 2px; }
+  h1 { font-size: 24px; margin-bottom: 4px; }
+  .subtitle { color: #818CF8; font-size: 14px; margin-bottom: 16px; line-height: 1.5; }
+  .subtitle .orange { color: #FB923C; font-weight: bold; }
+  .layout { display: flex; gap: 20px; flex-wrap: wrap; }
+  .panel { background: #0F172A; border: 1px solid #334155; border-radius: 10px; padding: 20px; }
+  .panel-controls { width: 280px; flex-shrink: 0; overflow: hidden; }
+  .panel-viz { flex: 1; min-width: 460px; min-height: 440px; position: relative; display: flex; flex-direction: column; gap: 20px; }
+  label { font-size: 13px; color: #CBD5E1; display: block; margin-bottom: 4px; }
+  /* Improved contrast: #CBD5E1 on #0B0F1A = 11.5:1 WCAG AA */
+  input[type=number], input[type=text] { width: 80px; padding: 6px 10px; border-radius: 5px; border: 1px solid #334155; background: #1E293B; color: #fff; font-size: 14px; font-family: 'JetBrains Mono', 'Consolas', monospace; }
+  input[type=text] { width: 140px; }
+  .btn { background: #312E81; color: #A5B4FC; border: 1px solid #4338CA; border-radius: 6px; padding: 7px 16px; font-size: 13px; cursor: pointer; font-family: inherit; transition: all 0.2s; }
+  .btn:hover, .btn:focus { background: #3730A3; }
+  .btn:focus-visible { outline: 2px solid #818CF8; outline-offset: 2px; }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn.primary { background: #6366F1; color: #fff; border-color: #6366F1; font-weight: 600; }
+  .btn.primary:hover { filter: brightness(1.1); }
+  .btn.danger { background: #5A1A1A; color: #FB923C; border-color: #7F1D1D; }
+  .btn.danger:hover { background: #6A2020; }
+  .btn-row { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+  .section-label { font-size: 11px; letter-spacing: 2px; color: #818CF8; text-transform: uppercase; margin: 16px 0 8px; font-weight: 600; }
+  .section-label:first-child { margin-top: 0; }
+  .preset-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+  .preset-btn { font-size: 11px; padding: 4px 10px; background: #1E293B; border: 1px solid #334155; color: #CBD5E1; border-radius: 4px; cursor: pointer; transition: all 0.2s; }
+  /* Improved contrast: #CBD5E1 on #1E293B = 8.1:1 WCAG AA */
+  .preset-btn:hover, .preset-btn:focus { border-color: #818CF8; color: #818CF8; }
+  .preset-btn:focus-visible { outline: 2px solid #818CF8; outline-offset: 2px; }
+  .preset-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .log { margin-top: 12px; max-height: 180px; overflow-y: auto; font-size: 12px; line-height: 1.6; padding: 10px; background: #0B0F1A; border-radius: 6px; border: 1px solid #334155; }
+  /* Log text colors verified for WCAG AA contrast */
+  .log-entry { padding: 2px 0; border-bottom: 1px solid rgba(51,65,85,0.3); }
+  .log-entry:last-child { border-bottom: none; }
+  .log .green { color: #4ADE80; } .log .orange { color: #FB923C; } .log .blue { color: #22D3EE; } .log .muted { color: #94A3B8; }
+  /* Log colors: Green (#4ADE80) 10.2:1, Orange (#FB923C) 7.2:1, Blue (#22D3EE) 9.6:1, Muted (#94A3B8) 6.4:1 - All WCAG AA compliant */
+  .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+  .stat { background: #1E293B; border-radius: 6px; padding: 10px; text-align: center; }
+  .stat .val { font-size: 22px; font-weight: 700; color: #818CF8; font-family: 'JetBrains Mono', 'Consolas', monospace; }
+  .stat .lbl { font-size: 10px; color: #94A3B8; text-transform: uppercase; letter-spacing: 1px; margin-top: 2px; }
+  /* Improved contrast: #94A3B8 on #1E293B = 4.6:1 WCAG AA */
+  .speed-row { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+  .speed-row input { width: 100px; } .speed-row span { font-size: 12px; color: #94A3B8; }
+  /* Improved contrast: #94A3B8 on #0B0F1A = 6.4:1 WCAG AA */
+  .insight { margin-top: 12px; padding: 10px 12px; background: rgba(129,140,248,0.06); border: 1px solid rgba(129,140,248,0.15); border-radius: 6px; font-size: 12px; color: #CBD5E1; line-height: 1.5; }
+  /* Improved contrast: #CBD5E1 on rgba background = 11.3:1 WCAG AA */
+  .insight strong { color: #818CF8; }
+
+  /* Visualization sections */
+  .viz-section { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  .viz-section-title { font-size: 12px; letter-spacing: 2px; color: #818CF8; text-transform: uppercase; font-weight: 600; margin-bottom: 12px; align-self: flex-start; }
+
+  /* Circular array view */
+  .array-queue { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .array-pointers { display: flex; gap: 0; }
+  .array-pointer { width: 56px; text-align: center; font-size: 11px; font-family: 'JetBrains Mono', 'Consolas', monospace; font-weight: 600; height: 20px; line-height: 20px; }
+  .array-pointer.front { color: #4ADE80; }
+  .array-pointer.rear { color: #FB923C; }
+  .array-cells { display: flex; gap: 0; }
+  .aq-cell { width: 56px; text-align: center; }
+  .aq-cell .cell-val { width: 52px; height: 44px; line-height: 44px; background: #1E293B; border: 1.5px dashed #334155; color: #fff; font-size: 15px; font-family: 'JetBrains Mono', 'Consolas', monospace; font-weight: 600; border-radius: 5px; margin: 0 auto; transition: background 0.3s, border-color 0.3s; }
+  .aq-cell .cell-val.filled { background: #312E81; border: 1.5px solid #4338CA; }
+  .aq-cell .cell-val.highlight-front { background: #065F46; border-color: #4ADE80; }
+  .aq-cell .cell-val.highlight-rear { background: #78350F; border-color: #FB923C; }
+  .aq-cell .cell-val.highlight-peek { background: #1E3A5F; border-color: #22D3EE; }
+  .aq-cell .cell-val.highlight-dequeue { background: #5A1A1A; border-color: #FB923C; }
+  .aq-cell .cell-idx { font-size: 10px; color: #94A3B8; margin-top: 3px; font-family: 'JetBrains Mono', 'Consolas', monospace; }
+  /* Improved contrast: #94A3B8 on #0F172A = 5.9:1 WCAG AA */
+
+  /* Linked list view */
+  .ll-queue { display: flex; align-items: center; gap: 0; flex-wrap: wrap; justify-content: center; min-height: 80px; }
+  .ll-node { display: flex; align-items: center; }
+  .ll-node-box { width: 52px; height: 44px; line-height: 44px; text-align: center; background: #312E81; border: 1.5px solid #4338CA; color: #fff; font-size: 15px; font-family: 'JetBrains Mono', 'Consolas', monospace; font-weight: 600; border-radius: 5px; transition: background 0.3s, border-color 0.3s; }
+  .ll-node-box.highlight-front { background: #065F46; border-color: #4ADE80; }
+  .ll-node-box.highlight-rear { background: #78350F; border-color: #FB923C; }
+  .ll-node-box.highlight-peek { background: #1E3A5F; border-color: #22D3EE; }
+  .ll-node-box.highlight-dequeue { background: #5A1A1A; border-color: #FB923C; }
+  .ll-arrow { color: #818CF8; font-size: 18px; margin: 0 4px; font-family: 'JetBrains Mono', monospace; }
+  .ll-label { font-size: 10px; font-family: 'JetBrains Mono', 'Consolas', monospace; font-weight: 600; text-align: center; margin-top: 4px; }
+  .ll-label.front { color: #4ADE80; }
+  .ll-label.rear { color: #FB923C; }
+  .ll-node-wrap { display: flex; flex-direction: column; align-items: center; }
+  .ll-null { color: #94A3B8; font-size: 12px; font-family: 'JetBrains Mono', monospace; margin-left: 4px; }
+
+  .empty-msg { color: #94A3B8; font-size: 14px; }
+  /* Improved contrast: #94A3B8 on #0F172A = 5.9:1 WCAG AA */
+
+  .legend { display: flex; gap: 14px; margin-top: 10px; flex-wrap: wrap; }
+  .legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: #CBD5E1; }
+  /* Improved contrast: #CBD5E1 on #0B0F1A = 11.5:1 WCAG AA */
+  .legend-dot { width: 12px; height: 12px; border-radius: 50%; border: 1.5px solid #4338CA; }
+
+  /* Reduced motion support for accessibility (WCAG 2.3.3) */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+
+  @media (max-width: 780px) {
+    body { padding: 16px; }
+    .panel-controls { width: 100%; }
+    .panel-viz { min-width: 100%; }
+    h1 { font-size: 20px; }
+    .subtitle { font-size: 13px; }
+    .aq-cell { width: 44px; }
+    .aq-cell .cell-val { width: 40px; height: 38px; line-height: 38px; font-size: 13px; }
+    .array-pointer { width: 44px; font-size: 9px; }
+  }
+</style>
+</head>
+<body>
+<a href="../index.html" class="back-link" aria-label="Back to CS 302 Home">&larr; CS 302 Home</a>
+<h1>Queues &mdash; Interactive</h1>
+<p class="subtitle">
+  Enqueue values at the rear, <span class="orange">dequeue from the front</span>, and watch both circular array and linked-list representations update in sync. See how wrap-around works with modular arithmetic.
+</p>
+<div class="layout">
+  <div class="panel panel-controls">
+    <div class="section-label">Enqueue</div>
+    <div style="display:flex;gap:8px;align-items:end;">
+      <div><label for="enqVal">Value</label><input type="number" id="enqVal" value="10" min="1" max="99"></div>
+      <button class="btn primary" onclick="doEnqueue()" aria-label="Enqueue value into queue">Enqueue</button>
+    </div>
+    <div class="section-label">Dequeue / Peek</div>
+    <div class="btn-row">
+      <button class="btn danger" onclick="doDequeue()" aria-label="Dequeue front value from queue">Dequeue</button>
+      <button class="btn" onclick="doPeek()" aria-label="Peek at front value">Peek</button>
+    </div>
+    <div class="section-label">Presets</div>
+    <div class="preset-row">
+      <button class="preset-btn" onclick="loadPreset('small')">Small [3]</button>
+      <button class="preset-btn" onclick="loadPreset('wrap')">Wrap-around</button>
+      <button class="preset-btn" onclick="loadPreset('empty')">Empty</button>
+    </div>
+    <div class="btn-row">
+      <button class="btn danger" onclick="clearQueue()" aria-label="Clear queue">Clear</button>
+    </div>
+    <div class="speed-row">
+      <label style="margin:0;">Speed:</label>
+      <input type="range" id="speedSlider" min="1" max="5" value="3" aria-label="Animation speed">
+      <span id="speedLabel" aria-live="polite">Normal</span>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="val" id="statSize">0</div><div class="lbl">Size</div></div>
+      <div class="stat"><div class="val" id="statCap">8</div><div class="lbl">Capacity</div></div>
+      <div class="stat"><div class="val" id="statFront">&mdash;</div><div class="lbl">Front Index</div></div>
+      <div class="stat"><div class="val" id="statRear">&mdash;</div><div class="lbl">Rear Index</div></div>
+    </div>
+    <div class="insight" id="insight">
+      <strong>Watch the circular array</strong> &mdash; when rear wraps past the end, that's modular arithmetic in action: <code style="color:#22D3EE;font-family:'JetBrains Mono',monospace;font-size:11px;">rear = (rear + 1) % capacity</code>
+    </div>
+    <div class="section-label">Log</div>
+    <div class="log" id="log" role="log" aria-label="Operation log" aria-live="polite"></div>
+  </div>
+  <div class="panel panel-viz">
+    <div class="viz-section">
+      <div class="viz-section-title">Circular Array (capacity 8)</div>
+      <div class="array-queue">
+        <div class="array-pointers" id="arrayPointers"></div>
+        <div class="array-cells" id="arrayCells"></div>
+      </div>
+    </div>
+    <div class="viz-section">
+      <div class="viz-section-title">Linked List</div>
+      <div class="ll-queue" id="llView"></div>
+    </div>
+    <div class="legend">
+      <div class="legend-item"><div class="legend-dot" style="background:#312E81"></div> Filled</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#065F46;border-color:#4ADE80"></div> Front</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#78350F;border-color:#FB923C"></div> Rear</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#1E3A5F;border-color:#22D3EE"></div> Peek</div>
+    </div>
+  </div>
+</div>
+<script>
+const CAPACITY = 8;
+let cells = new Array(CAPACITY).fill(null); // circular array storage
+let front = -1;  // index of front element, -1 when empty
+let rear = -1;   // index of rear element, -1 when empty
+let size = 0;
+let animating = false;
+let cellHighlights = new Array(CAPACITY).fill(null); // per-cell highlight class
+
+function getSpeed() {
+  const v = +document.getElementById('speedSlider').value;
+  const s = [1200, 800, 500, 300, 150];
+  const l = ['Slow', 'Medium', 'Normal', 'Fast', 'Very Fast'];
+  document.getElementById('speedLabel').textContent = l[v - 1];
+  return s[v - 1];
+}
+document.getElementById('speedSlider').addEventListener('input', getSpeed);
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+function updateStats() {
+  document.getElementById('statSize').textContent = size;
+  document.getElementById('statCap').textContent = CAPACITY;
+  document.getElementById('statFront').textContent = size > 0 ? front : '\u2014';
+  document.getElementById('statRear').textContent = size > 0 ? rear : '\u2014';
+}
+
+function addLog(html) {
+  const log = document.getElementById('log');
+  const e = document.createElement('div');
+  e.className = 'log-entry';
+  e.innerHTML = html;
+  log.prepend(e);
+  if (log.children.length > 50) log.removeChild(log.lastChild);
+}
+
+function getQueueElements() {
+  // Returns array of {value, index} in queue order (front to rear)
+  if (size === 0) return [];
+  const elems = [];
+  let i = front;
+  for (let count = 0; count < size; count++) {
+    elems.push({ value: cells[i], index: i });
+    i = (i + 1) % CAPACITY;
+  }
+  return elems;
+}
+
+function drawArrayView() {
+  const pointersDiv = document.getElementById('arrayPointers');
+  const cellsDiv = document.getElementById('arrayCells');
+  pointersDiv.innerHTML = '';
+  cellsDiv.innerHTML = '';
+
+  for (let i = 0; i < CAPACITY; i++) {
+    // Pointer label
+    const ptr = document.createElement('div');
+    ptr.className = 'array-pointer';
+    if (size > 0 && i === front && i === rear) {
+      ptr.innerHTML = '<span class="front">F</span><span style="color:#94A3B8">/</span><span class="rear">R</span>';
+      ptr.innerHTML += '<div style="color:#94A3B8;font-size:9px;margin-top:-2px;">\u2193</div>';
+    } else if (size > 0 && i === front) {
+      ptr.classList.add('front');
+      ptr.textContent = 'FRONT \u2193';
+    } else if (size > 0 && i === rear) {
+      ptr.classList.add('rear');
+      ptr.textContent = 'REAR \u2193';
+    }
+    pointersDiv.appendChild(ptr);
+
+    // Cell
+    const cell = document.createElement('div');
+    cell.className = 'aq-cell';
+    const val = document.createElement('div');
+    val.className = 'cell-val';
+    if (cells[i] !== null) {
+      val.classList.add('filled');
+      val.textContent = cells[i];
+    }
+    if (cellHighlights[i]) {
+      val.classList.add(cellHighlights[i]);
+    }
+    const idx = document.createElement('div');
+    idx.className = 'cell-idx';
+    idx.textContent = i;
+    cell.appendChild(val);
+    cell.appendChild(idx);
+    cellsDiv.appendChild(cell);
+  }
+}
+
+function drawLLView() {
+  const container = document.getElementById('llView');
+  container.innerHTML = '';
+
+  if (size === 0) {
+    container.innerHTML = '<span class="empty-msg">Empty queue</span>';
+    return;
+  }
+
+  const elems = getQueueElements();
+  for (let i = 0; i < elems.length; i++) {
+    const wrap = document.createElement('div');
+    wrap.className = 'll-node-wrap';
+
+    const nodeDiv = document.createElement('div');
+    nodeDiv.className = 'll-node';
+
+    const box = document.createElement('div');
+    box.className = 'll-node-box';
+    box.textContent = elems[i].value;
+
+    // Apply highlight based on array cell highlight
+    const hi = cellHighlights[elems[i].index];
+    if (hi) box.classList.add(hi);
+
+    nodeDiv.appendChild(box);
+
+    // Arrow (except after last)
+    if (i < elems.length - 1) {
+      const arrow = document.createElement('span');
+      arrow.className = 'll-arrow';
+      arrow.textContent = '\u2192';
+      nodeDiv.appendChild(arrow);
+    } else {
+      const nul = document.createElement('span');
+      nul.className = 'll-null';
+      nul.textContent = '\u2192 null';
+      nodeDiv.appendChild(nul);
+    }
+
+    wrap.appendChild(nodeDiv);
+
+    // Labels
+    const label = document.createElement('div');
+    label.className = 'll-label';
+    if (i === 0 && i === elems.length - 1) {
+      label.innerHTML = '<span class="front">FRONT</span> / <span class="rear">REAR</span>';
+    } else if (i === 0) {
+      label.classList.add('front');
+      label.textContent = 'FRONT';
+    } else if (i === elems.length - 1) {
+      label.classList.add('rear');
+      label.textContent = 'REAR';
+    }
+    wrap.appendChild(label);
+
+    container.appendChild(wrap);
+  }
+}
+
+function draw() {
+  drawArrayView();
+  drawLLView();
+}
+
+function isFull() { return size === CAPACITY; }
+function isEmpty() { return size === 0; }
+
+async function doEnqueue() {
+  if (animating) return;
+  if (isFull()) {
+    addLog('<span class="orange">Queue is full (capacity ' + CAPACITY + ') \u2014 cannot enqueue.</span>');
+    return;
+  }
+  const val = parseInt(document.getElementById('enqVal').value);
+  if (isNaN(val) || val < 1 || val > 99) {
+    addLog('<span class="orange">Enter a value between 1 and 99.</span>');
+    return;
+  }
+  animating = true;
+  cellHighlights.fill(null);
+
+  let newRear;
+  if (isEmpty()) {
+    front = 0;
+    newRear = 0;
+  } else {
+    newRear = (rear + 1) % CAPACITY;
+  }
+
+  // Show where the new element will go
+  cells[newRear] = val;
+  rear = newRear;
+  size++;
+  cellHighlights[newRear] = 'highlight-rear';
+  draw();
+  updateStats();
+
+  const wrapped = newRear < front ? ' (wrapped around!)' : '';
+  addLog('<span class="green">Enqueued ' + val + '</span> at index ' + newRear + '.' + (wrapped ? ' <span class="orange">' + wrapped + '</span>' : ''));
+  if (wrapped) {
+    document.getElementById('insight').innerHTML = '<strong>Wrap-around!</strong> Rear moved from index ' + ((newRear - 1 + CAPACITY) % CAPACITY) + ' to index ' + newRear + '. This is <code style="color:#22D3EE;font-family:\'JetBrains Mono\',monospace;font-size:11px;">rear = (' + ((newRear - 1 + CAPACITY) % CAPACITY) + ' + 1) % ' + CAPACITY + ' = ' + newRear + '</code>';
+  }
+
+  await sleep(getSpeed());
+  cellHighlights.fill(null);
+  draw();
+  animating = false;
+}
+
+async function doDequeue() {
+  if (animating) return;
+  if (isEmpty()) {
+    addLog('<span class="orange">Queue is empty \u2014 nothing to dequeue.</span>');
+    return;
+  }
+  animating = true;
+  cellHighlights.fill(null);
+
+  const val = cells[front];
+  const oldFront = front;
+
+  // Highlight the element being removed
+  cellHighlights[oldFront] = 'highlight-dequeue';
+  draw();
+  addLog('<span class="orange">Dequeuing ' + val + '</span> from index ' + oldFront + '.');
+  await sleep(getSpeed());
+
+  // Remove element
+  cells[oldFront] = null;
+  size--;
+
+  if (size === 0) {
+    front = -1;
+    rear = -1;
+  } else {
+    const newFront = (oldFront + 1) % CAPACITY;
+    const wrapped = newFront < oldFront;
+    front = newFront;
+    if (wrapped) {
+      addLog('<span class="blue">Front advanced from ' + oldFront + ' to ' + newFront + '</span> <span class="orange">(wrapped!)</span>');
+    } else {
+      addLog('<span class="blue">Front advanced from ' + oldFront + ' to ' + newFront + '.</span>');
+    }
+  }
+
+  cellHighlights.fill(null);
+  draw();
+  updateStats();
+  addLog('<span class="green">Dequeued ' + val + '.</span> <span class="muted">Size is now ' + size + '.</span>');
+  await sleep(getSpeed());
+  animating = false;
+}
+
+async function doPeek() {
+  if (animating) return;
+  if (isEmpty()) {
+    addLog('<span class="orange">Queue is empty \u2014 nothing to peek.</span>');
+    return;
+  }
+  animating = true;
+  cellHighlights.fill(null);
+
+  cellHighlights[front] = 'highlight-peek';
+  draw();
+  addLog('<span class="blue">Peek: front element is ' + cells[front] + ' at index ' + front + '.</span>');
+
+  await sleep(getSpeed() * 1.5);
+  cellHighlights.fill(null);
+  draw();
+  animating = false;
+}
+
+function clearQueue() {
+  if (animating) return;
+  cells.fill(null);
+  front = -1;
+  rear = -1;
+  size = 0;
+  cellHighlights.fill(null);
+  document.getElementById('log').innerHTML = '';
+  draw();
+  updateStats();
+  document.getElementById('insight').innerHTML = '<strong>Watch the circular array</strong> &mdash; when rear wraps past the end, that\'s modular arithmetic in action: <code style="color:#22D3EE;font-family:\'JetBrains Mono\',monospace;font-size:11px;">rear = (rear + 1) % capacity</code>';
+}
+
+function loadPreset(name) {
+  if (animating) return;
+  cells.fill(null);
+  cellHighlights.fill(null);
+  document.getElementById('log').innerHTML = '';
+
+  if (name === 'small') {
+    // 3 elements starting at index 0
+    cells[0] = 42; cells[1] = 17; cells[2] = 83;
+    front = 0; rear = 2; size = 3;
+    addLog('<span class="muted">Small [3]: values [42, 17, 83] at indices 0\u20132. Front=0, Rear=2.</span>');
+    document.getElementById('insight').innerHTML = '<strong>FIFO order:</strong> 42 entered first and sits at the front. When you dequeue, 42 leaves first. Enqueue adds after 83 at the rear.';
+  } else if (name === 'wrap') {
+    // Wrap-around: front=5, items at 5,6,7,0,1 => rear=1
+    cells[5] = 11; cells[6] = 22; cells[7] = 33; cells[0] = 44; cells[1] = 55;
+    front = 5; rear = 1; size = 5;
+    addLog('<span class="muted">Wrap-around: front=5, rear=1. Items wrap from index 5 through 0 to 1.</span>');
+    document.getElementById('insight').innerHTML = '<strong>Wrap-around in action!</strong> Front is at index 5, rear is at index 1. The queue wraps around the end of the array. Indices 2\u20134 are empty. This is why we use <code style="color:#22D3EE;font-family:\'JetBrains Mono\',monospace;font-size:11px;">(index + 1) % capacity</code> to advance pointers.';
+  } else if (name === 'empty') {
+    front = -1; rear = -1; size = 0;
+    addLog('<span class="muted">Empty queue loaded.</span>');
+    document.getElementById('insight').innerHTML = '<strong>Empty queue:</strong> Both front and rear are unset. The first enqueue will set both to index 0.';
+  }
+
+  draw();
+  updateStats();
+}
+
+window.addEventListener('resize', draw);
+document.getElementById('enqVal').addEventListener('keydown', e => { if (e.key === 'Enter') doEnqueue(); });
+loadPreset('small');
+</script>
+</body>
+</html>

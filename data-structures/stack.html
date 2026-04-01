@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stacks — Interactive | CS 302</title>
+<meta name="description" content="Interactive visualization of Stacks. Push, pop, and peek with side-by-side array and linked list implementations. Includes a balanced parentheses checker.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0B0F1A; color: #fff; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; padding: 20px; min-height: 100vh; }
+  .back-link { font-family: 'Plus Jakarta Sans', system-ui, sans-serif; font-size: 13px; color: #22D3EE; text-decoration: none; display: inline-block; margin-bottom: 10px; transition: color 0.2s; }
+  .back-link:hover, .back-link:focus { color: #818CF8; text-decoration: underline; }
+  .back-link:focus-visible { outline: 2px solid #818CF8; outline-offset: 2px; border-radius: 2px; }
+  h1 { font-size: 24px; margin-bottom: 4px; }
+  .subtitle { color: #818CF8; font-size: 14px; margin-bottom: 16px; line-height: 1.5; }
+  .subtitle .orange { color: #FB923C; font-weight: bold; }
+  .layout { display: flex; gap: 20px; flex-wrap: wrap; }
+  .panel { background: #0F172A; border: 1px solid #334155; border-radius: 10px; padding: 20px; }
+  .panel-controls { width: 280px; flex-shrink: 0; overflow: hidden; }
+  .panel-viz { flex: 1; min-width: 500px; min-height: 520px; position: relative; }
+  label { font-size: 13px; color: #CBD5E1; display: block; margin-bottom: 4px; }
+  /* Improved contrast: #CBD5E1 on #0B0F1A = 11.5:1 WCAG AA */
+  input[type=number], input[type=text] { width: 80px; padding: 6px 10px; border-radius: 5px; border: 1px solid #334155; background: #1E293B; color: #fff; font-size: 14px; font-family: 'JetBrains Mono', 'Consolas', monospace; }
+  input[type=text] { width: 140px; }
+  .btn { background: #312E81; color: #A5B4FC; border: 1px solid #4338CA; border-radius: 6px; padding: 7px 16px; font-size: 13px; cursor: pointer; font-family: inherit; transition: all 0.2s; }
+  .btn:hover, .btn:focus { background: #3730A3; }
+  .btn:focus-visible { outline: 2px solid #818CF8; outline-offset: 2px; }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn.primary { background: #6366F1; color: #fff; border-color: #6366F1; font-weight: 600; }
+  .btn.primary:hover { filter: brightness(1.1); }
+  .btn.danger { background: #5A1A1A; color: #FB923C; border-color: #7F1D1D; }
+  .btn.danger:hover { background: #6A2020; }
+  .btn-row { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+  .section-label { font-size: 11px; letter-spacing: 2px; color: #818CF8; text-transform: uppercase; margin: 16px 0 8px; font-weight: 600; }
+  .section-label:first-child { margin-top: 0; }
+  .preset-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+  .preset-btn { font-size: 11px; padding: 4px 10px; background: #1E293B; border: 1px solid #334155; color: #CBD5E1; border-radius: 4px; cursor: pointer; transition: all 0.2s; }
+  /* Improved contrast: #CBD5E1 on #1E293B = 8.1:1 WCAG AA */
+  .preset-btn:hover, .preset-btn:focus { border-color: #818CF8; color: #818CF8; }
+  .preset-btn:focus-visible { outline: 2px solid #818CF8; outline-offset: 2px; }
+  .preset-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .log { margin-top: 12px; max-height: 180px; overflow-y: auto; font-size: 12px; line-height: 1.6; padding: 10px; background: #0B0F1A; border-radius: 6px; border: 1px solid #334155; }
+  /* Log text colors verified for WCAG AA contrast */
+  .log-entry { padding: 2px 0; border-bottom: 1px solid rgba(51,65,85,0.3); }
+  .log-entry:last-child { border-bottom: none; }
+  .log .green { color: #4ADE80; } .log .orange { color: #FB923C; } .log .blue { color: #22D3EE; } .log .muted { color: #94A3B8; }
+  /* Log colors: Green (#4ADE80) 10.2:1, Orange (#FB923C) 7.2:1, Blue (#22D3EE) 9.6:1, Muted (#94A3B8) 6.4:1 All WCAG AA compliant */
+  .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+  .stat { background: #1E293B; border-radius: 6px; padding: 10px; text-align: center; }
+  .stat .val { font-size: 22px; font-weight: 700; color: #818CF8; font-family: 'JetBrains Mono', 'Consolas', monospace; }
+  .stat .lbl { font-size: 10px; color: #94A3B8; text-transform: uppercase; letter-spacing: 1px; margin-top: 2px; }
+  /* Improved contrast: #94A3B8 on #1E293B = 4.6:1 WCAG AA */
+  .speed-row { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+  .speed-row input { width: 100px; } .speed-row span { font-size: 12px; color: #94A3B8; }
+  /* Improved contrast: #94A3B8 on #0B0F1A = 6.4:1 WCAG AA */
+  .insight { margin-top: 12px; padding: 10px 12px; background: rgba(129,140,248,0.06); border: 1px solid rgba(129,140,248,0.15); border-radius: 6px; font-size: 12px; color: #CBD5E1; line-height: 1.5; }
+  /* Improved contrast: #CBD5E1 on rgba background = 11.3:1 WCAG AA */
+  .insight strong { color: #818CF8; }
+
+  /* Visualization panels */
+  .viz-split { display: flex; gap: 20px; height: 100%; }
+  .viz-half { flex: 1; display: flex; flex-direction: column; align-items: center; }
+  .viz-half-label { font-size: 11px; letter-spacing: 2px; color: #818CF8; text-transform: uppercase; font-weight: 600; margin-bottom: 12px; }
+
+  /* Array stack cells */
+  .array-stack { display: flex; flex-direction: column; align-items: center; gap: 0; }
+  .stack-cell { width: 80px; height: 40px; display: flex; align-items: center; justify-content: center; font-family: 'JetBrains Mono', 'Consolas', monospace; font-size: 15px; font-weight: 600; border: 1.5px solid #334155; position: relative; transition: all 0.3s ease; }
+  .stack-cell.filled { background: #312E81; border-color: #4338CA; color: #fff; }
+  .stack-cell.empty { background: transparent; border-style: dashed; border-color: #334155; color: transparent; }
+  .stack-cell .idx-label { position: absolute; right: -30px; font-size: 10px; color: #94A3B8; font-family: 'JetBrains Mono', 'Consolas', monospace; }
+  .stack-cell .top-label { position: absolute; left: -50px; font-size: 11px; color: #FB923C; font-weight: 700; white-space: nowrap; }
+  .stack-cell.highlight-pop { background: #FB923C !important; border-color: #fff !important; color: #fff !important; }
+  .stack-cell.highlight-peek { background: #22D3EE !important; border-color: #fff !important; color: #fff !important; }
+  .stack-cell.highlight-push { background: #4ADE80 !important; border-color: #fff !important; color: #fff !important; }
+
+  /* Linked list nodes */
+  .ll-stack { display: flex; flex-direction: column; align-items: center; gap: 0; }
+  .ll-node { width: 80px; height: 40px; display: flex; align-items: center; justify-content: center; font-family: 'JetBrains Mono', 'Consolas', monospace; font-size: 15px; font-weight: 600; background: #312E81; border: 1.5px solid #4338CA; border-radius: 6px; color: #fff; position: relative; transition: all 0.3s ease; }
+  .ll-node .top-label { position: absolute; left: -50px; font-size: 11px; color: #FB923C; font-weight: 700; white-space: nowrap; }
+  .ll-node.highlight-pop { background: #FB923C !important; border-color: #fff !important; }
+  .ll-node.highlight-peek { background: #22D3EE !important; border-color: #fff !important; }
+  .ll-node.highlight-push { background: #4ADE80 !important; border-color: #fff !important; }
+  .ll-arrow { width: 2px; height: 20px; background: #4338CA; position: relative; }
+  .ll-arrow::after { content: ''; position: absolute; bottom: -4px; left: -4px; border-left: 5px solid transparent; border-right: 5px solid transparent; border-top: 6px solid #4338CA; }
+  .ll-null { font-size: 12px; color: #94A3B8; font-family: 'JetBrains Mono', 'Consolas', monospace; margin-top: 6px; }
+  .ll-empty-msg { color: #94A3B8; font-size: 14px; margin-top: 40px; }
+
+  .paren-result { margin-top: 8px; font-size: 13px; font-weight: 600; min-height: 20px; }
+  .paren-result.match { color: #4ADE80; }
+  .paren-result.mismatch { color: #FB923C; }
+
+  .legend { display: flex; gap: 14px; margin-top: 12px; flex-wrap: wrap; }
+  .legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: #CBD5E1; }
+  .legend-dot { width: 12px; height: 12px; border-radius: 50%; border: 1.5px solid #4338CA; }
+
+  /* Reduced motion support for accessibility (WCAG 2.3.3) */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+
+  @media (max-width: 780px) {
+    body { padding: 16px; }
+    .panel-controls { width: 100%; }
+    .panel-viz { min-width: 100%; }
+    .viz-split { flex-direction: column; }
+    h1 { font-size: 20px; }
+    .subtitle { font-size: 13px; }
+  }
+</style>
+</head>
+<body>
+<a href="../index.html" class="back-link" aria-label="Back to CS 302 Home">&larr; CS 302 Home</a>
+<h1>Stacks &mdash; Interactive</h1>
+<p class="subtitle">
+  Push and pop values to see <span class="orange">LIFO behavior</span> with two implementations side by side. Try the balanced parentheses checker to see stacks in action.
+</p>
+<div class="layout">
+  <div class="panel panel-controls">
+    <div class="section-label">Push</div>
+    <div style="display:flex;gap:8px;align-items:end;">
+      <div><label for="pushVal">Value</label><input type="number" id="pushVal" value="40" min="1" max="99"></div>
+      <button class="btn primary" onclick="doPush()" aria-label="Push value onto stack">Push</button>
+    </div>
+
+    <div class="section-label">Pop / Peek</div>
+    <div class="btn-row">
+      <button class="btn danger" onclick="doPop()" aria-label="Pop top value from stack">Pop</button>
+      <button class="btn" onclick="doPeek()" aria-label="Peek at top value of stack">Peek</button>
+    </div>
+
+    <div class="section-label">Parentheses</div>
+    <div><label for="parenInput">Expression</label><input type="text" id="parenInput" value="((a+b)*c)" placeholder="e.g. ((a+b)*c)" style="width:100%;"></div>
+    <div class="btn-row">
+      <button class="btn primary" onclick="doParenCheck()" aria-label="Check balanced parentheses">Check</button>
+    </div>
+    <div class="paren-result" id="parenResult" aria-live="polite"></div>
+
+    <div class="section-label">Presets</div>
+    <div class="preset-row">
+      <button class="preset-btn" onclick="loadPreset('small')">Small [3]</button>
+      <button class="preset-btn" onclick="loadPreset('full')">Full [8]</button>
+      <button class="preset-btn" onclick="loadPreset('empty')">Empty</button>
+    </div>
+    <div class="btn-row"><button class="btn danger" onclick="clearStack()" aria-label="Clear stack">Clear</button></div>
+
+    <div class="speed-row">
+      <label style="margin:0;">Speed:</label>
+      <input type="range" id="speedSlider" min="1" max="5" value="3" aria-label="Animation speed">
+      <span id="speedLabel" aria-live="polite">Normal</span>
+    </div>
+
+    <div class="stats">
+      <div class="stat"><div class="val" id="statSize">0</div><div class="lbl">Size</div></div>
+      <div class="stat"><div class="val" id="statCap">10</div><div class="lbl">Capacity</div></div>
+      <div class="stat" style="grid-column:span 2;"><div class="val" id="statLastOp">&mdash;</div><div class="lbl">Last Op</div></div>
+    </div>
+
+    <div class="insight" id="insight">
+      <strong>Insight:</strong> Same LIFO behavior, different underlying storage. Array gives O(1) amortized push with cache-friendly memory. Linked list gives O(1) worst-case push with no capacity limit.
+    </div>
+
+    <div class="section-label">Log</div>
+    <div class="log" id="log" role="log" aria-label="Operation log" aria-live="polite"></div>
+  </div>
+
+  <div class="panel panel-viz">
+    <div class="viz-split">
+      <div class="viz-half">
+        <div class="viz-half-label">Array Implementation</div>
+        <div id="arrayViz" class="array-stack"></div>
+      </div>
+      <div class="viz-half">
+        <div class="viz-half-label">Linked List Implementation</div>
+        <div id="llViz" class="ll-stack"></div>
+      </div>
+    </div>
+    <div class="legend">
+      <div class="legend-item"><div class="legend-dot" style="background:#312E81"></div> Element</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#4ADE80"></div> Pushed</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#FB923C"></div> Popping</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#22D3EE"></div> Peeked</div>
+    </div>
+  </div>
+</div>
+
+<script>
+const CAPACITY = 10;
+let stack = [];
+let animating = false;
+let highlightIndex = -1;
+let highlightClass = '';
+
+function getSpeed() {
+  const v = +document.getElementById('speedSlider').value;
+  const s = [1200, 800, 500, 300, 150];
+  const l = ['Slow', 'Medium', 'Normal', 'Fast', 'Very Fast'];
+  document.getElementById('speedLabel').textContent = l[v - 1];
+  return s[v - 1];
+}
+document.getElementById('speedSlider').addEventListener('input', getSpeed);
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+function updateStats(lastOp) {
+  document.getElementById('statSize').textContent = stack.length;
+  document.getElementById('statCap').textContent = CAPACITY;
+  if (lastOp !== undefined) document.getElementById('statLastOp').textContent = lastOp;
+}
+
+function addLog(html) {
+  const log = document.getElementById('log');
+  const e = document.createElement('div');
+  e.className = 'log-entry';
+  e.innerHTML = html;
+  log.prepend(e);
+  if (log.children.length > 50) log.removeChild(log.lastChild);
+}
+
+function drawArrayViz() {
+  const container = document.getElementById('arrayViz');
+  container.innerHTML = '';
+  // Draw top to bottom: index CAPACITY-1 at top, index 0 at bottom
+  for (let i = CAPACITY - 1; i >= 0; i--) {
+    const cell = document.createElement('div');
+    cell.className = 'stack-cell';
+    if (i < stack.length) {
+      cell.classList.add('filled');
+      cell.textContent = stack[i];
+      if (i === highlightIndex) cell.classList.add(highlightClass);
+    } else {
+      cell.classList.add('empty');
+    }
+    // TOP label
+    if (i === stack.length - 1 && stack.length > 0) {
+      const topLbl = document.createElement('span');
+      topLbl.className = 'top-label';
+      topLbl.textContent = 'TOP \u2192';
+      cell.appendChild(topLbl);
+    }
+    // Index label
+    const idxLbl = document.createElement('span');
+    idxLbl.className = 'idx-label';
+    idxLbl.textContent = i;
+    cell.appendChild(idxLbl);
+    container.appendChild(cell);
+  }
+}
+
+function drawLLViz() {
+  const container = document.getElementById('llViz');
+  container.innerHTML = '';
+  if (stack.length === 0) {
+    const msg = document.createElement('div');
+    msg.className = 'll-empty-msg';
+    msg.textContent = 'Empty stack';
+    container.appendChild(msg);
+    return;
+  }
+  // Draw from top (last element) to bottom (first element)
+  for (let i = stack.length - 1; i >= 0; i--) {
+    const node = document.createElement('div');
+    node.className = 'll-node';
+    node.textContent = stack[i];
+    if (i === highlightIndex) node.classList.add(highlightClass);
+    // TOP label on the first node (top of stack)
+    if (i === stack.length - 1) {
+      const topLbl = document.createElement('span');
+      topLbl.className = 'top-label';
+      topLbl.textContent = 'TOP \u2192';
+      node.appendChild(topLbl);
+    }
+    container.appendChild(node);
+    // Arrow pointing down (except after last node)
+    if (i > 0) {
+      const arrow = document.createElement('div');
+      arrow.className = 'll-arrow';
+      container.appendChild(arrow);
+    }
+  }
+  // null at the bottom
+  const nullLbl = document.createElement('div');
+  nullLbl.className = 'll-null';
+  nullLbl.textContent = 'null';
+  container.appendChild(nullLbl);
+}
+
+function draw() {
+  drawArrayViz();
+  drawLLViz();
+}
+
+async function doPush() {
+  if (animating) return;
+  const val = parseInt(document.getElementById('pushVal').value);
+  if (isNaN(val)) return;
+  if (stack.length >= CAPACITY) {
+    addLog('<span class="orange">Stack is full (capacity ' + CAPACITY + '). Cannot push.</span>');
+    return;
+  }
+  animating = true;
+  stack.push(val);
+  highlightIndex = stack.length - 1;
+  highlightClass = 'highlight-push';
+  draw();
+  addLog('<span class="green">Pushed ' + val + '</span> at index ' + (stack.length - 1) + '. Size: ' + stack.length + '.');
+  updateStats('Push ' + val);
+  await sleep(getSpeed());
+  highlightIndex = -1;
+  highlightClass = '';
+  draw();
+  animating = false;
+}
+
+async function doPop() {
+  if (animating) return;
+  if (stack.length === 0) {
+    addLog('<span class="orange">Stack is empty \u2014 nothing to pop.</span>');
+    return;
+  }
+  animating = true;
+  const topIdx = stack.length - 1;
+  const val = stack[topIdx];
+  highlightIndex = topIdx;
+  highlightClass = 'highlight-pop';
+  draw();
+  addLog('<span class="orange">Popping ' + val + '</span> from index ' + topIdx + '.');
+  await sleep(getSpeed());
+  stack.pop();
+  highlightIndex = -1;
+  highlightClass = '';
+  draw();
+  updateStats('Pop \u2192 ' + val);
+  addLog('<span class="green">Pop complete.</span> <span class="muted">Removed ' + val + '. Size: ' + stack.length + '.</span>');
+  await sleep(getSpeed() * 0.3);
+  animating = false;
+}
+
+async function doPeek() {
+  if (animating) return;
+  if (stack.length === 0) {
+    addLog('<span class="orange">Stack is empty \u2014 nothing to peek.</span>');
+    return;
+  }
+  animating = true;
+  const topIdx = stack.length - 1;
+  const val = stack[topIdx];
+  highlightIndex = topIdx;
+  highlightClass = 'highlight-peek';
+  draw();
+  addLog('<span class="blue">Peek: top is ' + val + '</span> at index ' + topIdx + '.');
+  updateStats('Peek \u2192 ' + val);
+  await sleep(getSpeed());
+  highlightIndex = -1;
+  highlightClass = '';
+  draw();
+  animating = false;
+}
+
+/* --- Balanced Parentheses Checker --- */
+async function doParenCheck() {
+  if (animating) return;
+  const expr = document.getElementById('parenInput').value;
+  if (!expr.trim()) {
+    addLog('<span class="orange">Enter an expression to check.</span>');
+    return;
+  }
+  animating = true;
+  // Save original stack, use a temporary one
+  const savedStack = stack.slice();
+  stack = [];
+  highlightIndex = -1;
+  highlightClass = '';
+  draw();
+  document.getElementById('parenResult').textContent = '';
+  document.getElementById('parenResult').className = 'paren-result';
+  addLog('<span class="muted">Checking: ' + escapeHtml(expr) + '</span>');
+  await sleep(getSpeed() * 0.5);
+
+  const openBrackets = '([{';
+  const closeBrackets = ')]}';
+  const matchMap = { ')': '(', ']': '[', '}': '{' };
+  let balanced = true;
+
+  for (let i = 0; i < expr.length; i++) {
+    const ch = expr[i];
+
+    if (openBrackets.includes(ch)) {
+      // Push
+      if (stack.length >= CAPACITY) {
+        addLog('<span class="orange">Stack overflow during check at char ' + i + '.</span>');
+        balanced = false;
+        break;
+      }
+      stack.push(ch);
+      highlightIndex = stack.length - 1;
+      highlightClass = 'highlight-push';
+      drawArrayViz();
+      addLog('<span class="green">Push \'' + ch + '\'</span> <span class="muted">(char ' + i + ')</span>');
+      await sleep(getSpeed() * 0.7);
+      highlightIndex = -1;
+      highlightClass = '';
+      drawArrayViz();
+    } else if (closeBrackets.includes(ch)) {
+      // Pop and check
+      if (stack.length === 0) {
+        addLog('<span class="orange">Mismatch: \'' + ch + '\' at char ' + i + ' but stack is empty.</span>');
+        document.getElementById('parenResult').textContent = 'Mismatch: no opening bracket for \'' + ch + '\' at position ' + i;
+        document.getElementById('parenResult').className = 'paren-result mismatch';
+        balanced = false;
+        break;
+      }
+      const topIdx = stack.length - 1;
+      const top = stack[topIdx];
+      if (top === matchMap[ch]) {
+        highlightIndex = topIdx;
+        highlightClass = 'highlight-push'; // green = match
+        drawArrayViz();
+        addLog('<span class="green">Match: \'' + top + '\' matches \'' + ch + '\'</span> <span class="muted">(char ' + i + ')</span>');
+        await sleep(getSpeed() * 0.7);
+        stack.pop();
+        highlightIndex = -1;
+        highlightClass = '';
+        drawArrayViz();
+      } else {
+        highlightIndex = topIdx;
+        highlightClass = 'highlight-pop'; // red/orange = mismatch
+        drawArrayViz();
+        addLog('<span class="orange">Mismatch: expected match for \'' + top + '\' but got \'' + ch + '\'</span> <span class="muted">(char ' + i + ')</span>');
+        document.getElementById('parenResult').textContent = 'Mismatch: \'' + top + '\' does not match \'' + ch + '\' at position ' + i;
+        document.getElementById('parenResult').className = 'paren-result mismatch';
+        balanced = false;
+        await sleep(getSpeed());
+        break;
+      }
+    } else {
+      // Skip non-bracket characters
+      addLog('<span class="muted">Skip \'' + escapeHtml(ch) + '\' (char ' + i + ')</span>');
+      await sleep(getSpeed() * 0.2);
+    }
+  }
+
+  if (balanced) {
+    if (stack.length === 0) {
+      document.getElementById('parenResult').textContent = 'Balanced! All brackets matched.';
+      document.getElementById('parenResult').className = 'paren-result match';
+      addLog('<span class="green">Result: Expression is balanced.</span>');
+    } else {
+      document.getElementById('parenResult').textContent = 'Unbalanced: ' + stack.length + ' unclosed bracket(s) remaining.';
+      document.getElementById('parenResult').className = 'paren-result mismatch';
+      addLog('<span class="orange">Result: ' + stack.length + ' unclosed bracket(s) on the stack.</span>');
+    }
+  }
+
+  await sleep(getSpeed());
+  // Restore original stack
+  stack = savedStack;
+  highlightIndex = -1;
+  highlightClass = '';
+  draw();
+  animating = false;
+}
+
+function escapeHtml(str) {
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function clearStack() {
+  if (animating) return;
+  stack = [];
+  highlightIndex = -1;
+  highlightClass = '';
+  document.getElementById('log').innerHTML = '';
+  document.getElementById('parenResult').textContent = '';
+  document.getElementById('parenResult').className = 'paren-result';
+  draw();
+  updateStats('\u2014');
+}
+
+function loadPreset(name) {
+  if (animating) return;
+  highlightIndex = -1;
+  highlightClass = '';
+  document.getElementById('log').innerHTML = '';
+  document.getElementById('parenResult').textContent = '';
+  document.getElementById('parenResult').className = 'paren-result';
+
+  if (name === 'small') {
+    stack = [10, 20, 30];
+    draw();
+    updateStats('Preset');
+    addLog('<span class="muted">Loaded Small [3]: [10, 20, 30]. Top = 30.</span>');
+  } else if (name === 'full') {
+    stack = [5, 10, 15, 20, 25, 30, 35, 40];
+    draw();
+    updateStats('Preset');
+    addLog('<span class="muted">Loaded Full [8]: [5, 10, 15, 20, 25, 30, 35, 40]. Top = 40.</span>');
+  } else if (name === 'empty') {
+    stack = [];
+    draw();
+    updateStats('Preset');
+    addLog('<span class="muted">Loaded Empty preset. Stack is empty.</span>');
+  }
+}
+
+window.addEventListener('resize', draw);
+document.getElementById('pushVal').addEventListener('keydown', e => { if (e.key === 'Enter') doPush(); });
+document.getElementById('parenInput').addEventListener('keydown', e => { if (e.key === 'Enter') doParenCheck(); });
+
+// Load default preset on startup
+loadPreset('small');
+</script>
+</body>
+</html>

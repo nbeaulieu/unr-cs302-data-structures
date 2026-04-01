@@ -10,6 +10,21 @@ This directory contains pseudocode implementations of algorithms used in CS 302.
 - **`bubble_sort_pseudocode.txt`** - Bubble Sort with Early Termination
 - **`insertion_sort_pseudocode.txt`** - Insertion Sort (Shifts, not swaps)
 
+### Foundational Data Structures
+
+- **`array_pseudocode.txt`** - Arrays (Access, Insert, Delete, Search)
+- **`linked_list_pseudocode.txt`** - Linked Lists (Singly and Doubly, Insert, Delete, Search, Reverse)
+- **`stack_pseudocode.txt`** - Stacks (Array-backed and Linked-list-backed, Balanced Parentheses)
+- **`queue_pseudocode.txt`** - Queues (Circular Array and Linked List)
+
+### Recursion
+
+- **`recursion_pseudocode.txt`** - Recursion (Factorial, Fibonacci, Binary Search, Memoization)
+
+### Trees & Heaps
+
+- **`heap_pseudocode.txt`** - Max-Heap (Insert, Extract Max, Build Heap)
+
 ## Format
 
 Each pseudocode file includes:

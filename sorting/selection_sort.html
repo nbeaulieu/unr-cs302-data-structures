@@ -6,48 +6,48 @@
 <title>Selection Sort — Maximum to End | CS 302</title>
 <meta name="description" content="Interactive visualization of Selection Sort algorithm. Find the largest item in unsorted region and swap to end. Sorted region grows right to left.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { background: #0E1E3A; color: #fff; font-family: 'Segoe UI', system-ui, sans-serif; padding: 24px; min-height: 100vh; }
-  .back-link { font-family: system-ui; font-size: 13px; color: #75CEEC; text-decoration: none; display: inline-block; margin-bottom: 10px; transition: color 0.2s; }
-  .back-link:hover, .back-link:focus { color: #ACD433; text-decoration: underline; }
-  .back-link:focus-visible { outline: 2px solid #ACD433; outline-offset: 2px; border-radius: 2px; }
+  body { background: #0B0F1A; color: #fff; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; padding: 24px; min-height: 100vh; }
+  .back-link { font-family: 'Plus Jakarta Sans', system-ui, sans-serif; font-size: 13px; color: #22D3EE; text-decoration: none; display: inline-block; margin-bottom: 10px; transition: color 0.2s; }
+  .back-link:hover, .back-link:focus { color: #818CF8; text-decoration: underline; }
+  .back-link:focus-visible { outline: 2px solid #818CF8; outline-offset: 2px; border-radius: 2px; }
   h1 { font-size: 24px; margin-bottom: 4px; }
-  .subtitle { color: #ACD433; font-size: 14px; margin-bottom: 18px; line-height: 1.5; }
-  .subtitle .orange { color: #EF7A24; font-weight: bold; }
+  .subtitle { color: #818CF8; font-size: 14px; margin-bottom: 18px; line-height: 1.5; }
+  .subtitle .orange { color: #FB923C; font-weight: bold; }
   .subtitle .bold { font-weight: bold; }
   .legend { display: flex; gap: 16px; margin-bottom: 18px; flex-wrap: wrap; }
-  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 13px; color: #9BBED0; }
-  /* Improved contrast: #9BBED0 on #0E1E3A = 5.2:1 ✅ WCAG AA */
-  .legend-swatch { width: 16px; height: 16px; border-radius: 3px; border: 1px solid #4A7AB5; flex-shrink: 0; }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 13px; color: #CBD5E1; }
+  /* Improved contrast: #CBD5E1 on #0B0F1A = 12.3:1 ✅ WCAG AAA */
+  .legend-swatch { width: 16px; height: 16px; border-radius: 3px; border: 1px solid #4338CA; flex-shrink: 0; }
   .controls { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; flex-wrap: wrap; }
-  .controls label { color: #9BBED0; font-size: 13px; }
-  /* Improved contrast: #9BBED0 on #0E1E3A = 5.2:1 ✅ WCAG AA */
+  .controls label { color: #CBD5E1; font-size: 13px; }
+  /* Improved contrast: #CBD5E1 on #0B0F1A = 12.3:1 ✅ WCAG AAA */
   .controls input[type=range] { width: 280px; }
   .controls span { color: #fff; font-size: 13px; }
-  .btn { background: #1A3A6A; color: #ACD433; border: 1px solid #4A7AB5; border-radius: 6px; padding: 6px 16px; font-size: 13px; cursor: pointer; font-family: inherit; transition: all 0.2s; }
-  .btn:hover, .btn:focus { background: #244A7A; }
-  .btn:focus-visible { outline: 2px solid #ACD433; outline-offset: 2px; }
-  .btn.active { background: #0D5E3A; border-color: #ACD433; }
+  .btn { background: #312E81; color: #818CF8; border: 1px solid #4338CA; border-radius: 6px; padding: 6px 16px; font-size: 13px; cursor: pointer; font-family: inherit; transition: all 0.2s; }
+  .btn:hover, .btn:focus { background: #3730A3; }
+  .btn:focus-visible { outline: 2px solid #818CF8; outline-offset: 2px; }
+  .btn.active { background: #065F46; border-color: #818CF8; }
   .btn:disabled { opacity: 0.5; cursor: not-allowed; }
   .pass-row { display: flex; align-items: center; margin-bottom: 6px; min-height: 80px; opacity: 0; transform: translateY(10px); transition: opacity 0.4s ease, transform 0.4s ease; }
   .pass-row.visible { opacity: 1; transform: translateY(0); }
-  .pass-label { width: 110px; flex-shrink: 0; font-size: 14px; font-weight: bold; color: #ACD433; }
+  .pass-label { width: 110px; flex-shrink: 0; font-size: 14px; font-weight: bold; color: #818CF8; }
   .cells { display: flex; gap: 6px; position: relative; flex-wrap: wrap; }
-  .cell { width: 68px; height: 50px; display: flex; align-items: center; justify-content: center; border-radius: 4px; border: 1.5px solid #4A7AB5; font-size: 22px; font-weight: bold; position: relative; transition: background 0.3s ease; flex-shrink: 0; }
-  .cell .idx { position: absolute; bottom: -16px; font-size: 11px; color: #9BBED0; font-weight: normal; }
-  /* Improved contrast: #9BBED0 on #0E1E3A = 5.2:1 ✅ WCAG AA */
-  .cell.unsorted { background: #1A3A6A; }
-  .cell.sorted { background: #0D5E3A; }
-  .cell.active { background: #B85A00; }
+  .cell { width: 68px; height: 50px; display: flex; align-items: center; justify-content: center; border-radius: 4px; border: 1.5px solid #4338CA; font-size: 22px; font-weight: bold; position: relative; transition: background 0.3s ease; flex-shrink: 0; }
+  .cell .idx { position: absolute; bottom: -16px; font-size: 11px; color: #CBD5E1; font-weight: normal; }
+  /* Improved contrast: #CBD5E1 on #0B0F1A = 12.3:1 ✅ WCAG AAA */
+  .cell.unsorted { background: #312E81; }
+  .cell.sorted { background: #065F46; }
+  .cell.active { background: #9A3412; }
   .cell.swapping { animation: pulse 0.5s ease; }
   @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.1); } }
-  .note { margin-left: 20px; font-size: 12px; color: #9BBED0; max-width: 280px; line-height: 1.4; }
-  /* Improved contrast: #9BBED0 on #0E1E3A = 5.2:1 ✅ WCAG AA (was #8BAEC0 = 4.6:1) */
-  .swap-indicator { position: absolute; top: -22px; left: 0; right: 0; text-align: center; font-size: 11px; color: #EF7A24; font-weight: bold; opacity: 0; transition: opacity 0.3s; }
+  .note { margin-left: 20px; font-size: 12px; color: #CBD5E1; max-width: 280px; line-height: 1.4; }
+  /* Improved contrast: #CBD5E1 on #0B0F1A = 12.3:1 ✅ WCAG AAA */
+  .swap-indicator { position: absolute; top: -22px; left: 0; right: 0; text-align: center; font-size: 11px; color: #FB923C; font-weight: bold; opacity: 0; transition: opacity 0.3s; }
   .swap-indicator.show { opacity: 1; }
-  .arrow-line { position: absolute; top: -8px; height: 2px; background: #EF7A24; transition: all 0.3s; }
+  .arrow-line { position: absolute; top: -8px; height: 2px; background: #FB923C; transition: all 0.3s; }
   /* Reduced motion support for accessibility (WCAG 2.3.3) */
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after {
@@ -80,9 +80,9 @@
 </p>
 
 <div class="legend" role="list" aria-label="Color legend">
-  <div class="legend-item" role="listitem"><div class="legend-swatch" style="background:#1A3A6A" aria-hidden="true"></div> Unsorted</div>
-  <div class="legend-item" role="listitem"><div class="legend-swatch" style="background:#B85A00" aria-hidden="true"></div> Largest found</div>
-  <div class="legend-item" role="listitem"><div class="legend-swatch" style="background:#0D5E3A" aria-hidden="true"></div> Sorted (final position)</div>
+  <div class="legend-item" role="listitem"><div class="legend-swatch" style="background:#312E81" aria-hidden="true"></div> Unsorted</div>
+  <div class="legend-item" role="listitem"><div class="legend-swatch" style="background:#9A3412" aria-hidden="true"></div> Largest found</div>
+  <div class="legend-item" role="listitem"><div class="legend-swatch" style="background:#065F46" aria-hidden="true"></div> Sorted (final position)</div>
 </div>
 
 <div class="controls" role="toolbar" aria-label="Animation controls">

@@ -1,0 +1,345 @@
+================================================================================
+MAX-HEAP - Pseudocode
+================================================================================
+Algorithm: Max-Heap (Binary Heap)
+Strategy: Complete binary tree stored in array. Parent >= both children.
+          Insert: add to end, sift up. Extract max: remove root, sift down.
+Array Representation: Parent at i, left child at 2i+1, right child at 2i+2
+Complexity: Insert O(log n), Extract Max O(log n), Build Heap O(n)
+Key: Array-based tree — no pointers needed
+
+================================================================================
+HEAP PROPERTY
+================================================================================
+
+A max-heap is a COMPLETE BINARY TREE where every parent is >= both children.
+
+    Stored as an array — no pointers needed!
+    The tree structure is implicit from the indices:
+
+    For a node at index i (0-based):
+        Parent:      (i - 1) / 2    (integer division)
+        Left child:  2 * i + 1
+        Right child: 2 * i + 2
+
+    Example heap as array and tree:
+
+    Array: [50, 40, 30, 20, 10]
+
+    Tree:        (50)
+                /    \
+             (40)    (30)
+            /    \
+          (20)  (10)
+
+    50 >= 40, 50 >= 30    ✓ (root)
+    40 >= 20, 40 >= 10    ✓
+    30 has no children     ✓
+
+================================================================================
+SIFT UP
+================================================================================
+
+SIFT_UP(heap, index)
+    // Move element up until heap property restored
+    WHILE index > 0 DO
+        parent ← (index - 1) / 2    // integer division
+        IF heap[index] > heap[parent] THEN
+            SWAP(heap[index], heap[parent])
+            index ← parent
+        ELSE
+            RETURN    // heap property satisfied
+        END IF
+    END WHILE
+END SIFT_UP
+
+================================================================================
+SIFT DOWN
+================================================================================
+
+SIFT_DOWN(heap, n, index)
+    // n is the heap size (not array size)
+    // Move element down until heap property restored
+    WHILE 2 * index + 1 < n DO    // while has at least one child
+        leftChild ← 2 * index + 1
+        rightChild ← 2 * index + 2
+        largest ← index
+
+        IF leftChild < n AND heap[leftChild] > heap[largest] THEN
+            largest ← leftChild
+        END IF
+        IF rightChild < n AND heap[rightChild] > heap[largest] THEN
+            largest ← rightChild
+        END IF
+
+        IF largest ≠ index THEN
+            SWAP(heap[index], heap[largest])
+            index ← largest
+        ELSE
+            RETURN    // heap property satisfied
+        END IF
+    END WHILE
+END SIFT_DOWN
+
+================================================================================
+HEAP INSERT
+================================================================================
+
+HEAP_INSERT(heap, value)
+    heap.append(value)        // Add to end of array
+    SIFT_UP(heap, heap.size - 1)    // Restore heap property
+END HEAP_INSERT
+
+================================================================================
+HEAP EXTRACT MAX
+================================================================================
+
+HEAP_EXTRACT_MAX(heap)
+    IF heap.size = 0 THEN
+        ERROR "Heap is empty"
+    END IF
+
+    max ← heap[0]                    // Save the maximum (root)
+    heap[0] ← heap[heap.size - 1]   // Move last element to root
+    heap.removeLast()                // Remove last position
+    IF heap.size > 0 THEN
+        SIFT_DOWN(heap, heap.size, 0)  // Restore heap property
+    END IF
+    RETURN max
+END HEAP_EXTRACT_MAX
+
+================================================================================
+BUILD HEAP (HEAPIFY)
+================================================================================
+
+BUILD_HEAP(array, n)
+    // Start from last non-leaf node and sift down each
+    // Last non-leaf = (n / 2) - 1
+    FOR i = (n / 2) - 1 DOWN TO 0 DO
+        SIFT_DOWN(array, n, i)
+    END FOR
+    // Array is now a valid max-heap
+END BUILD_HEAP
+
+================================================================================
+STEP-BY-STEP EXAMPLE — INSERT
+================================================================================
+
+Initial: [] (empty heap)
+
+Insert 20:
+    Array: [20]
+    Tree:  (20)
+    No parent → done
+    Heap: [20]
+
+Insert 40:
+    Array: [20, 40]
+    Compare 40 (index 1) with parent 20 (index 0): 40 > 20 → swap
+    Array: [40, 20]
+    Tree:    (40)
+            /
+          (20)
+    Heap: [40, 20]
+
+Insert 30:
+    Array: [40, 20, 30]
+    Compare 30 (index 2) with parent 40 (index 0): 30 < 40 → stop
+    Array: [40, 20, 30]
+    Tree:    (40)
+            /    \
+          (20)  (30)
+    Heap: [40, 20, 30]
+
+Insert 50:
+    Array: [40, 20, 30, 50]
+    Compare 50 (index 3) with parent 20 (index 1): 50 > 20 → swap
+    Array: [40, 50, 30, 20]
+    Compare 50 (index 1) with parent 40 (index 0): 50 > 40 → swap
+    Array: [50, 40, 30, 20]
+    Tree:        (50)
+                /    \
+             (40)    (30)
+            /
+          (20)
+    Heap: [50, 40, 30, 20]
+
+Insert 10:
+    Array: [50, 40, 30, 20, 10]
+    Compare 10 (index 4) with parent 40 (index 1): 10 < 40 → stop
+    Array: [50, 40, 30, 20, 10]
+    Tree:        (50)
+                /    \
+             (40)    (30)
+            /    \
+          (20)  (10)
+    Heap: [50, 40, 30, 20, 10]
+
+Final heap: [50, 40, 30, 20, 10] ✓
+
+================================================================================
+STEP-BY-STEP EXAMPLE — EXTRACT MAX
+================================================================================
+
+Starting heap: [50, 40, 30, 20, 10]
+
+    Tree:        (50)
+                /    \
+             (40)    (30)
+            /    \
+          (20)  (10)
+
+Extract Max (first):
+    Save max = 50
+    Move last element (10) to root: [10, 40, 30, 20]
+    Tree:        (10)
+                /    \
+             (40)    (30)
+            /
+          (20)
+    Sift down 10 from index 0:
+        Children: left = 40 (index 1), right = 30 (index 2)
+        Largest child: 40 (index 1)
+        10 < 40 → swap
+        Array: [40, 10, 30, 20]
+        Tree:        (40)
+                    /    \
+                 (10)    (30)
+                /
+              (20)
+        Children of index 1: left = 20 (index 3), no right child
+        Largest child: 20 (index 3)
+        10 < 20 → swap
+        Array: [40, 20, 30, 10]
+        Tree:        (40)
+                    /    \
+                 (20)    (30)
+                /
+              (10)
+        No more children → done
+    Heap: [40, 20, 30, 10]
+    Returned: 50
+
+Extract Max (second):
+    Save max = 40
+    Move last element (10) to root: [10, 20, 30]
+    Tree:    (10)
+            /    \
+          (20)  (30)
+    Sift down 10 from index 0:
+        Children: left = 20 (index 1), right = 30 (index 2)
+        Largest child: 30 (index 2)
+        10 < 30 → swap
+        Array: [30, 20, 10]
+        Tree:    (30)
+                /    \
+              (20)  (10)
+        No more children for index 2 → done
+    Heap: [30, 20, 10]
+    Returned: 40
+
+================================================================================
+KEY POINTS FOR TEACHING
+================================================================================
+
+1. COMPLETE BINARY TREE
+   - Always filled left-to-right, level by level
+   - Height = floor(log₂(n))
+   - This guarantees O(log n) operations
+   - Completeness is what makes array storage possible
+
+2. ARRAY IS THE TREE
+   - No pointers needed — parent/child via arithmetic
+   - Parent: (i - 1) / 2
+   - Left child: 2i + 1, Right child: 2i + 2
+   - Compact memory layout, cache-friendly
+
+3. SIFT UP VS SIFT DOWN
+   - Insert uses SIFT UP (new element bubbles up from bottom)
+   - Extract max uses SIFT DOWN (replacement element sinks from top)
+   - Build heap uses SIFT DOWN (not sift up!)
+   - Know which operation uses which direction
+
+4. BUILD HEAP IS O(n)
+   - NOT O(n log n) — this is a common misconception
+   - Intuition: most nodes are near the bottom and sift short distances
+   - Only 1 node sifts log(n), 2 nodes sift log(n)-1, 4 sift log(n)-2...
+   - Half the nodes are leaves and don't sift at all
+
+5. HEAP SORT
+   - Build heap O(n) + n extractions O(log n) each = O(n log n)
+   - In-place: swap root with last, reduce heap size, sift down
+   - Not stable, but guaranteed O(n log n) worst case
+   - Practical alternative to quicksort
+
+6. NOT A SORTED ARRAY
+   - Heap property ≠ sorted order
+   - Only the root is guaranteed to be the maximum
+   - [50, 40, 30, 20, 10] is a heap AND sorted — but that's coincidence
+   - [50, 30, 40, 10, 20] is also a valid heap but NOT sorted
+
+================================================================================
+COMPLEXITY ANALYSIS
+================================================================================
+
+Time Complexity:
+    Insert (sift up):
+        At most log₂(n) comparisons and swaps = O(log n)
+
+    Extract Max (sift down):
+        At most log₂(n) comparisons and swaps = O(log n)
+
+    Build Heap (heapify):
+        NOT O(n log n)! Actually O(n)
+        Intuition: Most nodes are near the bottom and sift short distances
+        Math: Sum of (n/2^(h+1)) * h for h=0 to log(n) = O(n)
+
+    Peek (get max without removing):
+        O(1) — just return heap[0]
+
+Space Complexity:
+    O(1) extra space — heap is stored in the input array
+    No additional data structures needed
+
+================================================================================
+WHEN TO USE
+================================================================================
+
+✓ Priority queues (task scheduling, event-driven simulation)
+✓ Finding top-k elements efficiently
+✓ Heap sort (O(n log n) in-place sorting)
+✓ Median maintenance (using two heaps)
+✓ Graph algorithms (Dijkstra's, Prim's)
+✗ NOT for searching arbitrary elements (no efficient search)
+✗ NOT when you need sorted order maintained (use BST instead)
+
+================================================================================
+COMMON MISTAKES TO AVOID
+================================================================================
+
+1. Wrong index formulas (0-based vs 1-based)
+   - 0-based: left = 2i+1, right = 2i+2, parent = (i-1)/2
+   - 1-based: left = 2i, right = 2i+1, parent = i/2
+   - Mixing these up causes subtle bugs
+
+2. Forgetting bounds check on right child
+   - A node can have a left child but NO right child
+   - Always check rightChild < n before accessing
+   - Left child existence check: 2*index + 1 < n
+
+3. Confusing sift up with sift down
+   - Insert → sift UP (bottom to top)
+   - Extract → sift DOWN (top to bottom)
+   - Build heap → sift DOWN (not up!)
+
+4. Thinking build heap is O(n log n)
+   - It's O(n), not O(n log n)
+   - Common exam mistake
+   - The mathematical proof is important to understand
+
+5. Assuming heap is sorted
+   - Heap only guarantees parent >= children
+   - Siblings have no ordering relationship
+   - Only root is guaranteed to be the maximum
+
+================================================================================

@@ -33,6 +33,54 @@ All sorting algorithms include:
 - **Key Feature**: Very efficient for nearly-sorted data
 - **Compile**: `g++ -std=c++11 -o demo insertion_sort.cpp`
 
+### Foundational Data Structures
+
+#### Arrays (`array.cpp`)
+- **Algorithm**: Fixed-capacity array with insert, delete, search, access
+- **Strategy**: Contiguous memory, O(1) random access, shifting for insert/delete
+- **Complexity**: Access O(1), Insert/Delete O(n), Search O(n)
+- **Key Feature**: Step-by-step shift visualization
+- **Compile**: `g++ -std=c++11 -o demo array.cpp`
+
+#### Linked Lists (`linked_list.cpp`)
+- **Algorithm**: Singly and doubly linked list operations
+- **Strategy**: Node-based storage with pointer manipulation. No shifting, no random access.
+- **Complexity**: Head insert O(1), Access O(n), Search O(n)
+- **Key Feature**: Both singly and doubly linked implementations with reverse
+- **Compile**: `g++ -std=c++11 -o demo linked_list.cpp`
+
+#### Stacks (`stack.cpp`)
+- **Algorithm**: LIFO stack with array-backed and linked-list-backed implementations
+- **Strategy**: Push/pop at top only. Includes balanced parentheses checker.
+- **Complexity**: Push O(1), Pop O(1), Peek O(1)
+- **Key Feature**: Dual implementation comparison, parentheses checking application
+- **Compile**: `g++ -std=c++11 -o demo stack.cpp`
+
+#### Queues (`queue.cpp`)
+- **Algorithm**: FIFO queue with circular array and linked-list implementations
+- **Strategy**: Enqueue at rear, dequeue from front. Circular array uses modular arithmetic.
+- **Complexity**: Enqueue O(1), Dequeue O(1), Peek O(1)
+- **Key Feature**: Circular array wrap-around visualization
+- **Compile**: `g++ -std=c++11 -o demo queue.cpp`
+
+### Recursion
+
+#### Recursion (`recursion.cpp`)
+- **Algorithm**: Factorial, Fibonacci (naive and memoized), recursive binary search
+- **Strategy**: Demonstrates call stack behavior, redundant computation, and memoization
+- **Complexity**: Factorial O(n), Fibonacci O(2^n) naive / O(n) memoized, Binary Search O(log n)
+- **Key Feature**: Call tracing with indentation, naive vs memoized comparison
+- **Compile**: `g++ -std=c++11 -o demo recursion.cpp`
+
+### Trees & Heaps
+
+#### Max-Heap (`heap.cpp`)
+- **Algorithm**: Max-Heap with insert, extract max, and build heap
+- **Strategy**: Complete binary tree stored in array. Parent >= both children. Sift up for insert, sift down for extract.
+- **Complexity**: Insert O(log n), Extract Max O(log n), Build Heap O(n)
+- **Key Feature**: Dual tree and array representation, step-by-step visualizations
+- **Compile**: `g++ -std=c++11 -o demo heap.cpp`
+
 ## Compiling and Running
 
 All code examples use C++11 standard and can be compiled with:
@@ -61,6 +109,42 @@ g++ -std=c++11 -o bubble_sort_demo bubble_sort.cpp
 ```bash
 g++ -std=c++11 -o insertion_sort_demo insertion_sort.cpp
 ./insertion_sort_demo
+```
+
+**Arrays:**
+```bash
+g++ -std=c++11 -o array_demo array.cpp
+./array_demo
+```
+
+**Linked Lists:**
+```bash
+g++ -std=c++11 -o linked_list_demo linked_list.cpp
+./linked_list_demo
+```
+
+**Stacks:**
+```bash
+g++ -std=c++11 -o stack_demo stack.cpp
+./stack_demo
+```
+
+**Queues:**
+```bash
+g++ -std=c++11 -o queue_demo queue.cpp
+./queue_demo
+```
+
+**Recursion:**
+```bash
+g++ -std=c++11 -o recursion_demo recursion.cpp
+./recursion_demo
+```
+
+**Max-Heap:**
+```bash
+g++ -std=c++11 -o heap_demo heap.cpp
+./heap_demo
 ```
 
 ## Code Style

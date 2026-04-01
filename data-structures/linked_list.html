@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Linked Lists — Interactive | CS 302</title>
+<meta name="description" content="Interactive visualization of Linked Lists. Insert, delete, search, and reverse nodes. See traversal animations for singly and doubly linked lists.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0B0F1A; color: #fff; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; padding: 20px; min-height: 100vh; }
+  .back-link { font-family: 'Plus Jakarta Sans', system-ui, sans-serif; font-size: 13px; color: #22D3EE; text-decoration: none; display: inline-block; margin-bottom: 10px; transition: color 0.2s; }
+  .back-link:hover, .back-link:focus { color: #818CF8; text-decoration: underline; }
+  .back-link:focus-visible { outline: 2px solid #818CF8; outline-offset: 2px; border-radius: 2px; }
+  h1 { font-size: 24px; margin-bottom: 4px; }
+  .subtitle { color: #818CF8; font-size: 14px; margin-bottom: 16px; line-height: 1.5; }
+  .subtitle .orange { color: #FB923C; font-weight: bold; }
+  .layout { display: flex; gap: 20px; flex-wrap: wrap; }
+  .panel { background: #0F172A; border: 1px solid #334155; border-radius: 10px; padding: 20px; }
+  .panel-controls { width: 280px; flex-shrink: 0; overflow: hidden; }
+  .panel-viz { flex: 1; min-width: 460px; min-height: 440px; position: relative; display: flex; flex-direction: column; }
+  label { font-size: 13px; color: #CBD5E1; display: block; margin-bottom: 4px; }
+  /* Improved contrast: #CBD5E1 on #0B0F1A = 11.5:1 WCAG AA */
+  input[type=number], input[type=text] { width: 80px; padding: 6px 10px; border-radius: 5px; border: 1px solid #334155; background: #1E293B; color: #fff; font-size: 14px; font-family: 'JetBrains Mono', 'Consolas', monospace; }
+  input[type=text] { width: 140px; }
+  .btn { background: #312E81; color: #A5B4FC; border: 1px solid #4338CA; border-radius: 6px; padding: 7px 16px; font-size: 13px; cursor: pointer; font-family: inherit; transition: all 0.2s; }
+  .btn:hover, .btn:focus { background: #3730A3; }
+  .btn:focus-visible { outline: 2px solid #818CF8; outline-offset: 2px; }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn.primary { background: #6366F1; color: #fff; border-color: #6366F1; font-weight: 600; }
+  .btn.primary:hover { filter: brightness(1.1); }
+  .btn.danger { background: #5A1A1A; color: #FB923C; border-color: #7F1D1D; }
+  .btn.danger:hover { background: #6A2020; }
+  .btn-row { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+  .section-label { font-size: 11px; letter-spacing: 2px; color: #818CF8; text-transform: uppercase; margin: 16px 0 8px; font-weight: 600; }
+  .section-label:first-child { margin-top: 0; }
+  .preset-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+  .preset-btn { font-size: 11px; padding: 4px 10px; background: #1E293B; border: 1px solid #334155; color: #CBD5E1; border-radius: 4px; cursor: pointer; transition: all 0.2s; }
+  /* Improved contrast: #CBD5E1 on #1E293B = 8.1:1 WCAG AA */
+  .preset-btn:hover, .preset-btn:focus { border-color: #818CF8; color: #818CF8; }
+  .preset-btn:focus-visible { outline: 2px solid #818CF8; outline-offset: 2px; }
+  .preset-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .log { margin-top: 12px; max-height: 180px; overflow-y: auto; font-size: 12px; line-height: 1.6; padding: 10px; background: #0B0F1A; border-radius: 6px; border: 1px solid #334155; }
+  /* Log text colors verified for WCAG AA contrast */
+  .log-entry { padding: 2px 0; border-bottom: 1px solid rgba(51,65,85,0.3); }
+  .log-entry:last-child { border-bottom: none; }
+  .log .green { color: #4ADE80; } .log .orange { color: #FB923C; } .log .blue { color: #22D3EE; } .log .muted { color: #94A3B8; }
+  /* Log colors: Green (#4ADE80) 10.2:1, Orange (#FB923C) 7.2:1, Blue (#22D3EE) 9.6:1, Muted (#94A3B8) 6.4:1 All WCAG AA compliant */
+  .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+  .stat { background: #1E293B; border-radius: 6px; padding: 10px; text-align: center; }
+  .stat .val { font-size: 22px; font-weight: 700; color: #818CF8; font-family: 'JetBrains Mono', 'Consolas', monospace; }
+  .stat .lbl { font-size: 10px; color: #94A3B8; text-transform: uppercase; letter-spacing: 1px; margin-top: 2px; }
+  /* Improved contrast: #94A3B8 on #1E293B = 4.6:1 WCAG AA */
+  .legend { display: flex; gap: 14px; margin-top: 10px; flex-wrap: wrap; }
+  .legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: #CBD5E1; }
+  /* Improved contrast: #CBD5E1 on #0B0F1A = 11.5:1 WCAG AA */
+  .legend-dot { width: 12px; height: 12px; border-radius: 50%; border: 1.5px solid #4338CA; }
+  .speed-row { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+  .speed-row input { width: 100px; } .speed-row span { font-size: 12px; color: #94A3B8; }
+  /* Improved contrast: #94A3B8 on #0B0F1A = 6.4:1 WCAG AA */
+  .insight { margin-top: 12px; padding: 10px 12px; background: rgba(129,140,248,0.06); border: 1px solid rgba(129,140,248,0.15); border-radius: 6px; font-size: 12px; color: #CBD5E1; line-height: 1.5; }
+  /* Improved contrast: #CBD5E1 on rgba background = 11.3:1 WCAG AA */
+  .insight strong { color: #818CF8; }
+
+  /* Toggle (segmented control) */
+  .toggle-row { display: flex; gap: 0; margin-bottom: 12px; }
+  .toggle-btn { flex: 1; padding: 7px 0; text-align: center; font-size: 12px; font-weight: 600; letter-spacing: 1px; border: 1px solid #4338CA; background: #1E293B; color: #94A3B8; cursor: pointer; transition: all 0.2s; font-family: inherit; }
+  .toggle-btn:first-child { border-radius: 6px 0 0 6px; }
+  .toggle-btn:last-child { border-radius: 0 6px 6px 0; }
+  .toggle-btn.active { background: #6366F1; color: #fff; border-color: #6366F1; }
+  .toggle-btn:focus-visible { outline: 2px solid #818CF8; outline-offset: 2px; }
+  .toggle-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  /* Linked list visualization area */
+  .ll-container { flex: 1; display: flex; align-items: center; justify-content: flex-start; padding: 20px 10px; overflow-x: auto; min-height: 200px; flex-wrap: nowrap; gap: 0; }
+  .ll-pointer-label { font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: #818CF8; text-align: center; margin-bottom: 4px; font-family: 'JetBrains Mono', 'Consolas', monospace; }
+  .ll-pointer-label.tail-label { color: #22D3EE; }
+  .ll-null { font-size: 13px; font-weight: 600; color: #94A3B8; font-family: 'JetBrains Mono', 'Consolas', monospace; padding: 10px 6px; display: flex; align-items: center; }
+
+  .ll-node-wrapper { display: flex; flex-direction: column; align-items: center; flex-shrink: 0; }
+  .ll-node { display: flex; border-radius: 6px; overflow: hidden; border: 2px solid #4338CA; transition: border-color 0.3s, opacity 0.4s, transform 0.4s; }
+  .ll-node .node-val { padding: 10px 14px; font-size: 16px; font-weight: 700; font-family: 'JetBrains Mono', 'Consolas', monospace; color: #fff; min-width: 44px; text-align: center; transition: background 0.3s; background: #312E81; }
+  .ll-node .node-ptr { padding: 10px 8px; font-size: 11px; color: #94A3B8; border-left: 1px solid #4338CA; display: flex; align-items: center; justify-content: center; background: #1E293B; min-width: 36px; font-family: 'JetBrains Mono', 'Consolas', monospace; transition: background 0.3s; }
+
+  .ll-arrow { display: flex; align-items: center; flex-shrink: 0; padding: 0 2px; }
+  .ll-arrow svg { display: block; }
+
+  .ll-bidir-arrows { display: flex; flex-direction: column; align-items: center; flex-shrink: 0; padding: 0 2px; gap: 2px; }
+
+  /* Node color states */
+  .ll-node.state-default .node-val { background: #312E81; }
+  .ll-node.state-default { border-color: #4338CA; }
+  .ll-node.state-traversing .node-val { background: #FB923C; }
+  .ll-node.state-traversing { border-color: #FB923C; }
+  .ll-node.state-found .node-val { background: #4ADE80; }
+  .ll-node.state-found { border-color: #4ADE80; }
+  .ll-node.state-inserting .node-val { background: #22D3EE; }
+  .ll-node.state-inserting { border-color: #22D3EE; }
+  .ll-node.state-deleting { border-color: #FB923C; opacity: 0.4; transform: scale(0.9); }
+  .ll-node.state-deleting .node-val { background: #FB923C; }
+
+  .empty-msg { color: #94A3B8; font-size: 14px; text-align: center; width: 100%; }
+
+  /* Reduced motion support for accessibility (WCAG 2.3.3) */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+
+  @media (max-width: 780px) {
+    body { padding: 16px; }
+    .panel-controls { width: 100%; }
+    .panel-viz { min-width: 100%; }
+    h1 { font-size: 20px; }
+    .subtitle { font-size: 13px; }
+  }
+</style>
+</head>
+<body>
+<a href="../index.html" class="back-link" aria-label="Back to CS 302 Home">&larr; CS 302 Home</a>
+<h1>Linked Lists &mdash; Interactive</h1>
+<p class="subtitle">
+  Insert, delete, and search nodes in a linked list. <span class="orange">Toggle between singly and doubly linked</span> to see how pointer structure changes traversal and operations.
+</p>
+<div class="layout">
+  <div class="panel panel-controls">
+    <div class="section-label" style="margin-top:0;">Mode</div>
+    <div class="toggle-row">
+      <button class="toggle-btn active" id="toggleSingly" onclick="setMode('singly')" aria-label="Switch to singly linked list" aria-pressed="true">Singly</button>
+      <button class="toggle-btn" id="toggleDoubly" onclick="setMode('doubly')" aria-label="Switch to doubly linked list" aria-pressed="false">Doubly</button>
+    </div>
+
+    <div class="section-label">Insert</div>
+    <div style="display:flex;gap:8px;align-items:end;">
+      <div><label for="insertVal">Value</label><input type="number" id="insertVal" value="25" min="1" max="99"></div>
+      <button class="btn primary" onclick="doInsertHead()" aria-label="Insert at head">Head</button>
+      <button class="btn" onclick="doInsertTail()" aria-label="Insert at tail">Tail</button>
+    </div>
+    <div style="display:flex;gap:8px;align-items:end;margin-top:8px;">
+      <div><label for="insertPos">Position</label><input type="number" id="insertPos" value="1" min="0" max="99"></div>
+      <button class="btn" onclick="doInsertAt()" aria-label="Insert at position">Insert at Pos</button>
+    </div>
+
+    <div class="section-label">Delete</div>
+    <div class="btn-row">
+      <button class="btn danger" onclick="doDeleteHead()" aria-label="Delete head node">Head</button>
+      <button class="btn danger" onclick="doDeleteTail()" aria-label="Delete tail node">Tail</button>
+    </div>
+    <div style="display:flex;gap:8px;align-items:end;margin-top:8px;">
+      <div><label for="deletePos">Position</label><input type="number" id="deletePos" value="0" min="0" max="99"></div>
+      <button class="btn danger" onclick="doDeleteAt()" aria-label="Delete at position">Delete at Pos</button>
+    </div>
+
+    <div class="section-label">Search</div>
+    <div style="display:flex;gap:8px;align-items:end;">
+      <div><label for="searchVal">Value</label><input type="number" id="searchVal" value="30" min="1" max="99"></div>
+      <button class="btn" onclick="doSearch()" aria-label="Search for value">Search</button>
+    </div>
+
+    <div class="section-label">Reverse</div>
+    <div class="btn-row">
+      <button class="btn" onclick="doReverse()" aria-label="Reverse the linked list">Reverse List</button>
+    </div>
+
+    <div class="section-label">Presets</div>
+    <div class="preset-row">
+      <button class="preset-btn" onclick="loadPreset('short')" aria-label="Load short preset with 3 nodes">Short [3]</button>
+      <button class="preset-btn" onclick="loadPreset('medium')" aria-label="Load medium preset with 5 nodes">Medium [5]</button>
+      <button class="preset-btn" onclick="loadPreset('random')" aria-label="Load random 6 nodes">Random 6</button>
+    </div>
+    <div class="btn-row"><button class="btn danger" onclick="clearList()" aria-label="Clear linked list">Clear</button></div>
+
+    <div class="speed-row">
+      <label style="margin:0;">Speed:</label>
+      <input type="range" id="speedSlider" min="1" max="5" value="3" aria-label="Animation speed">
+      <span id="speedLabel" aria-live="polite">Normal</span>
+    </div>
+
+    <div class="stats">
+      <div class="stat"><div class="val" id="statNodes">0</div><div class="lbl">Nodes</div></div>
+      <div class="stat"><div class="val" id="statSteps">&mdash;</div><div class="lbl">Last Op Steps</div></div>
+    </div>
+
+    <div class="insight" id="insight">
+      <strong>Try it:</strong> Insert at position 3 and count the traversal steps. Then compare with array insertion &mdash; different cost model!
+    </div>
+
+    <div class="section-label">Log</div>
+    <div class="log" id="log" role="log" aria-label="Operation log" aria-live="polite"></div>
+  </div>
+
+  <div class="panel panel-viz" role="img" aria-label="Linked list visualization">
+    <div class="ll-container" id="llContainer"></div>
+    <div class="legend">
+      <div class="legend-item"><div class="legend-dot" style="background:#312E81"></div> Default</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#FB923C"></div> Traversing</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#4ADE80"></div> Found</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#22D3EE"></div> New Node</div>
+    </div>
+  </div>
+</div>
+
+<script>
+// --- Data Model ---
+// Each node: { value, next (index or -1), prev (index or -1 for doubly) }
+// We store nodes in an array and use head/tail indices.
+let nodes = [];
+let headIdx = -1;
+let tailIdx = -1;
+let mode = 'singly'; // 'singly' or 'doubly'
+let animating = false;
+let nodeStates = new Map(); // index -> state name
+
+function getSpeed() {
+  const v = +document.getElementById('speedSlider').value;
+  const s = [1200, 800, 500, 300, 150];
+  const l = ['Slow', 'Medium', 'Normal', 'Fast', 'Very Fast'];
+  document.getElementById('speedLabel').textContent = l[v - 1];
+  return s[v - 1];
+}
+document.getElementById('speedSlider').addEventListener('input', getSpeed);
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+function addLog(html) {
+  const log = document.getElementById('log');
+  const e = document.createElement('div');
+  e.className = 'log-entry';
+  e.innerHTML = html;
+  log.prepend(e);
+  if (log.children.length > 50) log.removeChild(log.lastChild);
+}
+
+function updateStats(steps) {
+  const count = listLength();
+  document.getElementById('statNodes').textContent = count;
+  if (steps !== undefined) document.getElementById('statSteps').textContent = steps;
+}
+
+function listLength() {
+  let count = 0, idx = headIdx;
+  while (idx !== -1) { count++; idx = nodes[idx].next; }
+  return count;
+}
+
+function listToArray() {
+  const arr = [];
+  let idx = headIdx;
+  while (idx !== -1) { arr.push(nodes[idx].value); idx = nodes[idx].next; }
+  return arr;
+}
+
+function setAllButtons(disabled) {
+  document.querySelectorAll('.btn, .preset-btn, .toggle-btn').forEach(b => b.disabled = disabled);
+}
+
+// --- Rendering ---
+function makeArrowSVG(direction) {
+  // direction: 'right', 'left', or 'both'
+  if (direction === 'right') {
+    return '<svg width="32" height="20" viewBox="0 0 32 20" fill="none"><line x1="0" y1="10" x2="24" y2="10" stroke="#4338CA" stroke-width="2"/><polygon points="24,5 32,10 24,15" fill="#4338CA"/></svg>';
+  }
+  if (direction === 'left') {
+    return '<svg width="32" height="20" viewBox="0 0 32 20" fill="none"><line x1="8" y1="10" x2="32" y2="10" stroke="#4338CA" stroke-width="2"/><polygon points="8,5 0,10 8,15" fill="#4338CA"/></svg>';
+  }
+  return '';
+}
+
+function render() {
+  const container = document.getElementById('llContainer');
+  container.innerHTML = '';
+
+  if (headIdx === -1) {
+    container.innerHTML = '<div class="empty-msg">Empty list. Insert a value or load a preset.</div>';
+    return;
+  }
+
+  // Head label + nodes
+  let idx = headIdx;
+  let pos = 0;
+  while (idx !== -1) {
+    const node = nodes[idx];
+    const isHead = idx === headIdx;
+    const isTail = node.next === -1;
+
+    // Head pointer label above first node
+    if (isHead) {
+      const wrapper = document.createElement('div');
+      wrapper.className = 'll-node-wrapper';
+      const lbl = document.createElement('div');
+      lbl.className = 'll-pointer-label';
+      lbl.textContent = 'HEAD';
+      wrapper.appendChild(lbl);
+
+      const nodeEl = createNodeEl(idx);
+      wrapper.appendChild(nodeEl);
+
+      // Tail label for doubly linked if this is also the tail
+      if (mode === 'doubly' && isTail) {
+        const tlbl = document.createElement('div');
+        tlbl.className = 'll-pointer-label tail-label';
+        tlbl.textContent = 'TAIL';
+        wrapper.appendChild(tlbl);
+      }
+
+      container.appendChild(wrapper);
+    } else {
+      // Arrow before this node
+      if (mode === 'singly') {
+        const arrowDiv = document.createElement('div');
+        arrowDiv.className = 'll-arrow';
+        arrowDiv.innerHTML = makeArrowSVG('right');
+        container.appendChild(arrowDiv);
+      } else {
+        const arrowDiv = document.createElement('div');
+        arrowDiv.className = 'll-bidir-arrows';
+        arrowDiv.innerHTML = makeArrowSVG('right') + makeArrowSVG('left');
+        container.appendChild(arrowDiv);
+      }
+
+      const wrapper = document.createElement('div');
+      wrapper.className = 'll-node-wrapper';
+
+      // Blank spacer to align with head label
+      const spacer = document.createElement('div');
+      spacer.className = 'll-pointer-label';
+      spacer.innerHTML = '&nbsp;';
+      wrapper.appendChild(spacer);
+
+      const nodeEl = createNodeEl(idx);
+      wrapper.appendChild(nodeEl);
+
+      // Tail label for doubly linked
+      if (mode === 'doubly' && isTail) {
+        const tlbl = document.createElement('div');
+        tlbl.className = 'll-pointer-label tail-label';
+        tlbl.textContent = 'TAIL';
+        wrapper.appendChild(tlbl);
+      }
+
+      container.appendChild(wrapper);
+    }
+
+    idx = node.next;
+    pos++;
+  }
+
+  // Null at end
+  const arrowDiv = document.createElement('div');
+  arrowDiv.className = 'll-arrow';
+  arrowDiv.innerHTML = makeArrowSVG('right');
+  container.appendChild(arrowDiv);
+
+  const nullEl = document.createElement('div');
+  nullEl.className = 'll-null';
+  nullEl.textContent = 'null';
+  container.appendChild(nullEl);
+}
+
+function createNodeEl(idx) {
+  const node = nodes[idx];
+  const el = document.createElement('div');
+  el.className = 'll-node';
+  el.id = 'node-' + idx;
+
+  const state = nodeStates.get(idx) || 'default';
+  el.classList.add('state-' + state);
+
+  const valDiv = document.createElement('div');
+  valDiv.className = 'node-val';
+  valDiv.textContent = node.value;
+  el.appendChild(valDiv);
+
+  const ptrDiv = document.createElement('div');
+  ptrDiv.className = 'node-ptr';
+  if (mode === 'doubly') {
+    ptrDiv.innerHTML = '&larr; &rarr;';
+  } else {
+    ptrDiv.innerHTML = '&rarr;';
+  }
+  el.appendChild(ptrDiv);
+
+  return el;
+}
+
+// --- List helpers ---
+function addNode(value) {
+  const idx = nodes.length;
+  nodes.push({ value, next: -1, prev: -1 });
+  return idx;
+}
+
+function buildFromArray(arr) {
+  nodes = [];
+  headIdx = -1;
+  tailIdx = -1;
+  if (arr.length === 0) return;
+  for (let i = 0; i < arr.length; i++) {
+    const idx = addNode(arr[i]);
+    if (i === 0) {
+      headIdx = idx;
+    } else {
+      nodes[idx - 1].next = idx;
+      if (mode === 'doubly') nodes[idx].prev = idx - 1;
+    }
+  }
+  tailIdx = nodes.length - 1;
+}
+
+function getNodeAtPos(pos) {
+  let idx = headIdx, i = 0;
+  while (idx !== -1 && i < pos) { idx = nodes[idx].next; i++; }
+  return idx;
+}
+
+// --- Mode toggle ---
+function setMode(m) {
+  if (animating) return;
+  mode = m;
+  document.getElementById('toggleSingly').classList.toggle('active', m === 'singly');
+  document.getElementById('toggleDoubly').classList.toggle('active', m === 'doubly');
+  document.getElementById('toggleSingly').setAttribute('aria-pressed', m === 'singly');
+  document.getElementById('toggleDoubly').setAttribute('aria-pressed', m === 'doubly');
+
+  // Rebuild prev pointers for doubly
+  if (m === 'doubly') {
+    let idx = headIdx, prevIdx = -1;
+    while (idx !== -1) {
+      nodes[idx].prev = prevIdx;
+      prevIdx = idx;
+      idx = nodes[idx].next;
+    }
+  }
+
+  nodeStates.clear();
+  render();
+  updateStats();
+  addLog('<span class="muted">Switched to ' + (m === 'singly' ? 'singly' : 'doubly') + ' linked list mode.</span>');
+}
+
+// --- Operations ---
+
+async function doInsertHead() {
+  if (animating) return;
+  const val = parseInt(document.getElementById('insertVal').value);
+  if (isNaN(val)) return;
+  animating = true; setAllButtons(true);
+  nodeStates.clear();
+
+  const newIdx = addNode(val);
+  nodes[newIdx].next = headIdx;
+  if (mode === 'doubly' && headIdx !== -1) {
+    nodes[headIdx].prev = newIdx;
+  }
+  if (tailIdx === -1) tailIdx = newIdx;
+  headIdx = newIdx;
+
+  nodeStates.set(newIdx, 'inserting');
+  render();
+  addLog('<span class="green">Inserted ' + val + ' at head.</span>');
+  await sleep(getSpeed());
+
+  nodeStates.clear();
+  render();
+  updateStats(1);
+  animating = false; setAllButtons(false);
+}
+
+async function doInsertTail() {
+  if (animating) return;
+  const val = parseInt(document.getElementById('insertVal').value);
+  if (isNaN(val)) return;
+  animating = true; setAllButtons(true);
+  nodeStates.clear();
+  let steps = 0;
+
+  if (headIdx === -1) {
+    // Empty list
+    const newIdx = addNode(val);
+    headIdx = newIdx;
+    tailIdx = newIdx;
+    nodeStates.set(newIdx, 'inserting');
+    render();
+    addLog('<span class="green">Inserted ' + val + ' as only node.</span>');
+    await sleep(getSpeed());
+    nodeStates.clear(); render(); updateStats(1);
+    animating = false; setAllButtons(false);
+    return;
+  }
+
+  // Traverse to tail
+  let idx = headIdx;
+  while (idx !== -1) {
+    steps++;
+    nodeStates.clear();
+    nodeStates.set(idx, 'traversing');
+    render();
+    addLog('<span class="blue">Visiting node ' + nodes[idx].value + ' (pos ' + (steps - 1) + ')</span>');
+    await sleep(getSpeed());
+    if (nodes[idx].next === -1) break;
+    idx = nodes[idx].next;
+  }
+
+  const newIdx = addNode(val);
+  nodes[idx].next = newIdx;
+  if (mode === 'doubly') nodes[newIdx].prev = idx;
+  tailIdx = newIdx;
+
+  nodeStates.clear();
+  nodeStates.set(newIdx, 'inserting');
+  render();
+  addLog('<span class="green">Inserted ' + val + ' at tail.</span>');
+  await sleep(getSpeed());
+
+  nodeStates.clear(); render(); updateStats(steps);
+  animating = false; setAllButtons(false);
+}
+
+async function doInsertAt() {
+  if (animating) return;
+  const val = parseInt(document.getElementById('insertVal').value);
+  const pos = parseInt(document.getElementById('insertPos').value);
+  if (isNaN(val) || isNaN(pos) || pos < 0) return;
+  animating = true; setAllButtons(true);
+  nodeStates.clear();
+  let steps = 0;
+
+  if (pos === 0) {
+    // Insert at head
+    const newIdx = addNode(val);
+    nodes[newIdx].next = headIdx;
+    if (mode === 'doubly' && headIdx !== -1) nodes[headIdx].prev = newIdx;
+    if (tailIdx === -1) tailIdx = newIdx;
+    headIdx = newIdx;
+    nodeStates.set(newIdx, 'inserting');
+    render();
+    addLog('<span class="green">Inserted ' + val + ' at position 0 (head).</span>');
+    await sleep(getSpeed());
+    nodeStates.clear(); render(); updateStats(1);
+    animating = false; setAllButtons(false);
+    return;
+  }
+
+  // Traverse to pos-1
+  let idx = headIdx;
+  let i = 0;
+  while (idx !== -1 && i < pos - 1) {
+    steps++;
+    nodeStates.clear();
+    nodeStates.set(idx, 'traversing');
+    render();
+    addLog('<span class="blue">Traversing node ' + nodes[idx].value + ' (pos ' + i + ')</span>');
+    await sleep(getSpeed());
+    idx = nodes[idx].next;
+    i++;
+  }
+
+  if (idx === -1) {
+    addLog('<span class="orange">Position ' + pos + ' is out of bounds (list has ' + listLength() + ' nodes).</span>');
+    nodeStates.clear(); render(); updateStats(steps);
+    animating = false; setAllButtons(false);
+    return;
+  }
+
+  steps++;
+  nodeStates.clear();
+  nodeStates.set(idx, 'traversing');
+  render();
+  addLog('<span class="blue">At node ' + nodes[idx].value + ' (pos ' + i + ') — inserting after</span>');
+  await sleep(getSpeed());
+
+  const newIdx = addNode(val);
+  const nextIdx = nodes[idx].next;
+  nodes[idx].next = newIdx;
+  nodes[newIdx].next = nextIdx;
+  if (mode === 'doubly') {
+    nodes[newIdx].prev = idx;
+    if (nextIdx !== -1) nodes[nextIdx].prev = newIdx;
+  }
+  if (nextIdx === -1) tailIdx = newIdx;
+
+  nodeStates.clear();
+  nodeStates.set(newIdx, 'inserting');
+  render();
+  addLog('<span class="green">Inserted ' + val + ' at position ' + pos + '.</span>');
+  await sleep(getSpeed());
+
+  nodeStates.clear(); render(); updateStats(steps);
+  animating = false; setAllButtons(false);
+}
+
+async function doDeleteHead() {
+  if (animating) return;
+  if (headIdx === -1) { addLog('<span class="orange">List is empty.</span>'); return; }
+  animating = true; setAllButtons(true);
+  nodeStates.clear();
+
+  const oldHead = headIdx;
+  const val = nodes[oldHead].value;
+
+  nodeStates.set(oldHead, 'deleting');
+  render();
+  addLog('<span class="orange">Deleting head node ' + val + '.</span>');
+  await sleep(getSpeed());
+
+  headIdx = nodes[oldHead].next;
+  if (headIdx !== -1 && mode === 'doubly') nodes[headIdx].prev = -1;
+  if (headIdx === -1) tailIdx = -1;
+
+  nodeStates.clear(); render(); updateStats(1);
+  addLog('<span class="green">Deleted ' + val + ' from head.</span>');
+  animating = false; setAllButtons(false);
+}
+
+async function doDeleteTail() {
+  if (animating) return;
+  if (headIdx === -1) { addLog('<span class="orange">List is empty.</span>'); return; }
+  animating = true; setAllButtons(true);
+  nodeStates.clear();
+  let steps = 0;
+
+  // Single node
+  if (nodes[headIdx].next === -1) {
+    const val = nodes[headIdx].value;
+    nodeStates.set(headIdx, 'deleting');
+    render();
+    addLog('<span class="orange">Deleting only node ' + val + '.</span>');
+    await sleep(getSpeed());
+    headIdx = -1; tailIdx = -1;
+    nodeStates.clear(); render(); updateStats(1);
+    addLog('<span class="green">Deleted ' + val + '. List is empty.</span>');
+    animating = false; setAllButtons(false);
+    return;
+  }
+
+  // Traverse to second-to-last
+  let idx = headIdx;
+  while (idx !== -1) {
+    steps++;
+    nodeStates.clear();
+    nodeStates.set(idx, 'traversing');
+    render();
+    addLog('<span class="blue">Visiting node ' + nodes[idx].value + '</span>');
+    await sleep(getSpeed());
+    if (nodes[nodes[idx].next] && nodes[nodes[idx].next].next === -1) break;
+    if (nodes[idx].next === -1) break;
+    idx = nodes[idx].next;
+  }
+
+  const lastIdx = nodes[idx].next;
+  const val = nodes[lastIdx].value;
+
+  nodeStates.clear();
+  nodeStates.set(lastIdx, 'deleting');
+  render();
+  addLog('<span class="orange">Deleting tail node ' + val + '.</span>');
+  await sleep(getSpeed());
+
+  nodes[idx].next = -1;
+  tailIdx = idx;
+
+  nodeStates.clear(); render(); updateStats(steps);
+  addLog('<span class="green">Deleted ' + val + ' from tail.</span>');
+  animating = false; setAllButtons(false);
+}
+
+async function doDeleteAt() {
+  if (animating) return;
+  const pos = parseInt(document.getElementById('deletePos').value);
+  if (isNaN(pos) || pos < 0) return;
+  if (headIdx === -1) { addLog('<span class="orange">List is empty.</span>'); return; }
+  animating = true; setAllButtons(true);
+  nodeStates.clear();
+  let steps = 0;
+
+  if (pos === 0) {
+    const val = nodes[headIdx].value;
+    nodeStates.set(headIdx, 'deleting');
+    render();
+    addLog('<span class="orange">Deleting node ' + val + ' at position 0.</span>');
+    await sleep(getSpeed());
+    headIdx = nodes[headIdx].next;
+    if (headIdx !== -1 && mode === 'doubly') nodes[headIdx].prev = -1;
+    if (headIdx === -1) tailIdx = -1;
+    nodeStates.clear(); render(); updateStats(1);
+    addLog('<span class="green">Deleted ' + val + '.</span>');
+    animating = false; setAllButtons(false);
+    return;
+  }
+
+  // Traverse to pos-1
+  let idx = headIdx;
+  let i = 0;
+  while (idx !== -1 && i < pos - 1) {
+    steps++;
+    nodeStates.clear();
+    nodeStates.set(idx, 'traversing');
+    render();
+    addLog('<span class="blue">Traversing node ' + nodes[idx].value + ' (pos ' + i + ')</span>');
+    await sleep(getSpeed());
+    idx = nodes[idx].next;
+    i++;
+  }
+
+  if (idx === -1 || nodes[idx].next === -1) {
+    addLog('<span class="orange">Position ' + pos + ' is out of bounds.</span>');
+    nodeStates.clear(); render(); updateStats(steps);
+    animating = false; setAllButtons(false);
+    return;
+  }
+
+  steps++;
+  const delIdx = nodes[idx].next;
+  const val = nodes[delIdx].value;
+
+  nodeStates.clear();
+  nodeStates.set(delIdx, 'deleting');
+  render();
+  addLog('<span class="orange">Deleting node ' + val + ' at position ' + pos + '.</span>');
+  await sleep(getSpeed());
+
+  const afterDel = nodes[delIdx].next;
+  nodes[idx].next = afterDel;
+  if (mode === 'doubly' && afterDel !== -1) nodes[afterDel].prev = idx;
+  if (afterDel === -1) tailIdx = idx;
+
+  nodeStates.clear(); render(); updateStats(steps);
+  addLog('<span class="green">Deleted ' + val + ' from position ' + pos + '.</span>');
+  animating = false; setAllButtons(false);
+}
+
+async function doSearch() {
+  if (animating) return;
+  const val = parseInt(document.getElementById('searchVal').value);
+  if (isNaN(val)) return;
+  if (headIdx === -1) { addLog('<span class="orange">List is empty.</span>'); return; }
+  animating = true; setAllButtons(true);
+  nodeStates.clear();
+  let steps = 0;
+
+  let idx = headIdx;
+  let pos = 0;
+  while (idx !== -1) {
+    steps++;
+    nodeStates.clear();
+    nodeStates.set(idx, 'traversing');
+    render();
+    addLog('<span class="blue">Checking node ' + nodes[idx].value + ' at pos ' + pos + '</span>');
+    await sleep(getSpeed());
+
+    if (nodes[idx].value === val) {
+      nodeStates.clear();
+      nodeStates.set(idx, 'found');
+      render();
+      addLog('<span class="green">Found ' + val + ' at position ' + pos + '!</span>');
+      await sleep(getSpeed());
+      nodeStates.clear(); render(); updateStats(steps);
+      animating = false; setAllButtons(false);
+      return;
+    }
+
+    idx = nodes[idx].next;
+    pos++;
+  }
+
+  nodeStates.clear(); render();
+  addLog('<span class="orange">Value ' + val + ' not found. Traversed all ' + steps + ' nodes.</span>');
+  updateStats(steps);
+  animating = false; setAllButtons(false);
+}
+
+async function doReverse() {
+  if (animating) return;
+  if (headIdx === -1) { addLog('<span class="orange">List is empty.</span>'); return; }
+  const len = listLength();
+  if (len <= 1) { addLog('<span class="muted">List has only ' + len + ' node(s) — already reversed.</span>'); return; }
+  animating = true; setAllButtons(true);
+  nodeStates.clear();
+  let steps = 0;
+
+  addLog('<span class="blue">Reversing linked list...</span>');
+
+  let prev = -1;
+  let current = headIdx;
+  let next = -1;
+
+  // For doubly: also swap prev/next in each node
+  while (current !== -1) {
+    steps++;
+    nodeStates.clear();
+    nodeStates.set(current, 'traversing');
+    if (prev !== -1) nodeStates.set(prev, 'inserting');
+    render();
+    addLog('<span class="blue">Reversing pointer at node ' + nodes[current].value + '</span>');
+    await sleep(getSpeed());
+
+    next = nodes[current].next;
+    nodes[current].next = prev;
+    if (mode === 'doubly') {
+      nodes[current].prev = next;
+    }
+    prev = current;
+    current = next;
+  }
+
+  tailIdx = headIdx;
+  headIdx = prev;
+
+  nodeStates.clear();
+  // Flash all green
+  let idx = headIdx;
+  while (idx !== -1) { nodeStates.set(idx, 'found'); idx = nodes[idx].next; }
+  render();
+  addLog('<span class="green">Reverse complete. ' + steps + ' pointer reversals.</span>');
+  await sleep(getSpeed());
+
+  nodeStates.clear(); render(); updateStats(steps);
+  animating = false; setAllButtons(false);
+}
+
+// --- Presets ---
+function loadPreset(name) {
+  if (animating) return;
+  nodeStates.clear();
+  document.getElementById('log').innerHTML = '';
+
+  if (name === 'short') {
+    buildFromArray([10, 20, 30]);
+    addLog('<span class="muted">Loaded Short [3]: 10 → 20 → 30</span>');
+  } else if (name === 'medium') {
+    buildFromArray([10, 20, 30, 40, 50]);
+    addLog('<span class="muted">Loaded Medium [5]: 10 → 20 → 30 → 40 → 50</span>');
+  } else if (name === 'random') {
+    const vals = [];
+    while (vals.length < 6) {
+      const v = Math.floor(Math.random() * 91) + 5;
+      if (!vals.includes(v)) vals.push(v);
+    }
+    buildFromArray(vals);
+    addLog('<span class="muted">Loaded Random 6: ' + vals.join(' → ') + '</span>');
+  }
+
+  render();
+  updateStats();
+  document.getElementById('insight').innerHTML = '<strong>Try it:</strong> Insert at position 3 and count the traversal steps. Then compare with array insertion &mdash; different cost model!';
+}
+
+function clearList() {
+  if (animating) return;
+  nodes = []; headIdx = -1; tailIdx = -1;
+  nodeStates.clear();
+  document.getElementById('log').innerHTML = '';
+  render();
+  updateStats();
+  document.getElementById('insight').innerHTML = '<strong>Try it:</strong> Insert at position 3 and count the traversal steps. Then compare with array insertion &mdash; different cost model!';
+}
+
+// --- Keyboard support ---
+document.getElementById('insertVal').addEventListener('keydown', e => { if (e.key === 'Enter') doInsertHead(); });
+document.getElementById('insertPos').addEventListener('keydown', e => { if (e.key === 'Enter') doInsertAt(); });
+document.getElementById('deletePos').addEventListener('keydown', e => { if (e.key === 'Enter') doDeleteAt(); });
+document.getElementById('searchVal').addEventListener('keydown', e => { if (e.key === 'Enter') doSearch(); });
+
+// --- Init ---
+loadPreset('medium');
+</script>
+</body>
+</html>

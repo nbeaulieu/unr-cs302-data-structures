@@ -1,0 +1,427 @@
+================================================================================
+STACK - Pseudocode
+================================================================================
+Algorithm: Stack (LIFO — Last In, First Out)
+Strategy: Elements are added and removed from the same end (the "top").
+          Two implementations: array-backed and linked-list-backed.
+Operations: Push O(1), Pop O(1), Peek O(1), isEmpty O(1)
+Key: All operations happen at ONE end — the top of the stack
+
+================================================================================
+OVERVIEW
+================================================================================
+
+A stack is a linear data structure where the last element pushed is the
+first element popped. Think of a stack of plates — you add and remove
+from the top only.
+
+    Array-backed stack:
+        Uses a fixed-size array and a topIdx variable.
+        topIdx = -1 means the stack is empty.
+        Push increments topIdx and stores the value.
+        Pop reads the value and decrements topIdx.
+
+    Linked-list-backed stack:
+        Uses a singly linked list with insertions at the head.
+        The head of the list IS the top of the stack.
+        Push creates a new node and makes it the head.
+        Pop removes the head node and returns its data.
+
+    Visual:
+        Push 10, push 20, push 30:
+
+        Array:  [10, 20, 30, _, _, ...]
+                              ^
+                           topIdx = 2
+
+        Linked: top → [30] → [20] → [10] → nullptr
+
+        Pop returns 30 (last in, first out).
+
+================================================================================
+PUSH (Array-backed)
+================================================================================
+
+PUSH_ARRAY(stack, value)
+    IF topIdx = MAX_SIZE - 1 THEN
+        ERROR "Stack Overflow"    // stack is full
+    END IF
+    topIdx ← topIdx + 1          // advance the top index
+    arr[topIdx] ← value          // store the value
+END PUSH_ARRAY
+
+    Visual Example:
+        Before: arr = [10, 20, _, _]  topIdx = 1
+        PUSH_ARRAY(stack, 30):
+            topIdx = 1 + 1 = 2
+            arr[2] = 30
+        After:  arr = [10, 20, 30, _]  topIdx = 2
+
+================================================================================
+PUSH (Linked-list-backed)
+================================================================================
+
+PUSH_LINKED(stack, value)
+    newNode ← CREATE_NODE(value)
+    newNode.next ← top            // link new node to current top
+    top ← newNode                 // new node becomes the top
+    count ← count + 1
+END PUSH_LINKED
+
+    Visual Example:
+        Before: top → [20] → [10] → nullptr
+        PUSH_LINKED(stack, 30):
+            Create [30]
+            [30].next = top (→ [20])
+            top = [30]
+        After:  top → [30] → [20] → [10] → nullptr
+
+================================================================================
+POP (Array-backed)
+================================================================================
+
+POP_ARRAY(stack)
+    IF topIdx = -1 THEN
+        ERROR "Stack Underflow"    // stack is empty
+    END IF
+    value ← arr[topIdx]           // save the top value
+    topIdx ← topIdx - 1           // shrink the stack
+    RETURN value
+END POP_ARRAY
+
+    Visual Example:
+        Before: arr = [10, 20, 30, _]  topIdx = 2
+        POP_ARRAY(stack):
+            value = arr[2] = 30
+            topIdx = 2 - 1 = 1
+        After:  arr = [10, 20, 30, _]  topIdx = 1
+                (30 is still in array but logically removed)
+        Returns: 30
+
+================================================================================
+POP (Linked-list-backed)
+================================================================================
+
+POP_LINKED(stack)
+    IF top = nullptr THEN
+        ERROR "Stack Underflow"    // stack is empty
+    END IF
+    value ← top.data              // save the top value
+    temp ← top                    // save pointer for deletion
+    top ← top.next                // move top to next node
+    DELETE temp                   // free the old node
+    count ← count - 1
+    RETURN value
+END POP_LINKED
+
+    Visual Example:
+        Before: top → [30] → [20] → [10] → nullptr
+        POP_LINKED(stack):
+            value = 30
+            temp = [30]
+            top = [30].next = [20]
+            delete [30]
+        After:  top → [20] → [10] → nullptr
+        Returns: 30
+
+================================================================================
+PEEK
+================================================================================
+
+PEEK_ARRAY(stack)
+    IF topIdx = -1 THEN
+        ERROR "Stack is empty"
+    END IF
+    RETURN arr[topIdx]            // return without removing
+
+PEEK_LINKED(stack)
+    IF top = nullptr THEN
+        ERROR "Stack is empty"
+    END IF
+    RETURN top.data               // return without removing
+
+================================================================================
+IS_EMPTY
+================================================================================
+
+IS_EMPTY_ARRAY(stack)
+    RETURN topIdx = -1
+
+IS_EMPTY_LINKED(stack)
+    RETURN top = nullptr
+
+================================================================================
+CHECK PARENTHESES (Stack Application)
+================================================================================
+
+CHECK_PARENTHESES(expression)
+    stack ← EMPTY_STACK
+
+    FOR each character ch in expression DO
+        IF ch is '(' or '[' or '{' THEN
+            PUSH(stack, ch)
+        ELSE IF ch is ')' or ']' or '}' THEN
+            IF IS_EMPTY(stack) THEN
+                RETURN false       // no matching opener
+            END IF
+            opener ← POP(stack)
+            IF opener does not match ch THEN
+                RETURN false       // mismatched brackets
+            END IF
+        END IF
+        // other characters are ignored
+    END FOR
+
+    RETURN IS_EMPTY(stack)         // true if all openers were matched
+END CHECK_PARENTHESES
+
+    Matching pairs: '(' with ')', '[' with ']', '{' with '}'
+
+================================================================================
+STEP-BY-STEP EXAMPLE — ARRAY STACK PUSH
+================================================================================
+
+Initial: arr = [_, _, _, _, _]  topIdx = -1  (empty stack)
+
+Push 10:
+    topIdx = -1 + 1 = 0
+    arr[0] = 10
+    arr = [10, _, _, _, _]  topIdx = 0
+
+Push 20:
+    topIdx = 0 + 1 = 1
+    arr[1] = 20
+    arr = [10, 20, _, _, _]  topIdx = 1
+
+Push 30:
+    topIdx = 1 + 1 = 2
+    arr[2] = 30
+    arr = [10, 20, 30, _, _]  topIdx = 2
+
+Push 40:
+    topIdx = 2 + 1 = 3
+    arr[3] = 40
+    arr = [10, 20, 30, 40, _]  topIdx = 3
+
+Stack state:  Bottom [10, 20, 30, 40] Top
+
+================================================================================
+STEP-BY-STEP EXAMPLE — ARRAY STACK POP
+================================================================================
+
+Starting: arr = [10, 20, 30, 40, _]  topIdx = 3
+
+Pop:
+    value = arr[3] = 40
+    topIdx = 3 - 1 = 2
+    arr = [10, 20, 30, 40, _]  topIdx = 2
+    Returns: 40
+
+Pop:
+    value = arr[2] = 30
+    topIdx = 2 - 1 = 1
+    arr = [10, 20, 30, 40, _]  topIdx = 1
+    Returns: 30
+
+Pop:
+    value = arr[1] = 20
+    topIdx = 1 - 1 = 0
+    arr = [10, 20, 30, 40, _]  topIdx = 0
+    Returns: 20
+
+Pop:
+    value = arr[0] = 10
+    topIdx = 0 - 1 = -1
+    arr = [10, 20, 30, 40, _]  topIdx = -1
+    Returns: 10
+
+Stack is now empty (topIdx = -1).
+Elements came out in reverse order: 40, 30, 20, 10 (LIFO!)
+
+================================================================================
+STEP-BY-STEP EXAMPLE — LINKED STACK
+================================================================================
+
+Initial: top = nullptr, count = 0  (empty stack)
+
+Push 10:
+    Create [10], [10].next = nullptr
+    top = [10]
+    top → [10] → nullptr
+    count = 1
+
+Push 20:
+    Create [20], [20].next = top (→ [10])
+    top = [20]
+    top → [20] → [10] → nullptr
+    count = 2
+
+Push 30:
+    Create [30], [30].next = top (→ [20])
+    top = [30]
+    top → [30] → [20] → [10] → nullptr
+    count = 3
+
+Pop:
+    value = 30, temp = [30]
+    top = [30].next = [20]
+    delete [30]
+    top → [20] → [10] → nullptr
+    count = 2
+    Returns: 30
+
+Pop:
+    value = 20, temp = [20]
+    top = [20].next = [10]
+    delete [20]
+    top → [10] → nullptr
+    count = 1
+    Returns: 20
+
+================================================================================
+STEP-BY-STEP EXAMPLE — CHECK PARENTHESES
+================================================================================
+
+Example 1: "{[()]}" — BALANCED
+
+    Char '{': opening → push → stack: [{]
+    Char '[': opening → push → stack: [{, []
+    Char '(': opening → push → stack: [{, [, (]
+    Char ')': closing → pop '(' — matches ')' → stack: [{, []
+    Char ']': closing → pop '[' — matches ']' → stack: [{]
+    Char '}': closing → pop '{' — matches '}' → stack: []
+    End: stack is empty → BALANCED ✓
+
+Example 2: "{[(])}" — UNBALANCED
+
+    Char '{': opening → push → stack: [{]
+    Char '[': opening → push → stack: [{, []
+    Char '(': opening → push → stack: [{, [, (]
+    Char ']': closing → pop '(' — does NOT match ']' → MISMATCH!
+    Result: UNBALANCED ✗
+
+Example 3: "((())" — UNBALANCED
+
+    Char '(': push → stack: [(]
+    Char '(': push → stack: [(, (]
+    Char '(': push → stack: [(, (, (]
+    Char ')': pop '(' matches → stack: [(, (]
+    Char ')': pop '(' matches → stack: [(]
+    End: stack is NOT empty — one '(' remains unmatched
+    Result: UNBALANCED ✗
+
+================================================================================
+KEY POINTS FOR TEACHING
+================================================================================
+
+1. LIFO ORDERING
+   - Last In, First Out — always
+   - The most recently pushed element is the first to be popped
+   - This is the defining property of a stack
+   - Everything else follows from this principle
+
+2. ARRAY IMPLEMENTATION
+   - topIdx = -1 means empty, topIdx = MAX_SIZE - 1 means full
+   - Push: increment topIdx, then store
+   - Pop: read value, then decrement topIdx
+   - No shifting needed — O(1) for all operations
+   - Data "left behind" in array is logically invisible
+
+3. LINKED LIST IMPLEMENTATION
+   - Head of the list IS the top of the stack
+   - Push inserts at the head — O(1), no traversal needed
+   - Pop removes the head — O(1), no traversal needed
+   - Must free memory on pop (or use smart pointers)
+   - No capacity limit (until system runs out of memory)
+
+4. OVERFLOW AND UNDERFLOW
+   - Overflow: pushing onto a full array stack
+   - Underflow: popping from an empty stack
+   - ALWAYS check before push/pop in real code
+   - The "stack overflow" error in recursion is the same concept
+
+5. PARENTHESES CHECKING
+   - Classic stack application
+   - Opening brackets get pushed, closing brackets pop and compare
+   - Must check stack is empty at the END (catches unclosed openers)
+   - Works for nested brackets of different types: {[()]}
+
+6. CALL STACK CONNECTION
+   - Every function call pushes a frame (locals + return address)
+   - Function return pops the frame
+   - Recursion = pushing many frames
+   - Stack overflow = too many frames (too deep recursion)
+
+================================================================================
+COMPLEXITY ANALYSIS
+================================================================================
+
+Time Complexity:
+    Push:
+        Array: O(1) — increment index, store value
+        Linked: O(1) — create node, update head pointer
+
+    Pop:
+        Array: O(1) — read value, decrement index
+        Linked: O(1) — save head data, update head, delete old head
+
+    Peek:
+        Both: O(1) — just read the top element
+
+    isEmpty:
+        Both: O(1) — check topIdx == -1 or top == nullptr
+
+    Size:
+        Array: O(1) — return topIdx + 1
+        Linked: O(1) — return count (maintained during push/pop)
+
+Space Complexity:
+    Array: O(MAX_SIZE) — fixed allocation regardless of usage
+    Linked: O(n) — exactly n nodes for n elements, plus pointer overhead
+
+================================================================================
+WHEN TO USE
+================================================================================
+
+✓ Undo/redo functionality
+✓ Expression evaluation (postfix, infix-to-postfix)
+✓ Balanced parentheses/bracket checking
+✓ DFS (depth-first search) — iterative version
+✓ Backtracking (maze solving, N-queens, etc.)
+✓ Converting recursion to iteration
+✓ Browser back button (history)
+✗ NOT for FIFO processing (use a queue instead)
+✗ NOT for random access by index (use an array)
+✗ NOT for BFS (use a queue)
+
+================================================================================
+COMMON MISTAKES TO AVOID
+================================================================================
+
+1. Forgetting to check isEmpty() before pop/peek
+   - Popping an empty stack is undefined behavior
+   - Always guard with an isEmpty() check
+   - This is the #1 source of stack-related bugs
+
+2. Off-by-one with topIdx
+   - topIdx starts at -1 (not 0) for an empty stack
+   - Size = topIdx + 1
+   - Push increments BEFORE storing; pop reads BEFORE decrementing
+
+3. Memory leaks in linked stack
+   - Every push allocates a node; every pop MUST delete it
+   - Destructor must walk the list and free all remaining nodes
+   - Forgetting this leaks memory proportional to stack size
+
+4. Confusing stack (LIFO) with queue (FIFO)
+   - Stack: push and pop from the SAME end (top)
+   - Queue: enqueue at rear, dequeue from front
+   - BFS needs a queue; DFS needs a stack
+   - Using the wrong one gives incorrect traversal order
+
+5. Forgetting final empty check in parentheses
+   - Checking only during scanning catches mismatches
+   - But "(()" passes all scan checks — the extra '(' is caught
+     only by checking if the stack is empty at the end
+
+================================================================================

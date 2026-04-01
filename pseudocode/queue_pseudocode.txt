@@ -1,0 +1,460 @@
+================================================================================
+QUEUE - Pseudocode
+================================================================================
+Algorithm: Queue (FIFO — First In, First Out)
+Strategy: Elements are added at the rear and removed from the front.
+          Two implementations: circular array and linked list.
+Circular Array: Use modular arithmetic for wrap-around: (index + 1) % capacity
+Complexity: Enqueue O(1), Dequeue O(1), Peek O(1), isEmpty O(1)
+Key: Two ends — enqueue at rear, dequeue from front
+
+================================================================================
+OVERVIEW
+================================================================================
+
+A queue is a linear data structure where the first element enqueued is the
+first element dequeued. Think of a line at a store — first person in line
+is served first.
+
+    Circular array queue:
+        Uses a fixed-size array with front and rear indices.
+        Indices wrap around using modular arithmetic: (index + 1) % capacity.
+        A count variable tracks how many elements are in the queue.
+
+    Linked-list queue:
+        Uses a singly linked list with front and rear pointers.
+        Enqueue adds a node at the rear; dequeue removes from the front.
+        No wrap-around logic needed.
+
+    Visual:
+        Enqueue 10, enqueue 20, enqueue 30:
+
+        Circular array (capacity 8):
+            Index:  0    1    2    3    4    5    6    7
+            arr:  [10] [20] [30] [  ] [  ] [  ] [  ] [  ]
+                   F         R
+            front = 0, rear = 2, count = 3
+
+        Linked list:
+            front → [10] → [20] → [30] → nullptr
+                                    ^
+                                   rear
+
+        Dequeue returns 10 (first in, first out).
+
+================================================================================
+ENQUEUE (Circular Array)
+================================================================================
+
+ENQUEUE_ARRAY(queue, value)
+    IF count = capacity THEN
+        ERROR "Queue is full"
+    END IF
+    rear ← (rear + 1) % capacity     // advance rear with wrap-around
+    arr[rear] ← value                // store at new rear position
+    count ← count + 1
+END ENQUEUE_ARRAY
+
+    The key line is: rear = (rear + 1) % capacity
+    This is what makes the array "circular" — when rear reaches the last
+    index, the next position wraps around to index 0.
+
+    Example (capacity = 4):
+        If rear = 3:  (3 + 1) % 4 = 0  ← wraps to start!
+        If rear = 0:  (0 + 1) % 4 = 1  ← normal advance
+        If rear = 1:  (1 + 1) % 4 = 2  ← normal advance
+
+================================================================================
+ENQUEUE (Linked List)
+================================================================================
+
+ENQUEUE_LINKED(queue, value)
+    newNode ← CREATE_NODE(value)
+    newNode.next ← nullptr
+
+    IF IS_EMPTY(queue) THEN
+        front ← newNode              // first element: front AND rear
+        rear ← newNode
+    ELSE
+        rear.next ← newNode          // link current rear to new node
+        rear ← newNode               // update rear pointer
+    END IF
+    count ← count + 1
+END ENQUEUE_LINKED
+
+    Visual Example:
+        Before: front → [10] → [20] → nullptr, rear → [20]
+        ENQUEUE_LINKED(queue, 30):
+            Create [30], [30].next = nullptr
+            rear.next = [30]   (link [20] → [30])
+            rear = [30]
+        After:  front → [10] → [20] → [30] → nullptr, rear → [30]
+
+================================================================================
+DEQUEUE (Circular Array)
+================================================================================
+
+DEQUEUE_ARRAY(queue)
+    IF count = 0 THEN
+        ERROR "Queue is empty"
+    END IF
+    value ← arr[front]               // save front element
+    front ← (front + 1) % capacity   // advance front with wrap-around
+    count ← count - 1
+    RETURN value
+END DEQUEUE_ARRAY
+
+    The front pointer also wraps around:
+        If front = 3 (capacity 4): (3 + 1) % 4 = 0 ← wraps!
+
+================================================================================
+DEQUEUE (Linked List)
+================================================================================
+
+DEQUEUE_LINKED(queue)
+    IF front = nullptr THEN
+        ERROR "Queue is empty"
+    END IF
+    value ← front.data               // save front value
+    temp ← front                     // save for deletion
+    front ← front.next               // advance front
+    IF front = nullptr THEN
+        rear ← nullptr               // queue is now empty, reset rear too
+    END IF
+    DELETE temp                       // free old front node
+    count ← count - 1
+    RETURN value
+END DEQUEUE_LINKED
+
+    Important: when the last element is dequeued, rear MUST be set to nullptr.
+    Otherwise rear points to freed memory — a dangling pointer.
+
+================================================================================
+PEEK
+================================================================================
+
+PEEK_ARRAY(queue)
+    IF count = 0 THEN
+        ERROR "Queue is empty"
+    END IF
+    RETURN arr[front]
+
+PEEK_LINKED(queue)
+    IF front = nullptr THEN
+        ERROR "Queue is empty"
+    END IF
+    RETURN front.data
+
+================================================================================
+IS_EMPTY
+================================================================================
+
+IS_EMPTY_ARRAY(queue)
+    RETURN count = 0
+
+IS_EMPTY_LINKED(queue)
+    RETURN front = nullptr
+
+================================================================================
+IS_FULL (Circular Array only)
+================================================================================
+
+IS_FULL_ARRAY(queue)
+    RETURN count = capacity
+
+    Note: linked-list queues are never "full" (until system runs out of memory).
+
+================================================================================
+STEP-BY-STEP EXAMPLE — CIRCULAR ARRAY (with wrap-around)
+================================================================================
+
+Capacity = 4, front = 0, rear = -1, count = 0
+
+Enqueue 10:
+    rear = (-1 + 1) % 4 = 0
+    arr[0] = 10, count = 1
+
+    Index: [0]  [1]  [2]  [3]
+    arr:   [10] [  ] [  ] [  ]
+            F=R
+    front = 0, rear = 0, count = 1
+
+Enqueue 20:
+    rear = (0 + 1) % 4 = 1
+    arr[1] = 20, count = 2
+
+    Index: [0]  [1]  [2]  [3]
+    arr:   [10] [20] [  ] [  ]
+            F    R
+    front = 0, rear = 1, count = 2
+
+Enqueue 30:
+    rear = (1 + 1) % 4 = 2
+    arr[2] = 30, count = 3
+
+    Index: [0]  [1]  [2]  [3]
+    arr:   [10] [20] [30] [  ]
+            F         R
+    front = 0, rear = 2, count = 3
+
+Dequeue:
+    value = arr[0] = 10
+    front = (0 + 1) % 4 = 1
+    count = 2
+
+    Index: [0]  [1]  [2]  [3]
+    arr:   [10] [20] [30] [  ]
+                 F    R
+    front = 1, rear = 2, count = 2
+    Returns: 10
+
+Dequeue:
+    value = arr[1] = 20
+    front = (1 + 1) % 4 = 2
+    count = 1
+
+    Index: [0]  [1]  [2]  [3]
+    arr:   [10] [20] [30] [  ]
+                      F=R
+    front = 2, rear = 2, count = 1
+    Returns: 20
+
+Enqueue 40:
+    rear = (2 + 1) % 4 = 3
+    arr[3] = 40, count = 2
+
+    Index: [0]  [1]  [2]  [3]
+    arr:   [10] [20] [30] [40]
+                      F    R
+    front = 2, rear = 3, count = 2
+
+Enqueue 50:                          *** WRAP-AROUND! ***
+    rear = (3 + 1) % 4 = 0          ← rear wraps from 3 to 0!
+    arr[0] = 50, count = 3
+
+    Index: [0]  [1]  [2]  [3]
+    arr:   [50] [20] [30] [40]
+            R         F
+    front = 2, rear = 0, count = 3
+
+    Logical order (front to rear): 30, 40, 50
+    Note: rear (0) is BEFORE front (2) in the array!
+    This is normal in a circular queue after wrap-around.
+
+Enqueue 60:
+    rear = (0 + 1) % 4 = 1
+    arr[1] = 60, count = 4          ← queue is now FULL
+
+    Index: [0]  [1]  [2]  [3]
+    arr:   [50] [60] [30] [40]
+                 R    F
+    front = 2, rear = 1, count = 4
+
+    Logical order: 30, 40, 50, 60
+
+Enqueue 70:
+    count = 4 = capacity → ERROR "Queue is full"
+
+Dequeue:                             *** FRONT ALSO WRAPS! ***
+    value = arr[2] = 30
+    front = (2 + 1) % 4 = 3
+    count = 3
+
+    Index: [0]  [1]  [2]  [3]
+    arr:   [50] [60] [30] [40]
+                 R         F
+    front = 3, rear = 1, count = 3
+    Returns: 30
+    Logical order: 40, 50, 60
+
+Dequeue:
+    value = arr[3] = 40
+    front = (3 + 1) % 4 = 0         ← front wraps from 3 to 0!
+    count = 2
+
+    Index: [0]  [1]  [2]  [3]
+    arr:   [50] [60] [30] [40]
+            F    R
+    front = 0, rear = 1, count = 2
+    Returns: 40
+    Logical order: 50, 60
+
+================================================================================
+STEP-BY-STEP EXAMPLE — LINKED LIST
+================================================================================
+
+Initial: front = nullptr, rear = nullptr, count = 0
+
+Enqueue 10:
+    Create [10], [10].next = nullptr
+    Queue is empty: front = [10], rear = [10]
+    front → [10] → nullptr, rear → [10]
+    count = 1
+
+Enqueue 20:
+    Create [20], [20].next = nullptr
+    rear.next = [20]   (link [10] → [20])
+    rear = [20]
+    front → [10] → [20] → nullptr, rear → [20]
+    count = 2
+
+Enqueue 30:
+    Create [30], [30].next = nullptr
+    rear.next = [30]   (link [20] → [30])
+    rear = [30]
+    front → [10] → [20] → [30] → nullptr, rear → [30]
+    count = 3
+
+Dequeue:
+    value = 10, temp = [10]
+    front = [10].next = [20]
+    delete [10]
+    front → [20] → [30] → nullptr, rear → [30]
+    count = 2
+    Returns: 10
+
+Dequeue:
+    value = 20, temp = [20]
+    front = [20].next = [30]
+    delete [20]
+    front → [30] → nullptr, rear → [30]
+    count = 1
+    Returns: 20
+
+Dequeue:
+    value = 30, temp = [30]
+    front = [30].next = nullptr
+    front is nullptr → rear = nullptr    ← reset rear too!
+    delete [30]
+    front = nullptr, rear = nullptr
+    count = 0
+    Returns: 30
+
+Queue is now empty.
+Elements came out in order: 10, 20, 30 (FIFO!)
+
+================================================================================
+KEY POINTS FOR TEACHING
+================================================================================
+
+1. FIFO ORDERING
+   - First In, First Out — always
+   - The earliest enqueued element is the first to be dequeued
+   - Two ends: front (for dequeue) and rear (for enqueue)
+   - Compare with stack: LIFO — same end for push and pop
+
+2. CIRCULAR ARRAY — THE KEY INSIGHT
+   - nextIndex = (currentIndex + 1) % capacity
+   - This single formula makes the array behave as a ring
+   - Without it, you would need to shift elements on dequeue: O(n)
+   - The array indices cycle: 0, 1, 2, ..., capacity-1, 0, 1, 2, ...
+   - Physical layout and logical order are different after wrap-around
+
+3. DISTINGUISHING FULL FROM EMPTY
+   - Both full and empty could look like front == rear (in some designs)
+   - Solutions:
+     (a) Use a count variable (simplest — our approach)
+     (b) Leave one slot always empty (full when count = capacity - 1)
+     (c) Use a boolean flag
+   - The count approach is easiest to understand and implement
+
+4. LINKED LIST — REAR POINTER MATTERS
+   - Without a rear pointer, enqueue would require traversal: O(n)
+   - With a rear pointer, enqueue is O(1) — just append at rear
+   - Must set rear = nullptr when the last element is dequeued
+   - Forgetting this causes dangling pointer bugs
+
+5. BFS CONNECTION
+   - Breadth-first search uses a queue to visit nodes level by level
+   - Enqueue start node, then repeatedly dequeue and enqueue neighbors
+   - Queue ensures closest nodes are visited first
+   - DFS uses a stack — explore deep before wide
+   - Queue → BFS (level order), Stack → DFS (depth first)
+
+6. APPLICATIONS BEYOND BFS
+   - CPU scheduling (round-robin: dequeue process, give time slice, re-enqueue)
+   - Print spooling (documents printed in submission order)
+   - Buffering (keyboard input, network packets)
+   - Producer-consumer pattern
+   - Level-order tree traversal
+
+================================================================================
+COMPLEXITY ANALYSIS
+================================================================================
+
+Time Complexity:
+    Enqueue:
+        Circular array: O(1) — advance rear with modular arithmetic, store value
+        Linked list: O(1) — create node, update rear pointer
+
+    Dequeue:
+        Circular array: O(1) — read front, advance front with modular arithmetic
+        Linked list: O(1) — save front data, update front pointer, delete node
+
+    Peek:
+        Both: O(1) — just read the front element
+
+    isEmpty / isFull:
+        Both: O(1) — check count
+
+Space Complexity:
+    Circular array: O(capacity) — fixed allocation regardless of usage
+    Linked list: O(n) — exactly n nodes for n elements, plus pointer overhead
+
+================================================================================
+WHEN TO USE
+================================================================================
+
+✓ BFS (breadth-first search) in graphs and trees
+✓ Level-order tree traversal
+✓ Task scheduling (round-robin, job queues)
+✓ Buffering (I/O buffers, message queues)
+✓ Producer-consumer problems
+✓ Simulation (customer service lines, event queues)
+✗ NOT for LIFO processing (use a stack instead)
+✗ NOT for priority-based processing (use a priority queue / heap)
+✗ NOT for random access by index (use an array)
+✗ NOT for DFS (use a stack or recursion)
+
+================================================================================
+COMMON MISTAKES TO AVOID
+================================================================================
+
+1. Forgetting modular arithmetic
+   - rear++ without % capacity → array index out of bounds
+   - The % operator is what makes the array circular
+   - Both front AND rear need modular arithmetic
+
+2. Confusing full and empty states
+   - Without a count variable, full and empty can look identical
+   - Always use count (or one of the alternative approaches)
+   - Testing only front == rear is not sufficient
+
+3. Dangling rear pointer in linked list
+   - When dequeuing the LAST element, rear still points to the deleted node
+   - Must explicitly set rear = nullptr when front becomes nullptr
+   - Next enqueue would corrupt memory without this fix
+
+4. Using a linear array without wrap-around
+   - Dequeue shifts all elements left: O(n) per dequeue
+   - Or front advances but space is wasted at the beginning
+   - The circular approach solves both problems
+
+5. Confusing queue (FIFO) with stack (LIFO)
+   - Queue: two ends — enqueue at rear, dequeue from front
+   - Stack: one end — push and pop from the top
+   - BFS requires a queue, DFS requires a stack
+   - Using the wrong one gives completely wrong traversal order
+
+6. Off-by-one with rear initialization
+   - In our implementation, rear starts at -1 (before first enqueue)
+   - First enqueue: rear = (-1 + 1) % capacity = 0
+   - Some implementations start rear at 0 and treat it differently
+   - Be consistent with your choice
+
+7. Forgetting that logical order differs from physical array
+   - After wrap-around: physical [50, 60, 30, 40] with front=2, rear=1
+   - Logical (FIFO) order: 30, 40, 50, 60
+   - Must traverse using modular arithmetic, not simple index order
+
+================================================================================
