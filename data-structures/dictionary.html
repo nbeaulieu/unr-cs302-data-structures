@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dictionary (Hash Table) — Interactive | CS 302</title>
+<meta name="description" content="Interactive visualization of Hash Tables (Dictionaries). Compare three collision strategies: separate chaining, linear probing, and quadratic probing.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0B0F1A; color: #fff; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; padding: 20px; min-height: 100vh; }
+  .back-link { font-family: 'Plus Jakarta Sans', system-ui, sans-serif; font-size: 13px; color: #22D3EE; text-decoration: none; display: inline-block; margin-bottom: 10px; transition: color 0.2s; }
+  .back-link:hover, .back-link:focus { color: #818CF8; text-decoration: underline; }
+  .back-link:focus-visible { outline: 2px solid #818CF8; outline-offset: 2px; border-radius: 2px; }
+  h1 { font-size: 24px; margin-bottom: 4px; }
+  .subtitle { color: #818CF8; font-size: 14px; margin-bottom: 16px; line-height: 1.5; }
+  .subtitle .orange { color: #FB923C; font-weight: bold; }
+  .layout { display: flex; gap: 20px; flex-wrap: wrap; }
+  .panel { background: #0F172A; border: 1px solid #334155; border-radius: 10px; padding: 20px; }
+  .panel-controls { width: 280px; flex-shrink: 0; overflow: hidden; }
+  .panel-viz { flex: 1; min-width: 460px; min-height: 440px; position: relative; overflow-y: auto; }
+  label { font-size: 13px; color: #CBD5E1; display: block; margin-bottom: 4px; }
+  /* #CBD5E1 on #0B0F1A = 11.5:1 WCAG AAA */
+  input[type=number], input[type=text] { width: 80px; padding: 6px 10px; border-radius: 5px; border: 1px solid #334155; background: #1E293B; color: #fff; font-size: 14px; font-family: 'JetBrains Mono', 'Consolas', monospace; }
+  input[type=text] { width: 140px; }
+  .btn { background: #312E81; color: #A5B4FC; border: 1px solid #4338CA; border-radius: 6px; padding: 7px 16px; font-size: 13px; cursor: pointer; font-family: inherit; transition: all 0.2s; }
+  .btn:hover, .btn:focus { background: #3730A3; }
+  .btn:focus-visible { outline: 2px solid #818CF8; outline-offset: 2px; }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn.primary { background: #6366F1; color: #fff; border-color: #6366F1; font-weight: 600; }
+  .btn.primary:hover { filter: brightness(1.1); }
+  .btn.danger { background: #5A1A1A; color: #FB923C; border-color: #7F1D1D; }
+  .btn.danger:hover { background: #6A2020; }
+  .btn-row { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+  .section-label { font-size: 11px; letter-spacing: 2px; color: #818CF8; text-transform: uppercase; margin: 16px 0 8px; font-weight: 600; }
+  .section-label:first-child { margin-top: 0; }
+  .preset-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+  .preset-btn { font-size: 11px; padding: 4px 10px; background: #1E293B; border: 1px solid #334155; color: #CBD5E1; border-radius: 4px; cursor: pointer; transition: all 0.2s; }
+  /* #CBD5E1 on #1E293B = 8.1:1 WCAG AA */
+  .preset-btn:hover, .preset-btn:focus { border-color: #818CF8; color: #818CF8; }
+  .preset-btn:focus-visible { outline: 2px solid #818CF8; outline-offset: 2px; }
+  .preset-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .log { margin-top: 12px; max-height: 180px; overflow-y: auto; font-size: 12px; line-height: 1.6; padding: 10px; background: #0B0F1A; border-radius: 6px; border: 1px solid #334155; }
+  .log-entry { padding: 2px 0; border-bottom: 1px solid rgba(51,65,85,0.3); }
+  .log-entry:last-child { border-bottom: none; }
+  .log .green { color: #4ADE80; } .log .orange { color: #FB923C; } .log .blue { color: #22D3EE; } .log .muted { color: #94A3B8; }
+  /* Green (#4ADE80) 10.2:1, Orange (#FB923C) 7.2:1, Blue (#22D3EE) 9.6:1, Muted (#94A3B8) 6.4:1 All WCAG AA */
+  .stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 12px; }
+  .stat { background: #1E293B; border-radius: 6px; padding: 10px; text-align: center; }
+  .stat .val { font-size: 22px; font-weight: 700; color: #818CF8; font-family: 'JetBrains Mono', 'Consolas', monospace; }
+  .stat .lbl { font-size: 10px; color: #94A3B8; text-transform: uppercase; letter-spacing: 1px; margin-top: 2px; }
+  /* #94A3B8 on #1E293B = 4.6:1 WCAG AA */
+  .legend { display: flex; gap: 14px; margin-top: 16px; flex-wrap: wrap; }
+  .legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: #CBD5E1; }
+  .legend-dot { width: 12px; height: 12px; border-radius: 3px; border: 1.5px solid #4338CA; }
+  .speed-row { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+  .speed-row input { width: 100px; } .speed-row span { font-size: 12px; color: #94A3B8; }
+  .insight { margin-top: 12px; padding: 10px 12px; background: rgba(129,140,248,0.06); border: 1px solid rgba(129,140,248,0.15); border-radius: 6px; font-size: 12px; color: #CBD5E1; line-height: 1.5; }
+  .insight strong { color: #818CF8; }
+
+  /* Strategy selector */
+  .strategy-tabs { display: flex; gap: 0; margin-bottom: 12px; border-radius: 6px; overflow: hidden; border: 1px solid #334155; }
+  .strategy-tab { flex: 1; padding: 8px 6px; text-align: center; font-size: 12px; font-weight: 600; background: #1E293B; color: #94A3B8; border: none; cursor: pointer; transition: all 0.2s; font-family: inherit; }
+  .strategy-tab:not(:last-child) { border-right: 1px solid #334155; }
+  .strategy-tab.active { background: #312E81; color: #A5B4FC; }
+  .strategy-tab:hover:not(.active) { background: #334155; color: #CBD5E1; }
+  .strategy-tab:focus-visible { outline: 2px solid #818CF8; outline-offset: -2px; }
+
+  /* Slot visualization */
+  .ht-container { padding: 4px 0; }
+  .slot-row { display: flex; align-items: center; margin-bottom: 4px; min-height: 36px; }
+  .slot-label { width: 64px; flex-shrink: 0; font-family: 'JetBrains Mono', 'Consolas', monospace; font-size: 11px; color: #94A3B8; text-align: right; padding-right: 8px; }
+  .slot-box { min-width: 28px; height: 34px; background: #1E293B; border: 2px solid #334155; border-radius: 4px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-family: 'JetBrains Mono', 'Consolas', monospace; font-size: 10px; color: #475569; padding: 0 4px; }
+  .chain { display: flex; align-items: center; gap: 0; margin-left: 6px; flex-wrap: wrap; }
+  .chain-arrow { color: #4338CA; font-size: 14px; margin: 0 2px; flex-shrink: 0; font-family: 'JetBrains Mono', 'Consolas', monospace; }
+  .entry-pill { display: inline-flex; align-items: center; padding: 4px 10px; background: #312E81; border: 2px solid #4338CA; border-radius: 6px; font-family: 'JetBrains Mono', 'Consolas', monospace; font-size: 12px; color: #fff; white-space: nowrap; transition: all 0.3s; }
+  .entry-pill .ek { color: #22D3EE; font-weight: 600; }
+  .entry-pill .es { color: #94A3B8; margin: 0 4px; }
+  .entry-pill .ev { color: #FB923C; font-weight: 600; }
+  /* Highlight states */
+  .hl-hash { background: #4338CA !important; border-color: #818CF8 !important; color: #fff !important; }
+  .hl-compare { background: #713f12 !important; border-color: #FB923C !important; }
+  .hl-found { background: #166534 !important; border-color: #4ADE80 !important; }
+  .hl-remove { background: #5A1A1A !important; border-color: #EF4444 !important; opacity: 0.7; }
+  .hl-probe { background: #1e1b4b !important; border-color: #6366F1 !important; color: #A5B4FC !important; }
+  .hl-deleted { background: #451a03 !important; border-color: #78350f !important; color: #FB923C !important; }
+  .slot-state-del { font-size: 9px; color: #FB923C; font-style: italic; }
+
+  .hash-readout { font-family: 'JetBrains Mono', 'Consolas', monospace; font-size: 12px; color: #CBD5E1; background: #1E293B; border: 1px solid #334155; border-radius: 6px; padding: 8px 10px; line-height: 1.5; min-height: 36px; margin-bottom: 8px; }
+  .probe-readout { font-family: 'JetBrains Mono', 'Consolas', monospace; font-size: 11px; color: #A5B4FC; background: rgba(99,102,241,0.08); border: 1px solid rgba(99,102,241,0.2); border-radius: 6px; padding: 6px 10px; line-height: 1.5; min-height: 30px; margin-bottom: 12px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+  }
+  @media (max-width: 780px) {
+    body { padding: 16px; }
+    .panel-controls { width: 100%; }
+    .panel-viz { min-width: 100%; }
+    h1 { font-size: 20px; }
+    .subtitle { font-size: 13px; }
+    .strategy-tab { font-size: 10px; padding: 6px 4px; }
+  }
+</style>
+</head>
+<body>
+<a href="../index.html" class="back-link" aria-label="Back to CS 302 Home">&larr; CS 302 Home</a>
+<h1>Dictionary (Hash Table) &mdash; Interactive</h1>
+<p class="subtitle">
+  Compare <span class="orange">four collision strategies</span>: separate chaining, linear probing, quadratic probing, and double hashing. Add, search, and delete key-value pairs to see how each handles collisions.
+</p>
+<div class="layout">
+  <div class="panel panel-controls">
+    <div class="section-label">Strategy</div>
+    <div class="strategy-tabs" role="tablist" aria-label="Collision resolution strategy">
+      <button class="strategy-tab active" role="tab" aria-selected="true" onclick="setStrategy('chaining')" id="tab-chaining">Chaining</button>
+      <button class="strategy-tab" role="tab" aria-selected="false" onclick="setStrategy('linear')" id="tab-linear">Linear</button>
+      <button class="strategy-tab" role="tab" aria-selected="false" onclick="setStrategy('quadratic')" id="tab-quadratic">Quadratic</button>
+      <button class="strategy-tab" role="tab" aria-selected="false" onclick="setStrategy('double')" id="tab-double">Double</button>
+    </div>
+
+    <div class="section-label">Hash Function</div>
+    <div class="strategy-tabs" role="tablist" aria-label="Hash function" style="margin-bottom:0;">
+      <button class="strategy-tab active" role="tab" aria-selected="true" onclick="setHashFn('horners')" id="tab-horners">Horner's Rule</button>
+      <button class="strategy-tab" role="tab" aria-selected="false" onclick="setHashFn('modular')" id="tab-modular">Modular (sum)</button>
+    </div>
+
+    <div class="section-label">Add (Insert / Update)</div>
+    <div style="display:flex;gap:8px;align-items:end;flex-wrap:wrap;">
+      <div><label for="putKey">Key</label><input type="text" id="putKey" value="apple" style="width:100px;" placeholder="key"></div>
+      <div><label for="putVal">Value</label><input type="number" id="putVal" value="5" min="0" max="999" style="width:60px;"></div>
+      <button class="btn primary" onclick="doPut()" aria-label="Add key-value pair">Add</button>
+    </div>
+    <div class="section-label">Get (Search)</div>
+    <div style="display:flex;gap:8px;align-items:end;">
+      <div><label for="getKey">Key</label><input type="text" id="getKey" value="apple" style="width:100px;" placeholder="key"></div>
+      <button class="btn" onclick="doGet()" aria-label="Search for key">Get</button>
+    </div>
+    <div class="section-label">Remove (Delete)</div>
+    <div style="display:flex;gap:8px;align-items:end;">
+      <div><label for="removeKey">Key</label><input type="text" id="removeKey" value="apple" style="width:100px;" placeholder="key"></div>
+      <button class="btn danger" onclick="doRemove()" aria-label="Remove key-value pair">Remove</button>
+    </div>
+    <div class="section-label">Presets</div>
+    <div class="preset-row">
+      <button class="preset-btn" onclick="loadPreset('fruits')">Fruits</button>
+      <button class="preset-btn" onclick="loadPreset('collisions')">Force Collisions</button>
+      <button class="preset-btn" onclick="loadPreset('deletion')">Deletion Demo</button>
+      <button class="preset-btn" onclick="loadPreset('anagrams')">Anagram Test</button>
+    </div>
+    <div class="btn-row"><button class="btn danger" onclick="clearTable()" aria-label="Clear hash table">Clear Table</button></div>
+    <div class="speed-row">
+      <label style="margin:0;">Speed:</label>
+      <input type="range" id="speedSlider" min="1" max="5" value="3" aria-label="Animation speed">
+      <span id="speedLabel" aria-live="polite">Normal</span>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="val" id="statEntries">0</div><div class="lbl">Entries</div></div>
+      <div class="stat"><div class="val" id="statSlots">7</div><div class="lbl">Slots</div></div>
+      <div class="stat"><div class="val" id="statLoad">0.00</div><div class="lbl">Load Factor</div></div>
+    </div>
+    <div class="insight" id="insight">
+      <strong>Try it:</strong> Insert a few keys, then switch strategies to see how each one places entries differently. "Force Collisions" loads keys that hash to the same slot.
+    </div>
+    <div class="section-label">Log</div>
+    <div class="log" id="log" role="log" aria-label="Operation log" aria-live="polite"></div>
+  </div>
+  <div class="panel panel-viz">
+    <div class="section-label">Hash Computation</div>
+    <div class="hash-readout" id="hashReadout" aria-live="polite">&mdash;</div>
+    <div class="probe-readout" id="probeReadout" aria-live="polite">&mdash;</div>
+    <div class="section-label" id="vizTitle">Buckets (Chaining)</div>
+    <div class="ht-container" id="htContainer"></div>
+    <div class="legend">
+      <div class="legend-item"><div class="legend-dot" style="background:#312E81"></div> Entry</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#4338CA"></div> Hashing</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#713f12"></div> Comparing</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#166534"></div> Found</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#5A1A1A"></div> Removing</div>
+      <div class="legend-item" id="legendDeleted" style="display:none;"><div class="legend-dot" style="background:#451a03;border-color:#78350f"></div> Deleted Marker</div>
+    </div>
+  </div>
+</div>
+<script>
+// ─── State ─────────────────────────────────────────────────────────────────
+let strategy = 'chaining'; // 'chaining', 'linear', 'quadratic'
+let capacity = 7;
+let animating = false;
+
+// Chaining: array of arrays of {key, value}
+let chainBuckets = [];
+// Probing: array of {key, value, state} where state = 'empty'|'occupied'|'deleted'
+let probeSlots = [];
+let numEntries = 0;
+
+function initTable(cap) {
+  capacity = cap;
+  numEntries = 0;
+  chainBuckets = [];
+  probeSlots = [];
+  for (let i = 0; i < capacity; i++) {
+    chainBuckets.push([]);
+    probeSlots.push({ key: '', value: 0, state: 'empty' });
+  }
+}
+initTable(7);
+
+// ─── Hash Functions ────────────────────────────────────────────────────────
+let hashFn = 'horners'; // 'horners' or 'modular'
+
+function setHashFn(fn) {
+  if (animating) return;
+  hashFn = fn;
+  document.querySelectorAll('[id^="tab-horners"],[id^="tab-modular"]').forEach(t => { t.classList.remove('active'); t.setAttribute('aria-selected','false'); });
+  document.getElementById('tab-' + fn).classList.add('active');
+  document.getElementById('tab-' + fn).setAttribute('aria-selected','true');
+  clearTable();
+}
+
+// Horner's rule: hash = (...((0 * 31 + c₀) * 31 + c₁) * 31 + c₂...)
+function hornersHash(key, cap) {
+  let h = 0;
+  for (let i = 0; i < key.length; i++) h = (h * 31 + key.charCodeAt(i)) >>> 0;
+  return h % (cap || capacity);
+}
+
+// Modular hashing (sum of char codes): hash = (c₀ + c₁ + c₂ + ...) % capacity
+// Simple — shows why a naive hash causes more collisions (anagrams collide!)
+function modularSumHash(key, cap) {
+  let sum = 0;
+  for (let i = 0; i < key.length; i++) sum += key.charCodeAt(i);
+  return sum % (cap || capacity);
+}
+
+function hashKey(key, cap) {
+  return hashFn === 'horners' ? hornersHash(key, cap) : modularSumHash(key, cap);
+}
+
+// Build a step-by-step HTML string showing the hash computation
+function hashSteps(key) {
+  const c = capacity;
+  let result;
+  if (hashFn === 'horners') {
+    let h = 0;
+    result = '<span style="color:#94A3B8">Horner\'s (R=31):</span> ';
+    for (let i = 0; i < key.length; i++) {
+      const code = key.charCodeAt(i);
+      h = (h * 31 + code) >>> 0;
+      result += (i > 0 ? ' &rarr; ' : '') + '<span style="color:#22D3EE">' + h + '</span>';
+    }
+    result += ' % ' + c + ' = <strong style="color:#818CF8">' + (h % c) + '</strong>';
+  } else {
+    let sum = 0;
+    let parts = [];
+    for (let i = 0; i < key.length; i++) {
+      const code = key.charCodeAt(i);
+      sum += code;
+      parts.push(code);
+    }
+    result = '<span style="color:#94A3B8">Sum of chars:</span> ' + parts.join(' + ') +
+           ' = <span style="color:#22D3EE">' + sum + '</span> % ' + c +
+           ' = <strong style="color:#818CF8">' + (sum % c) + '</strong>';
+  }
+  // Append h2 info for double hashing
+  if (strategy === 'double') {
+    const step = h2(key);
+    result += '<br><span style="color:#94A3B8">h2 = ' + PRIME2 + ' \u2212 (hash % ' + PRIME2 + ') = <strong style="color:#FB923C">step ' + step + '</strong></span>';
+  }
+  return result;
+}
+
+// ─── UI ────────────────────────────────────────────────────────────────────
+function getSpeed() {
+  const v = +document.getElementById('speedSlider').value;
+  const s = [1200, 800, 500, 300, 150];
+  const l = ['Slow', 'Medium', 'Normal', 'Fast', 'Very Fast'];
+  document.getElementById('speedLabel').textContent = l[v - 1];
+  return s[v - 1];
+}
+document.getElementById('speedSlider').addEventListener('input', getSpeed);
+
+function updateStats() {
+  document.getElementById('statEntries').textContent = numEntries;
+  document.getElementById('statSlots').textContent = capacity;
+  document.getElementById('statLoad').textContent = (numEntries / capacity).toFixed(2);
+}
+
+function addLog(html) {
+  const log = document.getElementById('log');
+  const e = document.createElement('div');
+  e.className = 'log-entry';
+  e.innerHTML = html;
+  log.prepend(e);
+  if (log.children.length > 60) log.removeChild(log.lastChild);
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+let highlights = new Map(); // key → css class
+
+function setStrategy(s) {
+  if (animating) return;
+  strategy = s;
+  document.querySelectorAll('.strategy-tab').forEach(t => { t.classList.remove('active'); t.setAttribute('aria-selected','false'); });
+  document.getElementById('tab-' + s).classList.add('active');
+  document.getElementById('tab-' + s).setAttribute('aria-selected','true');
+  document.getElementById('legendDeleted').style.display = (s === 'chaining') ? 'none' : 'flex';
+  const titles = { chaining: 'Buckets (Chaining)', linear: 'Slots (Linear Probing)', quadratic: 'Slots (Quadratic Probing)', double: 'Slots (Double Hashing)' };
+  document.getElementById('vizTitle').textContent = titles[s];
+  clearTable();
+}
+
+// ─── Render ────────────────────────────────────────────────────────────────
+function render() {
+  const c = document.getElementById('htContainer');
+  c.innerHTML = '';
+
+  if (strategy === 'chaining') {
+    for (let i = 0; i < capacity; i++) {
+      const row = document.createElement('div'); row.className = 'slot-row';
+      const lbl = document.createElement('div'); lbl.className = 'slot-label'; lbl.textContent = 'Bucket ' + i;
+      const box = document.createElement('div'); box.className = 'slot-box';
+      if (highlights.has('b' + i)) box.classList.add(highlights.get('b' + i));
+      box.textContent = i;
+      row.appendChild(lbl); row.appendChild(box);
+
+      const chain = document.createElement('div'); chain.className = 'chain';
+      for (let j = 0; j < chainBuckets[i].length; j++) {
+        const arrow = document.createElement('span'); arrow.className = 'chain-arrow'; arrow.textContent = '\u2192';
+        chain.appendChild(arrow);
+        const pill = document.createElement('div'); pill.className = 'entry-pill';
+        const hk = i + '-' + j;
+        if (highlights.has(hk)) pill.classList.add(highlights.get(hk));
+        pill.innerHTML = '<span class="ek">' + esc(chainBuckets[i][j].key) + '</span><span class="es">:</span><span class="ev">' + chainBuckets[i][j].value + '</span>';
+        chain.appendChild(pill);
+      }
+      if (chainBuckets[i].length === 0) {
+        const em = document.createElement('span');
+        em.style.cssText = 'margin-left:10px;font-size:11px;color:#475569;font-family:JetBrains Mono,Consolas,monospace;';
+        em.textContent = '(empty)';
+        chain.appendChild(em);
+      }
+      row.appendChild(chain);
+      c.appendChild(row);
+    }
+  } else {
+    // Linear or Quadratic — flat array
+    for (let i = 0; i < capacity; i++) {
+      const row = document.createElement('div'); row.className = 'slot-row';
+      const lbl = document.createElement('div'); lbl.className = 'slot-label'; lbl.textContent = 'Slot ' + i;
+      const box = document.createElement('div'); box.className = 'slot-box';
+      if (highlights.has('s' + i)) box.classList.add(highlights.get('s' + i));
+
+      if (probeSlots[i].state === 'empty') {
+        box.textContent = '\u2014';
+        box.style.minWidth = '120px';
+      } else if (probeSlots[i].state === 'deleted') {
+        box.innerHTML = '<span class="slot-state-del">DELETED</span>';
+        box.style.minWidth = '120px';
+        box.classList.add('hl-deleted');
+      } else {
+        // occupied — show as pill inside the row
+        box.style.display = 'none';
+        const pill = document.createElement('div'); pill.className = 'entry-pill';
+        if (highlights.has('s' + i)) pill.classList.add(highlights.get('s' + i));
+        pill.innerHTML = '<span class="ek">' + esc(probeSlots[i].key) + '</span><span class="es">:</span><span class="ev">' + probeSlots[i].value + '</span>';
+        row.appendChild(lbl); row.appendChild(pill);
+        c.appendChild(row);
+        continue;
+      }
+      row.appendChild(lbl); row.appendChild(box);
+      c.appendChild(row);
+    }
+  }
+  updateStats();
+}
+
+// ─── Second hash function for double hashing ──────────────────────────────
+const PRIME2 = 5; // Must be < capacity (7) and prime
+
+function h2(key) {
+  // h2(key) = PRIME2 - (hash(key) % PRIME2), always in [1, PRIME2]
+  let h = 0;
+  for (let i = 0; i < key.length; i++) h = (h * 31 + key.charCodeAt(i)) >>> 0;
+  return PRIME2 - (h % PRIME2);
+}
+
+// Current key being operated on (needed for double hashing step)
+let currentKey = '';
+
+// ─── Probe index calculator ────────────────────────────────────────────────
+function probeIndex(home, probe) {
+  if (strategy === 'linear') return (home + probe) % capacity;
+  if (strategy === 'quadratic') return (home + probe * probe) % capacity;
+  // double hashing
+  const step = h2(currentKey);
+  return (home + probe * step) % capacity;
+}
+
+function probeFormula(home, probe) {
+  if (strategy === 'linear') return '(' + home + ' + ' + probe + ') % ' + capacity + ' = ' + probeIndex(home, probe);
+  if (strategy === 'quadratic') return '(' + home + ' + ' + probe + '&sup2;) % ' + capacity + ' = (' + home + ' + ' + (probe*probe) + ') % ' + capacity + ' = ' + probeIndex(home, probe);
+  // double
+  const step = h2(currentKey);
+  return '(' + home + ' + ' + probe + '&middot;' + step + ') % ' + capacity + ' = (' + home + ' + ' + (probe*step) + ') % ' + capacity + ' = ' + probeIndex(home, probe);
+}
+
+// ─── Put ───────────────────────────────────────────────────────────────────
+async function doPut() {
+  if (animating) return;
+  const key = document.getElementById('putKey').value.trim();
+  const value = parseInt(document.getElementById('putVal').value);
+  if (!key) { addLog('<span class="orange">Enter a key.</span>'); return; }
+  if (isNaN(value)) { addLog('<span class="orange">Enter a numeric value.</span>'); return; }
+  animating = true; highlights.clear(); currentKey = key;
+
+  const home = hashKey(key);
+  document.getElementById('hashReadout').innerHTML = '"<span style="color:#22D3EE">' + esc(key) + '</span>" &rarr; ' + hashSteps(key);
+
+  if (strategy === 'chaining') {
+    document.getElementById('probeReadout').innerHTML = 'Chaining: go directly to bucket ' + home;
+    highlights.set('b' + home, 'hl-hash'); render();
+    addLog('<span class="blue">hash("' + esc(key) + '") = ' + home + '</span>');
+    await sleep(getSpeed());
+
+    // Walk chain
+    let found = -1;
+    for (let j = 0; j < chainBuckets[home].length; j++) {
+      highlights.clear(); highlights.set('b' + home, 'hl-hash');
+      highlights.set(home + '-' + j, 'hl-compare'); render();
+      addLog('<span class="muted">Compare with "' + esc(chainBuckets[home][j].key) + '"</span>');
+      await sleep(getSpeed() * 0.6);
+      if (chainBuckets[home][j].key === key) { found = j; break; }
+    }
+
+    if (found >= 0) {
+      const old = chainBuckets[home][found].value;
+      chainBuckets[home][found].value = value;
+      highlights.clear(); highlights.set(home + '-' + found, 'hl-found'); render();
+      addLog('<span class="green">Updated "' + esc(key) + '": ' + old + ' \u2192 ' + value + '</span>');
+    } else {
+      chainBuckets[home].push({ key, value }); numEntries++;
+      highlights.clear(); highlights.set(home + '-' + (chainBuckets[home].length - 1), 'hl-found'); render();
+      const cl = chainBuckets[home].length;
+      addLog('<span class="green">Inserted ("' + esc(key) + '", ' + value + ') into bucket ' + home + '</span>' + (cl > 1 ? ' <span class="orange">\u2014 collision! Chain: ' + cl + '</span>' : ''));
+    }
+  } else {
+    // Open addressing
+    if (numEntries >= capacity) {
+      addLog('<span class="orange">Table is full!</span>');
+      animating = false; return;
+    }
+    highlights.set('s' + home, 'hl-hash'); render();
+    addLog('<span class="blue">hash("' + esc(key) + '") = ' + home + '</span>');
+    await sleep(getSpeed());
+
+    let inserted = false;
+    let firstDeleted = -1;
+    // First pass: find the key or reach EMPTY, remembering first DELETED slot
+    for (let p = 0; p < capacity; p++) {
+      const idx = probeIndex(home, p);
+      document.getElementById('probeReadout').innerHTML = 'Probe ' + p + ': ' + probeFormula(home, p);
+      highlights.clear(); highlights.set('s' + idx, 'hl-probe'); render();
+      await sleep(getSpeed() * 0.6);
+
+      if (probeSlots[idx].state === 'empty') {
+        // Key not in table — insert at first DELETED slot or here
+        const insertAt = (firstDeleted !== -1) ? firstDeleted : idx;
+        probeSlots[insertAt] = { key, value, state: 'occupied' }; numEntries++;
+        highlights.clear(); highlights.set('s' + insertAt, 'hl-found'); render();
+        addLog('<span class="green">Inserted at slot ' + insertAt + '</span>' + (p > 0 ? ' <span class="orange">(' + p + ' collision' + (p > 1 ? 's' : '') + ')</span>' : ''));
+        inserted = true; break;
+      }
+      if (probeSlots[idx].state === 'deleted') {
+        if (firstDeleted === -1) firstDeleted = idx;
+        addLog('<span class="muted">Slot ' + idx + ' DELETED \u2014 remember & keep probing</span>');
+        continue;
+      }
+      if (probeSlots[idx].key === key) {
+        const old = probeSlots[idx].value;
+        probeSlots[idx].value = value;
+        highlights.clear(); highlights.set('s' + idx, 'hl-found'); render();
+        addLog('<span class="green">Updated "' + esc(key) + '": ' + old + ' \u2192 ' + value + '</span>');
+        inserted = true; break;
+      }
+      addLog('<span class="muted">Slot ' + idx + ' occupied ("' + esc(probeSlots[idx].key) + '") \u2014 probe next</span>');
+    }
+    if (!inserted && firstDeleted !== -1) {
+      probeSlots[firstDeleted] = { key, value, state: 'occupied' }; numEntries++;
+      highlights.clear(); highlights.set('s' + firstDeleted, 'hl-found'); render();
+      addLog('<span class="green">Inserted at DELETED slot ' + firstDeleted + '</span>');
+      inserted = true;
+    }
+    if (!inserted) addLog('<span class="orange">Could not insert (table full or cycle).</span>');
+  }
+
+  await sleep(getSpeed());
+  highlights.clear(); render();
+  document.getElementById('hashReadout').innerHTML = '&mdash;';
+  document.getElementById('probeReadout').innerHTML = '&mdash;';
+  animating = false;
+}
+
+// ─── Get ───────────────────────────────────────────────────────────────────
+async function doGet() {
+  if (animating) return;
+  const key = document.getElementById('getKey').value.trim();
+  if (!key) { addLog('<span class="orange">Enter a key.</span>'); return; }
+  animating = true; highlights.clear(); currentKey = key;
+
+  const home = hashKey(key);
+  document.getElementById('hashReadout').innerHTML = '"<span style="color:#22D3EE">' + esc(key) + '</span>" &rarr; ' + hashSteps(key);
+
+  if (strategy === 'chaining') {
+    document.getElementById('probeReadout').innerHTML = 'Walk chain at bucket ' + home;
+    highlights.set('b' + home, 'hl-hash'); render();
+    addLog('<span class="blue">get("' + esc(key) + '"): bucket ' + home + '</span>');
+    await sleep(getSpeed());
+
+    let found = false;
+    for (let j = 0; j < chainBuckets[home].length; j++) {
+      highlights.clear(); highlights.set('b' + home, 'hl-hash');
+      highlights.set(home + '-' + j, 'hl-compare'); render();
+      addLog('<span class="muted">Check "' + esc(chainBuckets[home][j].key) + '"</span>');
+      await sleep(getSpeed() * 0.6);
+      if (chainBuckets[home][j].key === key) {
+        highlights.set(home + '-' + j, 'hl-found'); render();
+        addLog('<span class="green">Found! "' + esc(key) + '" \u2192 ' + chainBuckets[home][j].value + '</span>');
+        found = true; break;
+      }
+    }
+    if (!found) addLog('<span class="orange">"' + esc(key) + '" not found.</span>');
+  } else {
+    highlights.set('s' + home, 'hl-hash'); render();
+    addLog('<span class="blue">get("' + esc(key) + '"): home = ' + home + '</span>');
+    await sleep(getSpeed());
+
+    let found = false;
+    for (let p = 0; p < capacity; p++) {
+      const idx = probeIndex(home, p);
+      document.getElementById('probeReadout').innerHTML = 'Probe ' + p + ': ' + probeFormula(home, p);
+      highlights.clear(); highlights.set('s' + idx, 'hl-probe'); render();
+      await sleep(getSpeed() * 0.6);
+
+      if (probeSlots[idx].state === 'empty') {
+        addLog('<span class="orange">Slot ' + idx + ' EMPTY \u2014 "' + esc(key) + '" not in table.</span>');
+        break;
+      }
+      if (probeSlots[idx].state === 'deleted') {
+        addLog('<span class="muted">Slot ' + idx + ' DELETED \u2014 keep probing</span>');
+        continue;
+      }
+      if (probeSlots[idx].key === key) {
+        highlights.clear(); highlights.set('s' + idx, 'hl-found'); render();
+        addLog('<span class="green">Found at slot ' + idx + '! "' + esc(key) + '" \u2192 ' + probeSlots[idx].value + '</span>');
+        found = true; break;
+      }
+      addLog('<span class="muted">Slot ' + idx + ': "' + esc(probeSlots[idx].key) + '" \u2260 "' + esc(key) + '"</span>');
+    }
+    if (!found && probeSlots[probeIndex(home, 0)].state !== 'empty') {
+      // only log if we didn't already log "not in table"
+    }
+  }
+
+  await sleep(getSpeed());
+  highlights.clear(); render();
+  document.getElementById('hashReadout').innerHTML = '&mdash;';
+  document.getElementById('probeReadout').innerHTML = '&mdash;';
+  animating = false;
+}
+
+// ─── Remove ────────────────────────────────────────────────────────────────
+async function doRemove() {
+  if (animating) return;
+  const key = document.getElementById('removeKey').value.trim();
+  if (!key) { addLog('<span class="orange">Enter a key.</span>'); return; }
+  animating = true; highlights.clear(); currentKey = key;
+
+  const home = hashKey(key);
+  document.getElementById('hashReadout').innerHTML = '"<span style="color:#22D3EE">' + esc(key) + '</span>" &rarr; ' + hashSteps(key);
+
+  if (strategy === 'chaining') {
+    document.getElementById('probeReadout').innerHTML = 'Walk chain at bucket ' + home;
+    highlights.set('b' + home, 'hl-hash'); render();
+    addLog('<span class="blue">remove("' + esc(key) + '"): bucket ' + home + '</span>');
+    await sleep(getSpeed());
+
+    let found = -1;
+    for (let j = 0; j < chainBuckets[home].length; j++) {
+      highlights.clear(); highlights.set('b' + home, 'hl-hash');
+      highlights.set(home + '-' + j, 'hl-compare'); render();
+      addLog('<span class="muted">Check "' + esc(chainBuckets[home][j].key) + '"</span>');
+      await sleep(getSpeed() * 0.6);
+      if (chainBuckets[home][j].key === key) { found = j; break; }
+    }
+
+    if (found >= 0) {
+      highlights.set(home + '-' + found, 'hl-remove'); render();
+      addLog('<span class="orange">Removing ("' + esc(key) + '", ' + chainBuckets[home][found].value + ')</span>');
+      await sleep(getSpeed());
+      chainBuckets[home].splice(found, 1); numEntries--;
+      highlights.clear(); render();
+      addLog('<span class="green">Removed from chain.</span>');
+    } else {
+      addLog('<span class="orange">"' + esc(key) + '" not found.</span>');
+    }
+  } else {
+    highlights.set('s' + home, 'hl-hash'); render();
+    addLog('<span class="blue">remove("' + esc(key) + '"): home = ' + home + '</span>');
+    await sleep(getSpeed());
+
+    let found = false;
+    for (let p = 0; p < capacity; p++) {
+      const idx = probeIndex(home, p);
+      document.getElementById('probeReadout').innerHTML = 'Probe ' + p + ': ' + probeFormula(home, p);
+      highlights.clear(); highlights.set('s' + idx, 'hl-probe'); render();
+      await sleep(getSpeed() * 0.6);
+
+      if (probeSlots[idx].state === 'empty') {
+        addLog('<span class="orange">Slot ' + idx + ' EMPTY \u2014 "' + esc(key) + '" not in table.</span>');
+        break;
+      }
+      if (probeSlots[idx].state === 'deleted') {
+        addLog('<span class="muted">Slot ' + idx + ' DELETED \u2014 keep probing</span>');
+        continue;
+      }
+      if (probeSlots[idx].key === key) {
+        highlights.clear(); highlights.set('s' + idx, 'hl-remove'); render();
+        addLog('<span class="orange">Found "' + esc(key) + '" at slot ' + idx + ' \u2014 marking DELETED</span>');
+        await sleep(getSpeed());
+        probeSlots[idx].state = 'deleted'; numEntries--;
+        highlights.clear(); render();
+        addLog('<span class="green">Removed. Slot marked DELETED (not EMPTY) to preserve probe chains.</span>');
+        found = true; break;
+      }
+      addLog('<span class="muted">Slot ' + idx + ': "' + esc(probeSlots[idx].key) + '" \u2260 "' + esc(key) + '"</span>');
+    }
+  }
+
+  await sleep(getSpeed());
+  highlights.clear(); render();
+  document.getElementById('hashReadout').innerHTML = '&mdash;';
+  document.getElementById('probeReadout').innerHTML = '&mdash;';
+  animating = false;
+}
+
+// ─── Presets ───────────────────────────────────────────────────────────────
+function directInsert(key, value) {
+  currentKey = key;
+  if (strategy === 'chaining') {
+    const idx = hashKey(key);
+    // Check for duplicate
+    for (let j = 0; j < chainBuckets[idx].length; j++) {
+      if (chainBuckets[idx][j].key === key) { chainBuckets[idx][j].value = value; return; }
+    }
+    chainBuckets[idx].push({ key, value }); numEntries++;
+  } else {
+    const home = hashKey(key);
+    let firstDeleted = -1;
+    for (let p = 0; p < capacity; p++) {
+      const idx = probeIndex(home, p);
+      if (probeSlots[idx].state === 'empty') {
+        const insertAt = (firstDeleted !== -1) ? firstDeleted : idx;
+        probeSlots[insertAt] = { key, value, state: 'occupied' }; numEntries++; return;
+      }
+      if (probeSlots[idx].state === 'deleted') {
+        if (firstDeleted === -1) firstDeleted = idx;
+        continue;
+      }
+      if (probeSlots[idx].key === key) {
+        probeSlots[idx].value = value; return;
+      }
+    }
+    if (firstDeleted !== -1) {
+      probeSlots[firstDeleted] = { key, value, state: 'occupied' }; numEntries++; return;
+    }
+  }
+}
+
+function loadPreset(name) {
+  if (animating) return;
+  highlights.clear();
+  document.getElementById('log').innerHTML = '';
+  document.getElementById('hashReadout').innerHTML = '&mdash;';
+  document.getElementById('probeReadout').innerHTML = '&mdash;';
+
+  if (name === 'fruits') {
+    initTable(7);
+    [['apple',5],['banana',3],['cherry',8],['date',12],['fig',7]].forEach(([k,v]) => directInsert(k, v));
+    render();
+    addLog('<span class="muted">Loaded 5 fruit entries.</span>');
+    document.getElementById('insight').innerHTML = '<strong>Fruit prices:</strong> Notice where collisions occur. Try searching for a key or switch strategies to see different layouts for the same data.';
+  } else if (name === 'collisions') {
+    initTable(7);
+    // Pick keys that produce collisions with our hash function
+    [['banana',3],['cherry',8],['elderberry',1],['blueberry',4],['cranberry',6]].forEach(([k,v]) => directInsert(k, v));
+    render();
+    addLog('<span class="muted">Loaded keys that produce collisions.</span>');
+    if (strategy === 'chaining') {
+      document.getElementById('insight').innerHTML = '<strong>Collisions (Chaining):</strong> Multiple keys share the same bucket. The chain grows longer. Search must walk the entire chain in the worst case.';
+    } else {
+      const sNames = { linear: 'Linear', quadratic: 'Quadratic', double: 'Double' };
+      const sDescs = { linear: 'Notice the cluster of consecutive filled slots \u2014 this is primary clustering.', quadratic: 'Quadratic probing jumps +1, +4, +9... spreading entries out to reduce clustering.', double: 'Each key gets its own step from h2, so colliding keys follow different paths \u2014 no clustering!' };
+      document.getElementById('insight').innerHTML = '<strong>Collisions (' + sNames[strategy] + '):</strong> Keys that collide are displaced to other slots. ' + sDescs[strategy];
+    }
+  } else if (name === 'deletion') {
+    if (strategy === 'chaining') {
+      initTable(7);
+      [['banana',3],['cherry',8],['elderberry',1]].forEach(([k,v]) => directInsert(k, v));
+      render();
+      addLog('<span class="muted">Loaded 3 entries. Try removing one and searching for another.</span>');
+      document.getElementById('insight').innerHTML = '<strong>Deletion (Chaining):</strong> Simply unlink the entry from its chain. No special markers needed. Try removing "banana" then searching for "cherry".';
+    } else {
+      initTable(7);
+      [['banana',3],['cherry',8],['elderberry',1]].forEach(([k,v]) => directInsert(k, v));
+      render();
+      addLog('<span class="muted">Loaded 3 entries that share a home bucket. Remove the first one, then search for the last one.</span>');
+      document.getElementById('insight').innerHTML = '<strong>Deletion (Open Addressing):</strong> Remove "banana", then search for "elderberry". The DELETED marker at banana\'s old slot lets the search probe past it. Without the marker, "elderberry" would be lost!';
+      document.getElementById('removeKey').value = 'banana';
+      document.getElementById('getKey').value = 'elderberry';
+    }
+  } else if (name === 'anagrams') {
+    initTable(7);
+    [['cat',1],['act',2],['tac',3],['tea',4],['eat',5],['ate',6]].forEach(([k,v]) => directInsert(k, v));
+    render();
+    addLog('<span class="muted">Loaded anagram pairs: cat/act/tac and tea/eat/ate.</span>');
+    if (hashFn === 'horners') {
+      document.getElementById('insight').innerHTML = '<strong>Horner\'s Rule:</strong> "cat", "act", and "tac" use the same letters but hash to <em>different</em> slots because character order matters (each character is multiplied by a different power of 31). Try switching to "Modular (sum)" to see the difference!';
+    } else {
+      document.getElementById('insight').innerHTML = '<strong>Modular (sum):</strong> "cat", "act", and "tac" all have the same character sum (99+97+116 = 312) so they ALL collide at the same slot! This is why sum-based hashing is weak. Switch to "Horner\'s Rule" to see how it separates them.';
+    }
+  }
+}
+
+function clearTable() {
+  if (animating) return;
+  initTable(7);
+  highlights.clear();
+  document.getElementById('log').innerHTML = '';
+  document.getElementById('hashReadout').innerHTML = '&mdash;';
+  document.getElementById('probeReadout').innerHTML = '&mdash;';
+  render();
+  document.getElementById('insight').innerHTML = '<strong>Try it:</strong> Insert a few keys, then switch strategies to see how each one places entries differently. "Force Collisions" loads keys that hash to the same slot.';
+}
+
+// ─── Key bindings ──────────────────────────────────────────────────────────
+document.getElementById('putKey').addEventListener('keydown', e => { if (e.key === 'Enter') doPut(); });
+document.getElementById('putVal').addEventListener('keydown', e => { if (e.key === 'Enter') doPut(); });
+document.getElementById('getKey').addEventListener('keydown', e => { if (e.key === 'Enter') doGet(); });
+document.getElementById('removeKey').addEventListener('keydown', e => { if (e.key === 'Enter') doRemove(); });
+
+// ─── Init ──────────────────────────────────────────────────────────────────
+loadPreset('fruits');
+</script>
+</body>
+</html>
