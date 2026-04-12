@@ -278,15 +278,35 @@
           <p class="mod-desc">Insert, search, and compare balanced vs degenerate trees. See how shape drives performance.</p>
           <span class="mod-meta">O(log n) best · O(n) worst</span>
         </a>
+        <a class="module-card" href="data-structures/dictionary.html">
+          <h4>Dictionary (Hash Table)</h4>
+          <p class="mod-desc">Add, search, and delete key-value pairs. See hashing, collisions, and four collision resolution strategies.</p>
+          <span class="mod-meta">O(1) avg all operations</span>
+        </a>
         <a class="module-card" href="data-structures/heap.html">
           <h4>Max-Heap</h4>
           <p class="mod-desc">Insert, extract max, and build heap. See both tree and array representations simultaneously.</p>
           <span class="mod-meta">O(log n) insert/extract · O(n) build</span>
         </a>
-        <a class="module-card" href="data-structures/dictionary.html">
-          <h4>Dictionary (Hash Table)</h4>
-          <p class="mod-desc">Add, search, and delete key-value pairs. See hashing, collisions, and four collision resolution strategies.</p>
-          <span class="mod-meta">O(1) avg all operations</span>
+        <a class="module-card" href="data-structures/avl_tree.html">
+          <h4>AVL Tree</h4>
+          <p class="mod-desc">Self-balancing BST. Insert values and watch LL, RR, LR, and RL rotations fire to keep |balance factor| ≤ 1.</p>
+          <span class="mod-meta">O(log n) worst case · strict balance</span>
+        </a>
+        <a class="module-card" href="data-structures/red_black_tree.html">
+          <h4>Red-Black Tree</h4>
+          <p class="mod-desc">Self-balancing BST via node colors. Five properties, three fix-up cases, and the backing store of std::map.</p>
+          <span class="mod-meta">O(log n) worst case · fewer rotations</span>
+        </a>
+        <a class="module-card" href="data-structures/two_three_tree.html">
+          <h4>2-3 Tree</h4>
+          <p class="mod-desc">Multi-way search tree with bottom-up node splits. Perfectly height-balanced. Direct ancestor of B-trees.</p>
+          <span class="mod-meta">O(log n) · every leaf at same depth</span>
+        </a>
+        <a class="module-card" href="data-structures/two_three_four_tree.html">
+          <h4>2-3-4 Tree</h4>
+          <p class="mod-desc">Multi-way tree with top-down preemptive splitting. Single-pass insert. Isomorphic to red-black trees.</p>
+          <span class="mod-meta">O(log n) · the key to red-black</span>
         </a>
       </div>
     </div>
@@ -335,15 +355,35 @@
           <p class="mod-desc">Uses shifts, not swaps. Excellent for nearly-sorted data. Shows O(n) best case efficiency.</p>
           <span class="mod-meta">O(n²) worst · O(n) best</span>
         </a>
+        <a class="module-card" href="https://github.com/nbeaulieu/unr-cs302-data-structures/blob/main/code/dictionary.cpp" target="_blank" rel="noopener noreferrer">
+          <h4>Dictionary (C++)</h4>
+          <p class="mod-desc">Hash table with four collision strategies. Add, get, remove, rehashing, and word frequency demo.</p>
+          <span class="mod-meta">O(1) avg all operations</span>
+        </a>
         <a class="module-card" href="https://github.com/nbeaulieu/unr-cs302-data-structures/blob/main/code/heap.cpp" target="_blank" rel="noopener noreferrer">
           <h4>Max-Heap (C++)</h4>
           <p class="mod-desc">Insert, extract max, and build heap with sift up/down. Includes step-by-step visualizations.</p>
           <span class="mod-meta">O(log n) insert/extract · O(n) build</span>
         </a>
-        <a class="module-card" href="https://github.com/nbeaulieu/unr-cs302-data-structures/blob/main/code/dictionary.cpp" target="_blank" rel="noopener noreferrer">
-          <h4>Dictionary (C++)</h4>
-          <p class="mod-desc">Hash table with four collision strategies. Add, get, remove, rehashing, and word frequency demo.</p>
-          <span class="mod-meta">O(1) avg all operations</span>
+        <a class="module-card" href="https://github.com/nbeaulieu/unr-cs302-data-structures/blob/main/code/avl_tree.cpp" target="_blank" rel="noopener noreferrer">
+          <h4>AVL Tree (C++)</h4>
+          <p class="mod-desc">Self-balancing BST with LL, RR, LR, RL rotations. Step-by-step trace of rebalances.</p>
+          <span class="mod-meta">O(log n) worst case</span>
+        </a>
+        <a class="module-card" href="https://github.com/nbeaulieu/unr-cs302-data-structures/blob/main/code/red_black_tree.cpp" target="_blank" rel="noopener noreferrer">
+          <h4>Red-Black Tree (C++)</h4>
+          <p class="mod-desc">CLRS-style sentinel NIL implementation with insert + fix-up. Colored pretty-print.</p>
+          <span class="mod-meta">O(log n) worst case</span>
+        </a>
+        <a class="module-card" href="https://github.com/nbeaulieu/unr-cs302-data-structures/blob/main/code/two_three_tree.cpp" target="_blank" rel="noopener noreferrer">
+          <h4>2-3 Tree (C++)</h4>
+          <p class="mod-desc">Multi-way tree with bottom-up split propagation. Perfect balance without rotations.</p>
+          <span class="mod-meta">O(log n) · ancestor of B-trees</span>
+        </a>
+        <a class="module-card" href="https://github.com/nbeaulieu/unr-cs302-data-structures/blob/main/code/two_three_four_tree.cpp" target="_blank" rel="noopener noreferrer">
+          <h4>2-3-4 Tree (C++)</h4>
+          <p class="mod-desc">Multi-way tree with top-down preemptive splitting. Single-pass insert. Red-black twin.</p>
+          <span class="mod-meta">O(log n) · single-pass insert</span>
         </a>
         <a class="module-card" href="https://github.com/nbeaulieu/unr-cs302-data-structures/tree/main/code" target="_blank" rel="noopener noreferrer">
           <h4>All Code Examples</h4>
@@ -397,15 +437,35 @@
           <p class="mod-desc">Uses shifts, not swaps. Demonstrates left-to-right growth and efficiency for nearly-sorted data.</p>
           <span class="mod-meta">O(n²) worst · O(n) best</span>
         </a>
+        <a class="module-card" href="https://github.com/nbeaulieu/unr-cs302-data-structures/blob/main/pseudocode/dictionary_pseudocode.txt" target="_blank" rel="noopener noreferrer">
+          <h4>Dictionary Pseudocode</h4>
+          <p class="mod-desc">Modular hashing, Horner's rule, add, get, remove, and rehash with step-by-step collision examples.</p>
+          <span class="mod-meta">O(1) avg all operations</span>
+        </a>
         <a class="module-card" href="https://github.com/nbeaulieu/unr-cs302-data-structures/blob/main/pseudocode/heap_pseudocode.txt" target="_blank" rel="noopener noreferrer">
           <h4>Max-Heap Pseudocode</h4>
           <p class="mod-desc">Sift up, sift down, insert, extract max, and build heap. Array-based tree with index arithmetic.</p>
           <span class="mod-meta">O(log n) insert/extract · O(n) build</span>
         </a>
-        <a class="module-card" href="https://github.com/nbeaulieu/unr-cs302-data-structures/blob/main/pseudocode/dictionary_pseudocode.txt" target="_blank" rel="noopener noreferrer">
-          <h4>Dictionary Pseudocode</h4>
-          <p class="mod-desc">Modular hashing, Horner's rule, add, get, remove, and rehash with step-by-step collision examples.</p>
-          <span class="mod-meta">O(1) avg all operations</span>
+        <a class="module-card" href="https://github.com/nbeaulieu/unr-cs302-data-structures/blob/main/pseudocode/avl_tree_pseudocode.txt" target="_blank" rel="noopener noreferrer">
+          <h4>AVL Tree Pseudocode</h4>
+          <p class="mod-desc">Height-balanced BST with LL, RR, LR, RL rotations. Worked example of ascending inserts.</p>
+          <span class="mod-meta">O(log n) worst case</span>
+        </a>
+        <a class="module-card" href="https://github.com/nbeaulieu/unr-cs302-data-structures/blob/main/pseudocode/red_black_tree_pseudocode.txt" target="_blank" rel="noopener noreferrer">
+          <h4>Red-Black Tree Pseudocode</h4>
+          <p class="mod-desc">Five properties, CLRS-style insert + three fix-up cases with worked example.</p>
+          <span class="mod-meta">O(log n) worst case</span>
+        </a>
+        <a class="module-card" href="https://github.com/nbeaulieu/unr-cs302-data-structures/blob/main/pseudocode/two_three_tree_pseudocode.txt" target="_blank" rel="noopener noreferrer">
+          <h4>2-3 Tree Pseudocode</h4>
+          <p class="mod-desc">Bottom-up split propagation with worked example. Perfect balance without rotations.</p>
+          <span class="mod-meta">O(log n) · ancestor of B-trees</span>
+        </a>
+        <a class="module-card" href="https://github.com/nbeaulieu/unr-cs302-data-structures/blob/main/pseudocode/two_three_four_tree_pseudocode.txt" target="_blank" rel="noopener noreferrer">
+          <h4>2-3-4 Tree Pseudocode</h4>
+          <p class="mod-desc">Top-down preemptive split pseudocode. Single-pass insert; isomorphic to red-black trees.</p>
+          <span class="mod-meta">O(log n) · single-pass insert</span>
         </a>
         <a class="module-card" href="https://github.com/nbeaulieu/unr-cs302-data-structures/tree/main/pseudocode" target="_blank" rel="noopener noreferrer">
           <h4>All Pseudocode</h4>

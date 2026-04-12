@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2-3-4 Tree — Interactive | CS 302</title>
+<meta name="description" content="Interactive visualization of 2-3-4 (2-4) trees. Insert values and watch top-down preemptive splits keep the tree balanced in a single downward pass.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0B0F1A; color: #fff; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; padding: 20px; min-height: 100vh; }
+  .back-link { font-family: 'Plus Jakarta Sans', system-ui, sans-serif; font-size: 13px; color: #22D3EE; text-decoration: none; display: inline-block; margin-bottom: 10px; transition: color 0.2s; }
+  .back-link:hover, .back-link:focus { color: #818CF8; text-decoration: underline; }
+  .back-link:focus-visible { outline: 2px solid #818CF8; outline-offset: 2px; border-radius: 2px; }
+  h1 { font-size: 24px; margin-bottom: 4px; }
+  .subtitle { color: #818CF8; font-size: 14px; margin-bottom: 16px; line-height: 1.5; }
+  .subtitle .orange { color: #FB923C; font-weight: bold; }
+  .layout { display: flex; gap: 20px; flex-wrap: wrap; }
+  .panel { background: #0F172A; border: 1px solid #334155; border-radius: 10px; padding: 20px; }
+  .panel-controls { width: 280px; flex-shrink: 0; }
+  .panel-tree { flex: 1; min-width: 460px; min-height: 440px; position: relative; }
+  label { font-size: 13px; color: #CBD5E1; display: block; margin-bottom: 4px; }
+  input[type=number] { width: 80px; padding: 6px 10px; border-radius: 5px; border: 1px solid #334155; background: #1E293B; color: #fff; font-size: 14px; font-family: 'Consolas', monospace; }
+  .btn { background: #312E81; color: #A5B4FC; border: 1px solid #4338CA; border-radius: 6px; padding: 7px 16px; font-size: 13px; cursor: pointer; font-family: inherit; transition: all 0.2s; }
+  .btn:hover, .btn:focus { background: #3730A3; }
+  .btn:focus-visible { outline: 2px solid #818CF8; outline-offset: 2px; }
+  .btn.primary { background: #6366F1; color: #fff; border-color: #6366F1; font-weight: 600; }
+  .btn.primary:hover { filter: brightness(1.1); }
+  .btn.danger { background: #5A1A1A; color: #FB923C; border-color: #7F1D1D; }
+  .btn.danger:hover { background: #6A2020; }
+  .btn-row { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+  .section-label { font-size: 11px; letter-spacing: 2px; color: #818CF8; text-transform: uppercase; margin: 16px 0 8px; font-weight: 600; }
+  .section-label:first-child { margin-top: 0; }
+  .preset-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+  .preset-btn { font-size: 11px; padding: 4px 10px; background: #1E293B; border: 1px solid #334155; color: #CBD5E1; border-radius: 4px; cursor: pointer; transition: all 0.2s; }
+  .preset-btn:hover, .preset-btn:focus { border-color: #818CF8; color: #818CF8; }
+  .log { margin-top: 12px; max-height: 180px; overflow-y: auto; font-size: 12px; line-height: 1.6; padding: 10px; background: #0B0F1A; border-radius: 6px; border: 1px solid #334155; }
+  .log-entry { padding: 2px 0; border-bottom: 1px solid rgba(51,65,85,0.3); }
+  .log .green { color: #4ADE80; } .log .orange { color: #FB923C; } .log .blue { color: #22D3EE; } .log .muted { color: #94A3B8; }
+  .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+  .stat { background: #1E293B; border-radius: 6px; padding: 10px; text-align: center; }
+  .stat .val { font-size: 22px; font-weight: 700; color: #818CF8; font-family: 'Consolas', monospace; }
+  .stat .lbl { font-size: 10px; color: #94A3B8; text-transform: uppercase; letter-spacing: 1px; margin-top: 2px; }
+  canvas { display: block; width: 100%; height: 100%; }
+  .legend { display: flex; gap: 14px; margin-top: 10px; flex-wrap: wrap; }
+  .legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: #CBD5E1; }
+  .legend-box { width: 16px; height: 12px; border: 1.5px solid #6366F1; border-radius: 3px; background: #312E81; }
+  .speed-row { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+  .speed-row input { width: 100px; } .speed-row span { font-size: 12px; color: #94A3B8; }
+  .insight { margin-top: 12px; padding: 10px 12px; background: rgba(129,140,248,0.06); border: 1px solid rgba(129,140,248,0.15); border-radius: 6px; font-size: 12px; color: #CBD5E1; line-height: 1.5; }
+  .insight strong { color: #818CF8; }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+  }
+  @media (max-width: 780px) {
+    body { padding: 16px; }
+    .panel-controls { width: 100%; }
+    .panel-tree { min-width: 100%; }
+    h1 { font-size: 20px; }
+    .subtitle { font-size: 13px; }
+  }
+</style>
+</head>
+<body>
+<a href="../index.html" class="back-link" aria-label="Back to CS 302 Home">← CS 302 Home</a>
+<h1>2-3-4 Tree — Interactive</h1>
+<p class="subtitle">
+  Nodes hold 1, 2, or 3 keys (2-, 3-, or 4-node). Insertion uses <span class="orange">top-down preemptive splitting</span>: any 4-node encountered on the way down is split <strong>before</strong> we step into it, guaranteeing the parent always has room. Directly isomorphic to a red-black tree.
+</p>
+<div class="layout">
+  <div class="panel panel-controls">
+    <div class="section-label">Insert</div>
+    <div style="display:flex;gap:8px;align-items:end;">
+      <div><label for="insertVal">Value</label><input type="number" id="insertVal" value="25" min="1" max="99"></div>
+      <button class="btn primary" onclick="doInsert()" aria-label="Insert value">Insert</button>
+    </div>
+    <div class="section-label">Search</div>
+    <div style="display:flex;gap:8px;align-items:end;">
+      <div><label for="searchVal">Value</label><input type="number" id="searchVal" value="30" min="1" max="99"></div>
+      <button class="btn" onclick="doSearch()" aria-label="Search for value">Search</button>
+    </div>
+    <div class="section-label">Presets</div>
+    <div class="preset-row">
+      <button class="preset-btn" onclick="loadPreset('ascending')">Ascending</button>
+      <button class="preset-btn" onclick="loadPreset('mixed')">Mixed</button>
+      <button class="preset-btn" onclick="loadPreset('random')">Random 14</button>
+      <button class="preset-btn" onclick="loadPreset('presplit')">Pre-Split Demo</button>
+    </div>
+    <div class="btn-row"><button class="btn danger" onclick="clearTree()" aria-label="Clear tree">Clear Tree</button></div>
+    <div class="speed-row">
+      <label style="margin:0;">Speed:</label>
+      <input type="range" id="speedSlider" min="1" max="5" value="3" aria-label="Animation speed">
+      <span id="speedLabel" aria-live="polite">Normal</span>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="val" id="statKeys">0</div><div class="lbl">Keys</div></div>
+      <div class="stat"><div class="val" id="statHeight">0</div><div class="lbl">Depth</div></div>
+      <div class="stat"><div class="val" id="stat4">0</div><div class="lbl">4-Nodes</div></div>
+      <div class="stat"><div class="val" id="stat3">0</div><div class="lbl">3-Nodes</div></div>
+    </div>
+    <div class="insight" id="insight">
+      <strong>Try it:</strong> Load "Pre-Split Demo" to see when 4-nodes form and when the next insert pre-splits them on the way down. Insert is always a single downward pass — splits never propagate back up.
+    </div>
+    <div class="section-label">Log</div>
+    <div class="log" id="log" role="log" aria-label="Operation log" aria-live="polite"></div>
+  </div>
+  <div class="panel panel-tree">
+    <canvas id="treeCanvas" role="img" aria-label="2-3-4 tree visualization"></canvas>
+    <div class="legend">
+      <div class="legend-item"><div class="legend-box"></div> 2-node</div>
+      <div class="legend-item"><div class="legend-box" style="width:28px;"></div> 3-node</div>
+      <div class="legend-item"><div class="legend-box" style="width:40px;"></div> 4-node</div>
+      <div class="legend-item"><div class="legend-box" style="background:#FB923C;border-color:#fff;"></div> Visiting / splitting</div>
+    </div>
+  </div>
+</div>
+<script>
+// Node: {keys:[], children:[], leaf}
+function N(leaf){return {keys:[],children:[],leaf};}
+let root=null, animating=false, highlight=null, splitCount=0;
+
+function countNodes(n,pred){if(!n)return 0;let c=pred(n)?1:0;if(!n.leaf)for(const ch of n.children)c+=countNodes(ch,pred);return c;}
+function countKeys(n){if(!n)return 0;let c=n.keys.length;if(!n.leaf)for(const ch of n.children)c+=countKeys(ch);return c;}
+function depth(n){if(!n)return 0;if(n.leaf)return 1;return 1+Math.max(...n.children.map(depth));}
+
+function getSpeed(){const v=+document.getElementById('speedSlider').value;const s=[1400,900,550,320,160];const l=['Slow','Medium','Normal','Fast','Very Fast'];document.getElementById('speedLabel').textContent=l[v-1];return s[v-1];}
+document.getElementById('speedSlider').addEventListener('input',getSpeed);
+
+function updateStats(){
+  document.getElementById('statKeys').textContent=countKeys(root);
+  document.getElementById('statHeight').textContent=depth(root);
+  document.getElementById('stat4').textContent=countNodes(root,n=>n.keys.length===3);
+  document.getElementById('stat3').textContent=countNodes(root,n=>n.keys.length===2);
+}
+function addLog(html){const log=document.getElementById('log'),e=document.createElement('div');e.className='log-entry';e.innerHTML=html;log.prepend(e);if(log.children.length>60)log.removeChild(log.lastChild);}
+async function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
+
+// --- Top-down preemptive insert ---
+// splitChild(parent, i): parent.children[i] is a 4-node; split it into two 2-nodes,
+// promote middle key into parent.
+function splitChild(parent,i){
+  const full=parent.children[i];
+  const right=N(full.leaf);
+  right.keys=[full.keys[2]];
+  if(!full.leaf){right.children=[full.children[2],full.children[3]];full.children.length=2;}
+  const promoted=full.keys[1];
+  full.keys=[full.keys[0]];
+  parent.keys.splice(i,0,promoted);
+  parent.children.splice(i+1,0,right);
+  splitCount++;
+}
+
+function insertNonFull(node,key){
+  if(node.keys.includes(key))return;
+  if(node.leaf){
+    let i=node.keys.length-1;
+    node.keys.push(0);
+    while(i>=0 && key<node.keys[i]){node.keys[i+1]=node.keys[i];i--;}
+    node.keys[i+1]=key;
+    return;
+  }
+  let i=node.keys.length-1;
+  while(i>=0 && key<node.keys[i]) i--;
+  i++;
+  if(node.children[i].keys.length===3){
+    splitChild(node,i);
+    if(key===node.keys[i])return;
+    if(key>node.keys[i])i++;
+  }
+  insertNonFull(node.children[i],key);
+}
+
+function insertSilent(key){
+  if(!root){root=N(true);root.keys=[key];return;}
+  if(root.keys.length===3){
+    const newRoot=N(false);
+    newRoot.children=[root];
+    splitChild(newRoot,0);
+    insertNonFull(newRoot,key);
+    root=newRoot;
+    return;
+  }
+  insertNonFull(root,key);
+}
+
+function searchTree(key){
+  let n=root;
+  while(n){
+    let i=0;
+    while(i<n.keys.length && key>n.keys[i]) i++;
+    if(i<n.keys.length && key===n.keys[i]) return n;
+    if(n.leaf) return null;
+    n=n.children[i];
+  }
+  return null;
+}
+
+// --- Animated ---
+async function doInsert(){
+  if(animating)return;
+  const val=parseInt(document.getElementById('insertVal').value);
+  if(isNaN(val))return;
+  animating=true;splitCount=0;highlight=null;
+
+  if(!root){insertSilent(val);addLog('<span class="green">Inserted '+val+'</span> — new root.');updateStats();drawTree();animating=false;return;}
+
+  // Descent visualization. Note: actual splits may happen during descent, so we
+  // visualize the CURRENT node we are about to step into before each step.
+  let cur=root;
+  while(cur){
+    if(cur.keys.includes(val)){highlight=cur;drawTree();addLog('<span class="orange">'+val+' already in tree.</span>');await sleep(getSpeed());highlight=null;drawTree();animating=false;return;}
+    highlight=cur;drawTree();await sleep(getSpeed());
+    if(cur.keys.length===3){addLog('<span class="orange">Touching a 4-node — will pre-split on insert.</span>');}
+    if(cur.leaf)break;
+    let i=0;while(i<cur.keys.length && val>cur.keys[i]) i++;
+    addLog('<span class="blue">Descend to child '+i+' (between keys of '+fmt(cur)+')</span>');
+    cur=cur.children[i];
+  }
+
+  insertSilent(val);
+  if(splitCount>0)addLog('<span class="orange">'+splitCount+' pre-split'+(splitCount>1?'s':'')+' fired on the way down.</span>');
+  else addLog('<span class="muted">No splits needed.</span>');
+  const n=searchTree(val);
+  highlight=n;drawTree();
+  addLog('<span class="green">Insert complete.</span>');
+  updateStats();
+  await sleep(getSpeed()*1.5);highlight=null;drawTree();animating=false;
+}
+
+function fmt(n){return '['+n.keys.join(' | ')+']';}
+
+async function doSearch(){
+  if(animating)return;
+  const val=parseInt(document.getElementById('searchVal').value);
+  if(isNaN(val))return;
+  animating=true;highlight=null;
+  if(!root){addLog('<span class="orange">Empty tree.</span>');animating=false;return;}
+  let cur=root;
+  while(cur){
+    highlight=cur;drawTree();await sleep(getSpeed());
+    if(cur.keys.includes(val)){addLog('<span class="green">Found '+val+'</span> in '+fmt(cur)+'.');await sleep(getSpeed()*2);highlight=null;drawTree();animating=false;return;}
+    if(cur.leaf){addLog('<span class="orange">'+val+' not found.</span>');await sleep(getSpeed()*2);highlight=null;drawTree();animating=false;return;}
+    let i=0;while(i<cur.keys.length && val>cur.keys[i]) i++;
+    addLog('<span class="blue">Descend to child '+i+'</span>');
+    cur=cur.children[i];
+  }
+}
+
+// --- Layout & drawing (same approach as 2-3 tree) ---
+function nodeWidth(n){return Math.max(46,n.keys.length*32+16);}
+
+function layout(node,depth,xStart,out,yStep){
+  if(node.leaf){
+    const w=nodeWidth(node);
+    out.set(node,{x:xStart+w/2,y:40+depth*yStep,w});
+    return xStart+w+20;
+  }
+  let x=xStart;
+  for(const ch of node.children) x=layout(ch,depth+1,x,out,yStep);
+  const first=out.get(node.children[0]).x;
+  const last=out.get(node.children[node.children.length-1]).x;
+  const w=nodeWidth(node);
+  out.set(node,{x:(first+last)/2,y:40+depth*yStep,w});
+  return x;
+}
+
+function drawTree(){
+  const canvas=document.getElementById('treeCanvas');
+  const rect=canvas.parentElement.getBoundingClientRect();
+  const dpr=2;
+  canvas.width=rect.width*dpr;canvas.height=(rect.height-40)*dpr;
+  canvas.style.width=rect.width+'px';canvas.style.height=(rect.height-40)+'px';
+  const ctx=canvas.getContext('2d');ctx.scale(dpr,dpr);
+  const W=rect.width,Hc=rect.height-40;
+  ctx.clearRect(0,0,W,Hc);
+
+  if(!root){ctx.fillStyle='#94A3B8';ctx.font='14px system-ui';ctx.textAlign='center';ctx.fillText('Empty tree. Insert a value or load a preset.',W/2,100);return;}
+
+  const pos=new Map();
+  const d=depth(root);
+  const yStep=Math.max(62,Math.min(90,(Hc-80)/Math.max(d,1)));
+  const totalW=layout(root,0,20,pos,yStep);
+  const dx=(W-totalW)/2;
+  for(const [,p] of pos) p.x+=dx;
+
+  function drawEdges(n){
+    if(n.leaf)return;
+    const p=pos.get(n);
+    n.children.forEach((ch,i)=>{
+      const cp=pos.get(ch);
+      const nchild=n.children.length;
+      ctx.beginPath();ctx.moveTo(p.x+(i-nchild/2+0.5)*16,p.y+18);
+      ctx.lineTo(cp.x,cp.y-18);
+      ctx.strokeStyle='#334155';ctx.lineWidth=1.5;ctx.stroke();
+      drawEdges(ch);
+    });
+  }
+  drawEdges(root);
+
+  function drawNodes(n){
+    const p=pos.get(n);
+    const w=p.w,h=36;
+    let fill='#312E81',border='#6366F1';
+    if(n.keys.length===3){fill='#3B1C6B';}
+    if(highlight===n){fill='#FB923C';border='#fff';}
+    const rx=p.x-w/2,ry=p.y-h/2,rr=6;
+    ctx.beginPath();
+    ctx.moveTo(rx+rr,ry);
+    ctx.lineTo(rx+w-rr,ry);ctx.quadraticCurveTo(rx+w,ry,rx+w,ry+rr);
+    ctx.lineTo(rx+w,ry+h-rr);ctx.quadraticCurveTo(rx+w,ry+h,rx+w-rr,ry+h);
+    ctx.lineTo(rx+rr,ry+h);ctx.quadraticCurveTo(rx,ry+h,rx,ry+h-rr);
+    ctx.lineTo(rx,ry+rr);ctx.quadraticCurveTo(rx,ry,rx+rr,ry);
+    ctx.closePath();
+    ctx.fillStyle=fill;ctx.fill();
+    ctx.strokeStyle=border;ctx.lineWidth=2;ctx.stroke();
+
+    ctx.fillStyle='#fff';ctx.font='bold 14px system-ui';
+    ctx.textAlign='center';ctx.textBaseline='middle';
+    const perKey=w/n.keys.length;
+    n.keys.forEach((k,i)=>{
+      ctx.fillText(String(k), rx+(i+0.5)*perKey, p.y+1);
+      if(i>0){
+        ctx.strokeStyle='rgba(255,255,255,0.25)';ctx.lineWidth=1;
+        ctx.beginPath();ctx.moveTo(rx+i*perKey,ry+6);ctx.lineTo(rx+i*perKey,ry+h-6);ctx.stroke();
+      }
+    });
+    if(!n.leaf)for(const ch of n.children)drawNodes(ch);
+  }
+  drawNodes(root);
+}
+
+// --- Presets ---
+function clearTree(){if(animating)return;root=null;highlight=null;document.getElementById('log').innerHTML='';drawTree();updateStats();document.getElementById('insight').innerHTML='<strong>Try it:</strong> Load "Pre-Split Demo" to see when 4-nodes form and when the next insert pre-splits them on the way down.';}
+
+function loadPreset(name){
+  if(animating)return;root=null;highlight=null;document.getElementById('log').innerHTML='';
+  let vals=[];
+  if(name==='ascending'){vals=[10,20,30,40,50,60,70,80,90,100];addLog('<span class="muted">Ascending: [10..100]</span>');document.getElementById('insight').innerHTML='<strong>Perfect balance:</strong> Like a 2-3 tree, every leaf stays at the same depth. Only the root-split case ever grows the tree taller.';}
+  else if(name==='mixed'){vals=[50,30,70,20,40,60,80,10,25,35,45,55,65,75];addLog('<span class="muted">Mixed sequence.</span>');}
+  else if(name==='random'){const p=[];while(p.length<14){const v=Math.floor(Math.random()*90)+5;if(!p.includes(v))p.push(v);}vals=p;addLog('<span class="muted">Random: ['+vals.join(', ')+']</span>');}
+  else if(name==='presplit'){vals=[10,20,30,40,50,60];addLog('<span class="muted">Watch the 4-node form, then get pre-split.</span>');document.getElementById('insight').innerHTML='<strong>Top-down preemptive splitting:</strong> Insert 30 fills the root into a 4-node. Insert 40 pre-splits the root BEFORE descending — the middle key 20 goes up as a new root. This is why insert never needs to propagate splits back up.';}
+  for(const v of vals)insertSilent(v);
+  drawTree();updateStats();
+}
+
+window.addEventListener('resize',drawTree);
+document.getElementById('insertVal').addEventListener('keydown',e=>{if(e.key==='Enter')doInsert();});
+document.getElementById('searchVal').addEventListener('keydown',e=>{if(e.key==='Enter')doSearch();});
+loadPreset('mixed');
+</script>
+</body>
+</html>

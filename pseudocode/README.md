@@ -24,6 +24,10 @@ This directory contains pseudocode implementations of algorithms used in CS 302.
 ### Trees & Heaps
 
 - **`heap_pseudocode.txt`** - Max-Heap (Insert, Extract Max, Build Heap)
+- **`avl_tree_pseudocode.txt`** - AVL Tree (Height-Balanced BST with LL, RR, LR, RL Rotations)
+- **`red_black_tree_pseudocode.txt`** - Red-Black Tree (CLRS Insert + Fix-up, Three Cases)
+- **`two_three_tree_pseudocode.txt`** - 2-3 Tree (Bottom-Up Split Propagation)
+- **`two_three_four_tree_pseudocode.txt`** - 2-3-4 Tree (Top-Down Preemptive Splitting)
 
 ## Format
 

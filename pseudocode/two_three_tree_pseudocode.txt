@@ -1,0 +1,273 @@
+================================================================================
+2-3 TREE - Pseudocode
+================================================================================
+Algorithm: 2-3 Tree (Perfectly Height-Balanced Multi-Way Search Tree)
+Strategy: Nodes hold 1 or 2 keys (2-node / 3-node). All leaves stay at the
+          same depth. Insertion uses BOTTOM-UP SPLITTING: overfilled nodes
+          split and promote their middle key to the parent; splits may
+          cascade; root splits grow the tree upward.
+Complexity: Search O(log n), Insert O(log n)
+Key: Perfect balance without rotations — the direct ancestor of B-trees.
+
+================================================================================
+NODE SHAPES
+================================================================================
+
+A node is either a 2-NODE or a 3-NODE. There are no other shapes at rest.
+
+    2-node        [ K ]                   Keys in left  < K
+                  /   \                   Keys in right > K
+                L     R
+
+    3-node        [ K1 | K2 ]             Keys in left   < K1
+                  /    |    \             K1 < keys in middle < K2
+                L     M     R             Keys in right  > K2
+
+During insertion a node MAY momentarily hold 3 keys (a "4-node"). The split
+rule immediately replaces it with two 2-nodes and a promoted middle key.
+
+All leaves are always at the same depth. Height = O(log n).
+
+================================================================================
+SEARCH
+================================================================================
+
+SEARCH_23(node, key)
+    WHILE node ≠ null DO
+        IF node has key THEN
+            RETURN true
+        END IF
+        IF node is leaf THEN
+            RETURN false
+        END IF
+        IF key < node.key1 THEN
+            node ← node.left
+        ELSE IF node is 2-node OR key < node.key2 THEN
+            node ← node.middle        // (or node.right if it's a 2-node)
+        ELSE
+            node ← node.right
+        END IF
+    END WHILE
+    RETURN false
+END SEARCH_23
+
+Work per level is O(1) (at most 2 key comparisons), so total is O(log n).
+
+================================================================================
+INSERT — BOTTOM-UP SPLIT PROPAGATION
+================================================================================
+
+High level:
+    1. Descend to the correct leaf.
+    2. Insert the key into that leaf.
+    3. If the leaf now holds 3 keys, SPLIT it: middle key promotes to parent.
+    4. The parent may now hold 3 keys — split again and keep propagating.
+    5. If the ROOT splits, build a new 1-key root above it. The tree grows
+       upward by one level. (This is the ONLY way the tree gets taller.)
+
+INSERT_23(root, key)
+    IF root = null THEN
+        RETURN new 2-node with key
+    END IF
+
+    result ← INSERT_HELPER(root, key)
+
+    IF NOT result.split THEN
+        RETURN result.node           // no split propagated to the top
+    END IF
+
+    // Root split: build a new root holding the promoted key.
+    newRoot ← new 2-node
+    newRoot.key1          ← result.promoted
+    newRoot.left          ← result.leftChild
+    newRoot.right         ← result.rightChild
+    RETURN newRoot
+END INSERT_23
+
+
+INSERT_HELPER(node, key)
+    // Returns either:
+    //    {split: false, node}                               — no change above
+    //    {split: true,  leftChild, promoted, rightChild}   — split happened
+
+    IF node is leaf THEN
+        Insert key into node in sorted order (node may now hold 3 keys).
+        IF node has 3 keys THEN
+            RETURN SPLIT(node)
+        END IF
+        RETURN {split: false, node}
+    END IF
+
+    // Recurse into the child that should contain key.
+    child ← choose correct child of node based on key
+    result ← INSERT_HELPER(child, key)
+
+    IF NOT result.split THEN
+        RETURN {split: false, node}
+    END IF
+
+    // A child split — absorb the promoted key into THIS node.
+    Insert result.promoted into node in sorted order, wiring
+    result.leftChild and result.rightChild in place of the old child.
+    // (node may now hold 3 keys.)
+    IF node has 3 keys THEN
+        RETURN SPLIT(node)
+    END IF
+    RETURN {split: false, node}
+END INSERT_HELPER
+
+================================================================================
+SPLIT — THE ONLY REBALANCING PRIMITIVE
+================================================================================
+
+A node that momentarily holds 3 keys [k1, k2, k3] and (for internal nodes)
+4 children [c0, c1, c2, c3] is split into two 2-nodes and a promoted middle.
+
+SPLIT(node)
+    left  ← new 2-node holding key1 of node
+    right ← new 2-node holding key3 of node
+
+    IF node is internal THEN
+        left.left   ← node.c0
+        left.right  ← node.c1
+        right.left  ← node.c2
+        right.right ← node.c3
+    END IF
+
+    promoted ← node.key2
+    RETURN {split: true, left, promoted, right}
+END SPLIT
+
+Visualization of a leaf split:
+
+        [k1 | k2 | k3]                promoted k2
+             (overflow)         ────▶    /       \
+                                     [k1]        [k3]
+
+Whoever called split() hands `promoted` off to its own parent, which may
+in turn overflow and split — that's how cascades happen.
+
+================================================================================
+STEP-BY-STEP EXAMPLE — INSERT 20, 40, 30, 10, 50, 60, 70
+================================================================================
+
+Insert 20:
+    [20]
+
+Insert 40:
+    [20 | 40]
+
+Insert 30:
+    Leaf becomes [20 | 30 | 40] — overflow!
+    SPLIT: promote 30, leaves become [20] and [40].
+    ROOT split → new root.
+
+          [30]
+         /    \
+      [20]   [40]
+
+Insert 10:
+    Descend to leaf [20]. Insert: [10 | 20].
+
+          [30]
+         /    \
+      [10|20] [40]
+
+Insert 50:
+    Descend to leaf [40]. Insert: [40 | 50].
+
+          [30]
+         /    \
+      [10|20] [40|50]
+
+Insert 60:
+    Descend to leaf [40 | 50]. Insert: [40 | 50 | 60] — overflow!
+    SPLIT: promote 50, leaves become [40] and [60].
+    Parent absorbs 50, becoming [30 | 50].
+
+          [30 | 50]
+         /    |    \
+      [10|20] [40] [60]
+
+Insert 70:
+    Descend to leaf [60]. Insert: [60 | 70].
+
+          [30 | 50]
+         /    |    \
+      [10|20] [40] [60|70]
+
+All leaves are at the same depth throughout. Height grew exactly once,
+when the ROOT split on insert 30.
+
+================================================================================
+KEY POINTS FOR TEACHING
+================================================================================
+
+1. WHY LEAVES STAY ALIGNED
+   Splits NEVER add a new level below. A split replaces ONE node with TWO
+   siblings at the SAME depth and pushes a key up. The only way the tree
+   gets taller is a ROOT split, which adds exactly one level ABOVE. Hence
+   all leaves are always at the same depth.
+
+2. SPLIT PROMOTES THE MIDDLE KEY
+   Given a transient 3-key node [k1, k2, k3], the MIDDLE key k2 always goes
+   up. k1 becomes the left 2-node, k3 the right. For internal nodes, the
+   four children split 2-2 between left and right.
+
+3. 2-3 TREE vs B-TREE
+   A 2-3 tree is the smallest useful B-tree. A B-tree of order m allows up
+   to m-1 keys per node. For m=3 (i.e., up to 2 keys per node) you have a
+   2-3 tree. Production databases and filesystems use B-trees with m in
+   the hundreds, so each disk read fetches a very fat node.
+
+4. 2-3 vs 2-3-4 TREES
+   - 2-3:   BOTTOM-UP splits. Splits propagate back up on the return path.
+   - 2-3-4: TOP-DOWN preemptive splits. Single-pass insert. Isomorphic to
+            red-black trees.
+
+5. NO ROTATIONS NEEDED
+   Unlike AVL and red-black trees, a 2-3 tree uses only splits (and merges
+   on delete). Rotations don't appear — multi-way nodes absorb the extra
+   flexibility instead.
+
+================================================================================
+COMPLEXITY ANALYSIS
+================================================================================
+
+Time Complexity:
+    Search:  O(log n)
+    Insert:  O(log n) — O(log n) descent + O(log n) splits in the worst
+                       case (rare; typical insert does ≤ 1 split)
+    Delete:  O(log n) — harder; involves merges or rotations between siblings
+
+Space Complexity:
+    O(n). Each node holds 1 or 2 keys and up to 3 children.
+
+================================================================================
+WHEN TO USE
+================================================================================
+
+✓ Teaching balanced trees — split rules are more intuitive than rotations
+✓ Stepping stone to B-trees (which power databases and filesystems)
+✗ Rarely used directly in production (red-black trees are easier to code)
+
+================================================================================
+COMMON MISTAKES TO AVOID
+================================================================================
+
+1. Forgetting that a 3-node has THREE children, not two.
+   A 3-node has two keys partitioning the key space into three ranges.
+
+2. Splitting by promoting the WRONG key.
+   Always promote the MIDDLE key of the overflowing node.
+
+3. Growing the tree at the leaves ("new leaf below existing leaf").
+   Wrong mental model. The tree grows only at the ROOT.
+
+4. Failing to propagate a split upward when the parent also overflows.
+   Cascading splits are what keep the tree balanced — don't stop at one.
+
+5. Trying to split into a 3-node and a 2-node.
+   A split always produces TWO 2-nodes plus a promoted middle key.
+
+================================================================================

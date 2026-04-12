@@ -81,6 +81,34 @@ All sorting algorithms include:
 - **Key Feature**: Dual tree and array representation, step-by-step visualizations
 - **Compile**: `g++ -std=c++11 -o demo heap.cpp`
 
+#### AVL Tree (`avl_tree.cpp`)
+- **Algorithm**: Self-balancing BST with height-tracked nodes and rotations
+- **Strategy**: After every insert, walk back up updating heights; if |balance factor| > 1, apply one of four rotation cases (LL, RR, LR, RL) to restore balance
+- **Complexity**: Search / Insert / Delete all O(log n) worst case
+- **Key Feature**: Step-by-step trace of rotations as the tree grows
+- **Compile**: `g++ -std=c++11 -o demo avl_tree.cpp`
+
+#### Red-Black Tree (`red_black_tree.cpp`)
+- **Algorithm**: Self-balancing BST using node colors and a sentinel NIL
+- **Strategy**: Insert red nodes then fix up using three cases (recolor / zig-zag rotate / straight-line rotate) based on the uncle's color
+- **Complexity**: Search / Insert / Delete all O(log n) worst case
+- **Key Feature**: Colored pretty-print, CLRS-style sentinel implementation
+- **Compile**: `g++ -std=c++11 -o demo red_black_tree.cpp`
+
+#### 2-3 Tree (`two_three_tree.cpp`)
+- **Algorithm**: Multi-way search tree with 2-nodes and 3-nodes, bottom-up splitting
+- **Strategy**: Insert into leaf; if a node holds 3 keys, split and promote the middle key to the parent; splits may cascade; root splits grow the tree upward
+- **Complexity**: Search / Insert O(log n)
+- **Key Feature**: Perfect height balance (all leaves at same depth), conceptual ancestor of B-trees
+- **Compile**: `g++ -std=c++11 -o demo two_three_tree.cpp`
+
+#### 2-3-4 Tree (`two_three_four_tree.cpp`)
+- **Algorithm**: Multi-way search tree with 2-, 3-, and 4-nodes, top-down preemptive splitting
+- **Strategy**: Descend the tree pre-splitting any 4-node before stepping into it; guarantees the parent always has room and insert is a single downward pass
+- **Complexity**: Search / Insert O(log n)
+- **Key Feature**: Directly isomorphic to red-black trees — the clearest path to understanding how red-black fix-up works
+- **Compile**: `g++ -std=c++11 -o demo two_three_four_tree.cpp`
+
 ## Compiling and Running
 
 All code examples use C++11 standard and can be compiled with:
@@ -145,6 +173,30 @@ g++ -std=c++11 -o recursion_demo recursion.cpp
 ```bash
 g++ -std=c++11 -o heap_demo heap.cpp
 ./heap_demo
+```
+
+**AVL Tree:**
+```bash
+g++ -std=c++11 -o avl_tree_demo avl_tree.cpp
+./avl_tree_demo
+```
+
+**Red-Black Tree:**
+```bash
+g++ -std=c++11 -o red_black_tree_demo red_black_tree.cpp
+./red_black_tree_demo
+```
+
+**2-3 Tree:**
+```bash
+g++ -std=c++11 -o two_three_tree_demo two_three_tree.cpp
+./two_three_tree_demo
+```
+
+**2-3-4 Tree:**
+```bash
+g++ -std=c++11 -o two_three_four_tree_demo two_three_four_tree.cpp
+./two_three_four_tree_demo
 ```
 
 ## Code Style
