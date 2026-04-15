@@ -163,6 +163,44 @@ function insertSilent(node,key){
 // --- Animated insert: BST descent with highlights, then a silent rebalance and a labeled redraw ---
 function path(key){const out=[];let c=root;while(c){out.push(c);if(key===c.v)break;c=key<c.v?c.l:c.r;}return out;}
 
+async function insertAnim(node,key){
+  if(!node){const n=new AVLNode(key);highlights.clear();highlights.set(n,'#4ADE80');return n;}
+  if(key===node.v)return node;
+  highlights.clear();highlights.set(node,'#FB923C');drawTree();
+  if(key<node.v){addLog('<span class="blue">'+key+' &lt; '+node.v+'</span> → go left');await sleep(getSpeed());node.l=await insertAnim(node.l,key);}
+  else{addLog('<span class="blue">'+key+' &gt; '+node.v+'</span> → go right');await sleep(getSpeed());node.r=await insertAnim(node.r,key);}
+  upd(node);
+  const b=bf(node);
+  highlights.clear();highlights.set(node,'#FB923C');drawTree();
+  addLog('<span class="muted">At node '+node.v+', balance = '+(b>=0?'+':'')+b+'.</span>');
+  await sleep(getSpeed());
+  if(b>1 && key<node.l.v){
+    addLog('<span class="orange">|bf|&gt;1 at '+node.v+' (LL) — single right rotation.</span>');
+    highlights.clear();highlights.set(node,'#22D3EE');highlights.set(node.l,'#22D3EE');drawTree();await sleep(getSpeed());
+    rotCount++;const r=rotR(node);highlights.clear();highlights.set(r,'#22D3EE');drawTree();await sleep(getSpeed());return r;
+  }
+  if(b<-1 && key>node.r.v){
+    addLog('<span class="orange">|bf|&gt;1 at '+node.v+' (RR) — single left rotation.</span>');
+    highlights.clear();highlights.set(node,'#22D3EE');highlights.set(node.r,'#22D3EE');drawTree();await sleep(getSpeed());
+    rotCount++;const r=rotL(node);highlights.clear();highlights.set(r,'#22D3EE');drawTree();await sleep(getSpeed());return r;
+  }
+  if(b>1 && key>node.l.v){
+    addLog('<span class="orange">|bf|&gt;1 at '+node.v+' (LR) — left rotate child '+node.l.v+' first.</span>');
+    highlights.clear();highlights.set(node.l,'#22D3EE');highlights.set(node.l.r,'#22D3EE');drawTree();await sleep(getSpeed());
+    rotCount++;node.l=rotL(node.l);highlights.clear();highlights.set(node,'#22D3EE');highlights.set(node.l,'#22D3EE');drawTree();await sleep(getSpeed());
+    addLog('<span class="orange">Now right rotate '+node.v+'.</span>');
+    rotCount++;const r=rotR(node);highlights.clear();highlights.set(r,'#22D3EE');drawTree();await sleep(getSpeed());return r;
+  }
+  if(b<-1 && key<node.r.v){
+    addLog('<span class="orange">|bf|&gt;1 at '+node.v+' (RL) — right rotate child '+node.r.v+' first.</span>');
+    highlights.clear();highlights.set(node.r,'#22D3EE');highlights.set(node.r.l,'#22D3EE');drawTree();await sleep(getSpeed());
+    rotCount++;node.r=rotR(node.r);highlights.clear();highlights.set(node,'#22D3EE');highlights.set(node.r,'#22D3EE');drawTree();await sleep(getSpeed());
+    addLog('<span class="orange">Now left rotate '+node.v+'.</span>');
+    rotCount++;const r=rotL(node);highlights.clear();highlights.set(r,'#22D3EE');drawTree();await sleep(getSpeed());return r;
+  }
+  return node;
+}
+
 async function doInsert(){
   if(animating)return;
   const val=parseInt(document.getElementById('insertVal').value);
@@ -175,40 +213,16 @@ async function doInsert(){
     updateStats(0);await sleep(getSpeed());highlights.clear();drawTree();animating=false;return;
   }
 
-  // Walk the BST descent path for visualization.
-  let cur=root;
-  while(cur){
-    if(val===cur.v){
-      highlights.set(cur,'#FB923C');drawTree();
-      addLog('<span class="orange">'+val+' already in tree.</span>');
-      await sleep(getSpeed());highlights.clear();drawTree();animating=false;return;
-    }
-    highlights.set(cur,'#FB923C');drawTree();await sleep(getSpeed());
-    if(val<cur.v){addLog('<span class="blue">'+val+' &lt; '+cur.v+'</span> → go left');cur=cur.l;}
-    else{addLog('<span class="blue">'+val+' &gt; '+cur.v+'</span> → go right');cur=cur.r;}
-  }
-  addLog('<span class="muted">Reached empty slot — placing new node.</span>');
+  if(find(root,val)){highlights.set(find(root,val),'#FB923C');drawTree();addLog('<span class="orange">'+val+' already in tree.</span>');await sleep(getSpeed());highlights.clear();drawTree();animating=false;return;}
 
-  // Compare heights before/after to flag rotations.
-  const before=snapshotShape(root);
-  root=insertSilent(root,val);
-  const after=snapshotShape(root);
-  const rotations=countRotations(before,after);
-  rotCount=rotations;
-
-  // Highlight the new node in green if we can find it.
+  root=await insertAnim(root,val);
   const n=find(root,val);
   highlights.clear();
   if(n)highlights.set(n,'#4ADE80');
   drawTree();
-
-  if(rotations>0){
-    addLog('<span class="orange">Rebalance:</span> '+rotations+' rotation'+(rotations>1?'s':'')+' applied — see new shape.');
-  } else {
-    addLog('<span class="muted">No rotation needed — still balanced.</span>');
-  }
-  updateStats(rotations);
-
+  if(rotCount>0)addLog('<span class="green">Insert complete.</span> <span class="muted">'+rotCount+' rotation'+(rotCount>1?'s':'')+'.</span>');
+  else addLog('<span class="green">Insert complete.</span> <span class="muted">No rotations needed.</span>');
+  updateStats(rotCount);
   await sleep(getSpeed()*1.5);highlights.clear();drawTree();animating=false;
 }
 

@@ -205,6 +205,57 @@ function fixup(z){
 function find(v){let c=root;while(c!==NIL){if(v===c.v)return c;c=v<c.v?c.l:c.r;}return null;}
 
 // --- Animated operations ---
+async function fixupAnim(z){
+  while(z.p.color==='R'){
+    if(z.p===z.p.p.l){
+      const u=z.p.p.r;
+      if(u.color==='R'){
+        addLog('<span class="orange">Case 1: uncle red — recolor parent+uncle BLACK, grandparent RED, recurse on grandparent.</span>');
+        highlights.clear();highlights.set(z.p,'#FB923C');highlights.set(u,'#FB923C');highlights.set(z.p.p,'#FB923C');drawTree();await sleep(getSpeed());
+        z.p.color='B';u.color='B';z.p.p.color='R';
+        highlights.clear();highlights.set(z.p.p,'#FB923C');drawTree();await sleep(getSpeed());
+        z=z.p.p;
+      } else {
+        if(z===z.p.r){
+          addLog('<span class="orange">Case 2 (left): triangle — left-rotate parent '+z.p.v+'.</span>');
+          highlights.clear();highlights.set(z,'#FB923C');highlights.set(z.p,'#FB923C');drawTree();await sleep(getSpeed());
+          z=z.p;leftRotate(z);
+          highlights.clear();highlights.set(z,'#FB923C');drawTree();await sleep(getSpeed());
+        }
+        addLog('<span class="orange">Case 3 (left): line — recolor parent BLACK, grandparent RED, right-rotate grandparent '+z.p.p.v+'.</span>');
+        highlights.clear();highlights.set(z.p,'#FB923C');highlights.set(z.p.p,'#FB923C');drawTree();await sleep(getSpeed());
+        z.p.color='B';z.p.p.color='R';rightRotate(z.p.p);
+        highlights.clear();highlights.set(z.p,'#FB923C');drawTree();await sleep(getSpeed());
+      }
+    } else {
+      const u=z.p.p.l;
+      if(u.color==='R'){
+        addLog('<span class="orange">Case 1: uncle red — recolor parent+uncle BLACK, grandparent RED, recurse on grandparent.</span>');
+        highlights.clear();highlights.set(z.p,'#FB923C');highlights.set(u,'#FB923C');highlights.set(z.p.p,'#FB923C');drawTree();await sleep(getSpeed());
+        z.p.color='B';u.color='B';z.p.p.color='R';
+        highlights.clear();highlights.set(z.p.p,'#FB923C');drawTree();await sleep(getSpeed());
+        z=z.p.p;
+      } else {
+        if(z===z.p.l){
+          addLog('<span class="orange">Case 2 (right): triangle — right-rotate parent '+z.p.v+'.</span>');
+          highlights.clear();highlights.set(z,'#FB923C');highlights.set(z.p,'#FB923C');drawTree();await sleep(getSpeed());
+          z=z.p;rightRotate(z);
+          highlights.clear();highlights.set(z,'#FB923C');drawTree();await sleep(getSpeed());
+        }
+        addLog('<span class="orange">Case 3 (right): line — recolor parent BLACK, grandparent RED, left-rotate grandparent '+z.p.p.v+'.</span>');
+        highlights.clear();highlights.set(z.p,'#FB923C');highlights.set(z.p.p,'#FB923C');drawTree();await sleep(getSpeed());
+        z.p.color='B';z.p.p.color='R';leftRotate(z.p.p);
+        highlights.clear();highlights.set(z.p,'#FB923C');drawTree();await sleep(getSpeed());
+      }
+    }
+  }
+  if(root.color==='R'){
+    addLog('<span class="orange">Root was RED — repaint BLACK.</span>');
+    highlights.clear();highlights.set(root,'#FB923C');drawTree();await sleep(getSpeed());
+    root.color='B';
+  }
+}
+
 async function doInsert(){
   if(animating)return;
   const val=parseInt(document.getElementById('insertVal').value);
@@ -218,7 +269,7 @@ async function doInsert(){
   }
 
   // Descent visualization.
-  let cur=root;
+  let y=NIL,cur=root;
   while(cur!==NIL){
     if(val===cur.v){
       highlights.set(cur,'#FB923C');drawTree();
@@ -226,11 +277,18 @@ async function doInsert(){
       await sleep(getSpeed());highlights.clear();drawTree();animating=false;return;
     }
     highlights.set(cur,'#FB923C');drawTree();await sleep(getSpeed());
+    y=cur;
     if(val<cur.v){addLog('<span class="blue">'+val+' &lt; '+cur.v+'</span> → go left');cur=cur.l;}
     else{addLog('<span class="blue">'+val+' &gt; '+cur.v+'</span> → go right');cur=cur.r;}
   }
-  addLog('<span class="red">Place new RED node, then fix-up any violations.</span>');
-  rbInsertSilent(val);
+  const z={v:val,color:'R',l:NIL,r:NIL,p:y,nil:false};
+  if(val<y.v)y.l=z;else y.r=z;
+  highlights.clear();highlights.set(z,'#F87171');drawTree();
+  addLog('<span class="red">Inserted '+val+' as RED leaf.</span>');
+  await sleep(getSpeed());
+
+  await fixupAnim(z);
+
   const n=find(val);
   highlights.clear();
   if(n)highlights.set(n,'#4ADE80');

@@ -118,7 +118,7 @@
 <script>
 // Node: {keys:[], children:[], leaf}
 function N(leaf){return {keys:[],children:[],leaf};}
-let root=null, animating=false, highlight=null, splitCount=0;
+let root=null, animating=false, highlight=null, highlightSet=null, splitCount=0;
 
 function countNodes(n,pred){if(!n)return 0;let c=pred(n)?1:0;if(!n.leaf)for(const ch of n.children)c+=countNodes(ch,pred);return c;}
 function countKeys(n){if(!n)return 0;let c=n.keys.length;if(!n.leaf)for(const ch of n.children)c+=countKeys(ch);return c;}
@@ -197,35 +197,69 @@ function searchTree(key){
 }
 
 // --- Animated ---
+async function insertNonFullAnim(node,key){
+  if(node.keys.includes(key))return;
+  if(node.leaf){
+    let i=node.keys.length-1;
+    node.keys.push(0);
+    while(i>=0 && key<node.keys[i]){node.keys[i+1]=node.keys[i];i--;}
+    node.keys[i+1]=key;
+    highlight=node;highlightSet=null;drawTree();
+    addLog('<span class="muted">Placed '+key+' in leaf '+fmt(node)+'.</span>');
+    await sleep(getSpeed());
+    return;
+  }
+  let i=node.keys.length-1;
+  while(i>=0 && key<node.keys[i]) i--;
+  i++;
+  if(node.children[i].keys.length===3){
+    const full=node.children[i];
+    addLog('<span class="orange">Preemptively splitting 4-node '+fmt(full)+' before descending.</span>');
+    highlight=full;highlightSet=null;drawTree();await sleep(getSpeed());
+    splitChild(node,i);
+    highlightSet=new Set([node,node.children[i],node.children[i+1]]);highlight=null;drawTree();
+    addLog('<span class="orange">Promoted '+node.keys[i]+' into parent → '+fmt(node)+'.</span>');
+    await sleep(getSpeed());
+    if(key===node.keys[i])return;
+    if(key>node.keys[i])i++;
+  }
+  highlight=node.children[i];highlightSet=null;drawTree();
+  addLog('<span class="blue">Descend to child '+i+' of '+fmt(node)+'</span>');
+  await sleep(getSpeed());
+  await insertNonFullAnim(node.children[i],key);
+}
+
 async function doInsert(){
   if(animating)return;
   const val=parseInt(document.getElementById('insertVal').value);
   if(isNaN(val))return;
-  animating=true;splitCount=0;highlight=null;
+  animating=true;splitCount=0;highlight=null;highlightSet=null;
 
   if(!root){insertSilent(val);addLog('<span class="green">Inserted '+val+'</span> — new root.');updateStats();drawTree();animating=false;return;}
 
-  // Descent visualization. Note: actual splits may happen during descent, so we
-  // visualize the CURRENT node we are about to step into before each step.
-  let cur=root;
-  while(cur){
-    if(cur.keys.includes(val)){highlight=cur;drawTree();addLog('<span class="orange">'+val+' already in tree.</span>');await sleep(getSpeed());highlight=null;drawTree();animating=false;return;}
-    highlight=cur;drawTree();await sleep(getSpeed());
-    if(cur.keys.length===3){addLog('<span class="orange">Touching a 4-node — will pre-split on insert.</span>');}
-    if(cur.leaf)break;
-    let i=0;while(i<cur.keys.length && val>cur.keys[i]) i++;
-    addLog('<span class="blue">Descend to child '+i+' (between keys of '+fmt(cur)+')</span>');
-    cur=cur.children[i];
-  }
+  if(searchTree(val)){highlight=searchTree(val);drawTree();addLog('<span class="orange">'+val+' already in tree.</span>');await sleep(getSpeed());highlight=null;drawTree();animating=false;return;}
 
-  insertSilent(val);
+  highlight=root;drawTree();await sleep(getSpeed());
+  if(root.keys.length===3){
+    addLog('<span class="orange">Root is a 4-node '+fmt(root)+' — preemptive split grows the tree.</span>');
+    await sleep(getSpeed());
+    const newRoot=N(false);
+    newRoot.children=[root];
+    splitChild(newRoot,0);
+    root=newRoot;
+    highlightSet=new Set([root,root.children[0],root.children[1]]);highlight=null;drawTree();
+    addLog('<span class="orange">Root split — new root '+fmt(root)+', depth now '+depth(root)+'.</span>');
+    await sleep(getSpeed());
+  }
+  await insertNonFullAnim(root,val);
+
   if(splitCount>0)addLog('<span class="orange">'+splitCount+' pre-split'+(splitCount>1?'s':'')+' fired on the way down.</span>');
   else addLog('<span class="muted">No splits needed.</span>');
   const n=searchTree(val);
-  highlight=n;drawTree();
+  highlightSet=null;highlight=n;drawTree();
   addLog('<span class="green">Insert complete.</span>');
   updateStats();
-  await sleep(getSpeed()*1.5);highlight=null;drawTree();animating=false;
+  await sleep(getSpeed()*1.5);highlight=null;highlightSet=null;drawTree();animating=false;
 }
 
 function fmt(n){return '['+n.keys.join(' | ')+']';}
@@ -303,7 +337,7 @@ function drawTree(){
     const w=p.w,h=36;
     let fill='#312E81',border='#6366F1';
     if(n.keys.length===3){fill='#3B1C6B';}
-    if(highlight===n){fill='#FB923C';border='#fff';}
+    if(highlight===n||(highlightSet&&highlightSet.has(n))){fill='#FB923C';border='#fff';}
     const rx=p.x-w/2,ry=p.y-h/2,rr=6;
     ctx.beginPath();
     ctx.moveTo(rx+rr,ry);

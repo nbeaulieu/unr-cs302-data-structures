@@ -119,7 +119,7 @@
 // Node: {keys: [], children: [], leaf: bool}
 // numKeys in {1,2} normally; briefly 3 during overflow.
 function N(leaf){return {keys:[],children:[],leaf};}
-let root=null, animating=false, highlight=null, splitCount=0;
+let root=null, animating=false, highlight=null, highlightSet=null, splitCount=0;
 
 function countNodes(n,pred){if(!n)return 0;let c=pred(n)?1:0;if(!n.leaf)for(const ch of n.children)c+=countNodes(ch,pred);return c;}
 function countKeys(n){if(!n)return 0;let c=n.keys.length;if(!n.leaf)for(const ch of n.children)c+=countKeys(ch);return c;}
@@ -201,33 +201,83 @@ function searchTree(key){
 }
 
 // --- Animated wrappers ---
+async function insertRecAnim(node,key){
+  if(node.leaf){
+    if(node.keys.includes(key))return {split:false,node};
+    let i=node.keys.length-1;
+    node.keys.push(0);
+    while(i>=0 && key<node.keys[i]){node.keys[i+1]=node.keys[i];i--;}
+    node.keys[i+1]=key;
+    highlight=node;drawTree();
+    addLog('<span class="muted">Placed '+key+' in leaf '+fmt(node)+'.</span>');
+    await sleep(getSpeed());
+    if(node.keys.length===3){
+      addLog('<span class="orange">Overflow at '+fmt(node)+' — splitting, promoting '+node.keys[1]+'.</span>');
+      highlight=node;drawTree();await sleep(getSpeed());
+      const r=split(node);
+      highlightSet=new Set([r.left,r.right]);highlight=null;
+      return r;
+    }
+    return {split:false,node};
+  }
+  let ci=0;
+  while(ci<node.keys.length && key>node.keys[ci]){
+    if(key===node.keys[ci])return {split:false,node};
+    ci++;
+  }
+  if(ci<node.keys.length && key===node.keys[ci])return {split:false,node};
+  highlight=node;highlightSet=null;drawTree();
+  if(ci===0)addLog('<span class="blue">'+key+' &lt; '+node.keys[0]+'</span> → go left');
+  else if(node.keys.length===1||ci===1)addLog('<span class="blue">'+key+' between keys</span> → go middle');
+  else addLog('<span class="blue">'+key+' &gt; '+node.keys[node.keys.length-1]+'</span> → go right');
+  await sleep(getSpeed());
+  const r=await insertRecAnim(node.children[ci],key);
+  if(!r.split){node.children[ci]=r.node;return {split:false,node};}
+  node.keys.splice(ci,0,r.promoted);
+  node.children.splice(ci,1,r.left,r.right);
+  highlightSet=new Set([node,r.left,r.right]);highlight=null;drawTree();
+  addLog('<span class="orange">Promoted '+r.promoted+' into parent → '+fmt(node)+'.</span>');
+  await sleep(getSpeed());
+  if(node.keys.length===3){
+    addLog('<span class="orange">Overflow at '+fmt(node)+' — splitting, promoting '+node.keys[1]+'.</span>');
+    highlight=node;highlightSet=null;drawTree();await sleep(getSpeed());
+    const rr=split(node);
+    highlightSet=new Set([rr.left,rr.right]);highlight=null;
+    return rr;
+  }
+  return {split:false,node};
+}
+
 async function doInsert(){
   if(animating)return;
   const val=parseInt(document.getElementById('insertVal').value);
   if(isNaN(val))return;
-  animating=true;splitCount=0;highlight=null;
+  animating=true;splitCount=0;highlight=null;highlightSet=null;
 
   if(!root){insertSilent(val);addLog('<span class="green">Inserted '+val+'</span> — new root.');updateStats();drawTree();animating=false;return;}
 
-  // Visual descent to the leaf.
-  let cur=root;
-  while(cur){
-    if(cur.keys.includes(val)){highlight=cur;drawTree();addLog('<span class="orange">'+val+' already in tree.</span>');await sleep(getSpeed());highlight=null;drawTree();animating=false;return;}
-    highlight=cur;drawTree();await sleep(getSpeed());
-    if(cur.leaf){addLog('<span class="muted">Reached leaf '+fmt(cur)+' — inserting key here.</span>');break;}
-    if(val<cur.keys[0]){addLog('<span class="blue">'+val+' &lt; '+cur.keys[0]+'</span> → go left');cur=cur.children[0];}
-    else if(cur.keys.length===1||val<cur.keys[1]){addLog('<span class="blue">'+val+' between keys</span> → go middle');cur=cur.children[1];}
-    else{addLog('<span class="blue">'+val+' &gt; '+cur.keys[cur.keys.length-1]+'</span> → go right');cur=cur.children[2];}
-  }
+  if(searchTree(val)){highlight=searchTree(val);drawTree();addLog('<span class="orange">'+val+' already in tree.</span>');await sleep(getSpeed());highlight=null;drawTree();animating=false;return;}
 
-  insertSilent(val);
+  highlight=root;drawTree();await sleep(getSpeed());
+  const r=await insertRecAnim(root,val);
+  if(r.split){
+    const newRoot=N(false);
+    newRoot.keys=[r.promoted];
+    newRoot.children=[r.left,r.right];
+    root=newRoot;
+    highlightSet=new Set([root,r.left,r.right]);highlight=null;drawTree();
+    addLog('<span class="orange">Root split — tree grows to depth '+depth(root)+'.</span>');
+    await sleep(getSpeed());
+  } else {
+    root=r.node;
+  }
   if(splitCount>0)addLog('<span class="orange">'+splitCount+' split'+(splitCount>1?'s':'')+' propagated upward.</span>');
   else addLog('<span class="muted">No splits — leaf had room.</span>');
   const n=searchTree(val);
-  highlight=n;drawTree();
+  highlightSet=null;highlight=n;drawTree();
   addLog('<span class="green">Insert complete.</span>');
   updateStats();
-  await sleep(getSpeed()*1.5);highlight=null;drawTree();animating=false;
+  await sleep(getSpeed()*1.5);highlight=null;highlightSet=null;drawTree();animating=false;
 }
 
 function fmt(n){return '['+n.keys.join(' | ')+']';}
@@ -306,7 +356,7 @@ function drawTree(){
     const p=pos.get(n);
     const w=p.w,h=36;
     let fill='#312E81',border='#6366F1';
-    if(highlight===n){fill='#FB923C';border='#fff';}
+    if(highlight===n||(highlightSet&&highlightSet.has(n))){fill='#FB923C';border='#fff';}
     // rounded rect
     const rx=p.x-w/2,ry=p.y-h/2;
     const rr=6;
