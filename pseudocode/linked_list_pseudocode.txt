@@ -1,0 +1,548 @@
+================================================================================
+LINKED LIST - Pseudocode
+================================================================================
+Algorithm: Singly and Doubly Linked List Operations
+Strategy: Dynamic nodes connected by pointers. Insert/delete by updating pointers.
+          No shifting needed — just rewire the links between nodes.
+Node Structure: Each node stores data + pointer(s) to neighboring node(s)
+Complexity: Access O(n), Search O(n), Insert at head O(1), Delete at head O(1)
+Key: Dynamic size, O(1) insert/delete at known positions, no random access
+
+================================================================================
+ALGORITHM OVERVIEW
+================================================================================
+
+A linked list is a sequence of nodes where each node stores data and a
+pointer to the next (and optionally previous) node.
+
+    Singly Linked List — each node points forward only:
+
+        head → [10|→]—→[20|→]—→[30|→]—→[40|∅]
+
+        Each node: [data | next]
+        Last node's next = nullptr (null / ∅)
+
+    Doubly Linked List — each node points forward AND backward:
+
+        head → [∅|10|→]⇄[←|20|→]⇄[←|30|→]⇄[←|40|∅] ← tail
+
+        Each node: [prev | data | next]
+        Head's prev = nullptr, Tail's next = nullptr
+
+    Key differences from arrays:
+        - Nodes are NOT contiguous in memory — scattered on the heap
+        - No random access — must traverse from head to reach node k
+        - Insert/delete at known position is O(1) — just update pointers
+        - Size is dynamic — no fixed capacity
+
+================================================================================
+INSERT_AT_HEAD (Singly Linked)
+================================================================================
+
+INSERT_AT_HEAD(head, value)
+    newNode ← CREATE Node(value)
+    newNode.next ← head          // Point new node to current head
+    head ← newNode               // Update head to new node
+END INSERT_AT_HEAD
+
+    Visual:
+        Before: head → [20|→]—→[30|∅]
+        Create: [10|∅]
+        Link:   [10|→]—→[20|→]—→[30|∅]
+        Update: head → [10|→]—→[20|→]—→[30|∅]
+
+================================================================================
+INSERT_AT_TAIL (Singly Linked)
+================================================================================
+
+INSERT_AT_TAIL(head, value)
+    newNode ← CREATE Node(value)
+    IF head = nullptr THEN
+        head ← newNode           // Empty list — new node becomes head
+        RETURN
+    END IF
+
+    current ← head
+    WHILE current.next ≠ nullptr DO
+        current ← current.next  // Traverse to last node
+    END WHILE
+    current.next ← newNode      // Append at end
+END INSERT_AT_TAIL
+
+    Visual:
+        Before: head → [10|→]—→[20|→]—→[30|∅]
+        Create: [40|∅]
+        Traverse to tail (30)
+        Link:   [30|→]—→[40|∅]
+        After:  head → [10|→]—→[20|→]—→[30|→]—→[40|∅]
+
+================================================================================
+INSERT_AT_POSITION (Singly Linked)
+================================================================================
+
+INSERT_AT_POSITION(head, pos, value)
+    IF pos = 0 THEN
+        INSERT_AT_HEAD(head, value)
+        RETURN
+    END IF
+
+    current ← head
+    FOR i ← 0 TO pos - 2 DO     // Traverse to node BEFORE target position
+        IF current = nullptr THEN
+            ERROR "Position out of bounds"
+        END IF
+        current ← current.next
+    END FOR
+
+    IF current = nullptr THEN
+        ERROR "Position out of bounds"
+    END IF
+
+    newNode ← CREATE Node(value)
+    newNode.next ← current.next  // New node points to next node
+    current.next ← newNode       // Previous node points to new node
+END INSERT_AT_POSITION
+
+    Visual (insert 25 at position 2):
+        Before: head → [10|→]—→[20|→]—→[30|→]—→[40|∅]
+                                 ↑
+                          node before target
+
+        Create: [25|∅]
+        Link new node: [25|→]—→[30|→]—→[40|∅]
+        Update prev:   [20|→]—→[25|→]—→[30|→]—→[40|∅]
+
+        After:  head → [10|→]—→[20|→]—→[25|→]—→[30|→]—→[40|∅]
+
+================================================================================
+DELETE_AT_HEAD (Singly Linked)
+================================================================================
+
+DELETE_AT_HEAD(head)
+    IF head = nullptr THEN
+        ERROR "List is empty"
+    END IF
+    temp ← head                  // Save node to delete
+    head ← head.next             // Move head to next node
+    DELETE temp                  // Free memory
+END DELETE_AT_HEAD
+
+    Visual:
+        Before: head → [10|→]—→[20|→]—→[30|∅]
+        Save temp → [10|→]
+        Update head → [20|→]—→[30|∅]
+        Delete temp (free memory)
+        After:  head → [20|→]—→[30|∅]
+
+================================================================================
+DELETE_AT_TAIL (Singly Linked)
+================================================================================
+
+DELETE_AT_TAIL(head)
+    IF head = nullptr THEN
+        ERROR "List is empty"
+    END IF
+
+    // Special case: only one node
+    IF head.next = nullptr THEN
+        DELETE head
+        head ← nullptr
+        RETURN
+    END IF
+
+    // Traverse to second-to-last node
+    current ← head
+    WHILE current.next.next ≠ nullptr DO
+        current ← current.next
+    END WHILE
+
+    DELETE current.next          // Free the last node
+    current.next ← nullptr      // New tail points to null
+END DELETE_AT_TAIL
+
+    Visual:
+        Before: head → [10|→]—→[20|→]—→[30|∅]
+        Traverse to second-to-last (20)
+        Delete [30|∅] (free memory)
+        Set [20|∅] (next = nullptr)
+        After:  head → [10|→]—→[20|∅]
+
+================================================================================
+SEARCH (Singly Linked)
+================================================================================
+
+SEARCH(head, value)
+    current ← head
+    position ← 0
+
+    WHILE current ≠ nullptr DO
+        IF current.data = value THEN
+            RETURN position      // Found at this position
+        END IF
+        current ← current.next
+        position ← position + 1
+    END WHILE
+
+    RETURN -1                    // Not found
+END SEARCH
+
+================================================================================
+REVERSE (Singly Linked)
+================================================================================
+
+REVERSE(head)
+    prev ← nullptr
+    current ← head
+    next ← nullptr
+
+    WHILE current ≠ nullptr DO
+        next ← current.next     // Save next node
+        current.next ← prev     // Reverse the pointer
+        prev ← current          // Move prev forward
+        current ← next          // Move current forward
+    END WHILE
+
+    head ← prev                 // prev is now the new head
+END REVERSE
+
+================================================================================
+STEP-BY-STEP EXAMPLE — INSERT
+================================================================================
+
+Build a list by inserting: 30, 20, 10 at head, then 40 at tail
+
+Insert 30 at head:
+    List is empty (head = nullptr)
+    Create [30|∅]
+    head → [30|∅]
+
+Insert 20 at head:
+    Create [20|∅]
+    Set 20's next → 30
+    head → [20|→]—→[30|∅]
+
+Insert 10 at head:
+    Create [10|∅]
+    Set 10's next → 20
+    head → [10|→]—→[20|→]—→[30|∅]
+
+Insert 40 at tail:
+    Create [40|∅]
+    Traverse: at 10 → move to next
+    Traverse: at 20 → move to next
+    Traverse: at 30 → this is the tail
+    Set 30's next → 40
+    head → [10|→]—→[20|→]—→[30|→]—→[40|∅]
+
+═══════════════════════════════════════════════════════════════════════════════
+
+Insert 25 at position 2:
+
+    Before: head → [10|→]—→[20|→]—→[30|→]—→[40|∅]
+                    pos 0    pos 1    pos 2    pos 3
+
+    Traverse to node at position 1 (the node BEFORE position 2):
+        i=0: at node 10 → move to next → now at node 20
+
+    Create [25|∅]
+    Set 25's next → 30 (current node 20's next)
+    Set 20's next → 25
+
+    Pointer updates:
+        Before: ... [20|→]—→[30|→] ...
+        After:  ... [20|→]—→[25|→]—→[30|→] ...
+
+    After:  head → [10|→]—→[20|→]—→[25|→]—→[30|→]—→[40|∅]
+
+================================================================================
+STEP-BY-STEP EXAMPLE — DELETE
+================================================================================
+
+Starting list: head → [10|→]—→[20|→]—→[30|→]—→[40|→]—→[50|∅]
+
+Delete head:
+    Save temp → node 10
+    head ← head.next (node 20)
+    Delete temp (free node 10)
+    After: head → [20|→]—→[30|→]—→[40|→]—→[50|∅]
+
+Delete tail:
+    Traverse to second-to-last:
+        at 20 → check: 20.next.next = 40 ≠ nullptr → move
+        at 30 → check: 30.next.next = 50 ≠ nullptr → move
+        at 40 → check: 40.next.next = nullptr → this is second-to-last
+    Save temp → node 50
+    Set 40's next → nullptr
+    Delete temp (free node 50)
+    After: head → [20|→]—→[30|→]—→[40|∅]
+
+Delete at position 1 (value 30):
+    Traverse to node at position 0 (node 20)
+    Save temp → node 30 (20's next)
+    Set 20's next → 40 (30's next)
+    Delete temp (free node 30)
+
+    Pointer updates:
+        Before: [20|→]—→[30|→]—→[40|∅]
+        After:  [20|→]—→[40|∅]
+
+    After: head → [20|→]—→[40|∅]
+
+================================================================================
+STEP-BY-STEP EXAMPLE — SEARCH
+================================================================================
+
+Search for 30 in: head → [10|→]—→[20|→]—→[30|→]—→[40|∅]
+
+    Position 0: current = [10|→], data = 10 ≠ 30 → move to next
+    Position 1: current = [20|→], data = 20 ≠ 30 → move to next
+    Position 2: current = [30|→], data = 30 = 30 → FOUND at position 2!
+
+    Comparisons: 3
+
+═══════════════════════════════════════════════════════════════════════════════
+
+Search for 99 in: head → [10|→]—→[20|→]—→[30|→]—→[40|∅]
+
+    Position 0: current = [10|→], data = 10 ≠ 99 → move to next
+    Position 1: current = [20|→], data = 20 ≠ 99 → move to next
+    Position 2: current = [30|→], data = 30 ≠ 99 → move to next
+    Position 3: current = [40|∅], data = 40 ≠ 99 → move to next
+    current = nullptr → NOT FOUND, return -1
+
+    Comparisons: 4 (traversed entire list)
+
+================================================================================
+STEP-BY-STEP EXAMPLE — REVERSE
+================================================================================
+
+Reverse: head → [10|→]—→[20|→]—→[30|→]—→[40|∅]
+
+    Initialize: prev = ∅, curr = 10, next = ∅
+
+    Step 1: next ← curr.next (20)
+            Set 10's next → ∅ (prev)       ← reverse pointer!
+            prev ← 10, curr ← 20
+
+            ∅←[10|∅]   [20|→]—→[30|→]—→[40|∅]
+              prev       curr
+
+    Step 2: next ← curr.next (30)
+            Set 20's next → 10 (prev)      ← reverse pointer!
+            prev ← 20, curr ← 30
+
+            ∅←[10|∅]←—[20|→]   [30|→]—→[40|∅]
+                        prev     curr
+
+    Step 3: next ← curr.next (40)
+            Set 30's next → 20 (prev)      ← reverse pointer!
+            prev ← 30, curr ← 40
+
+            ∅←[10|∅]←—[20|←]←—[30|→]   [40|∅]
+                                prev     curr
+
+    Step 4: next ← curr.next (∅)
+            Set 40's next → 30 (prev)      ← reverse pointer!
+            prev ← 40, curr ← ∅
+
+            ∅←[10|∅]←—[20|←]←—[30|←]←—[40|→]
+                                         prev    curr=∅
+
+    Set head ← prev (40)
+
+    After: head → [40|→]—→[30|→]—→[20|→]—→[10|∅]
+
+    Every pointer has been reversed! 4 nodes → 3 pointer reversals + 1
+
+================================================================================
+DOUBLY LINKED LIST OPERATIONS
+================================================================================
+
+DOUBLY INSERT_AT_HEAD(head, tail, value)
+    newNode ← CREATE DNode(value)
+    IF head = nullptr THEN
+        head ← newNode           // Empty list
+        tail ← newNode
+    ELSE
+        newNode.next ← head      // Link to current head
+        head.prev ← newNode      // Current head points back
+        head ← newNode           // Update head
+    END IF
+END DOUBLY INSERT_AT_HEAD
+
+    Visual:
+        Before: head → [∅|20|→]⇄[←|30|∅] ← tail
+        Create: [∅|10|∅]
+        Link forward:  [∅|10|→]→[∅|20|→]⇄[←|30|∅]
+        Link backward: [∅|10|→]⇄[←|20|→]⇄[←|30|∅]
+        Update head:
+        After:  head → [∅|10|→]⇄[←|20|→]⇄[←|30|∅] ← tail
+
+═══════════════════════════════════════════════════════════════════════════════
+
+DOUBLY INSERT_AT_TAIL(head, tail, value)
+    newNode ← CREATE DNode(value)
+    IF tail = nullptr THEN
+        head ← newNode           // Empty list
+        tail ← newNode
+    ELSE
+        newNode.prev ← tail      // Link to current tail
+        tail.next ← newNode      // Current tail points forward
+        tail ← newNode           // Update tail
+    END IF
+END DOUBLY INSERT_AT_TAIL
+
+    Note: This is O(1) because we have a tail pointer!
+    Compare with singly linked list where tail insert is O(n).
+
+═══════════════════════════════════════════════════════════════════════════════
+
+DOUBLY DELETE_AT_HEAD(head, tail)
+    IF head = nullptr THEN
+        ERROR "List is empty"
+    END IF
+    temp ← head
+    IF head = tail THEN
+        head ← nullptr           // Was the only node
+        tail ← nullptr
+    ELSE
+        head ← head.next
+        head.prev ← nullptr
+    END IF
+    DELETE temp
+END DOUBLY DELETE_AT_HEAD
+
+═══════════════════════════════════════════════════════════════════════════════
+
+DOUBLY DELETE_AT_TAIL(head, tail)
+    IF tail = nullptr THEN
+        ERROR "List is empty"
+    END IF
+    temp ← tail
+    IF head = tail THEN
+        head ← nullptr           // Was the only node
+        tail ← nullptr
+    ELSE
+        tail ← tail.prev
+        tail.next ← nullptr
+    END IF
+    DELETE temp
+END DOUBLY DELETE_AT_TAIL
+
+    Note: This is O(1)! Compare with singly linked list where
+    tail deletion is O(n) because you must traverse to find
+    the second-to-last node.
+
+================================================================================
+KEY POINTS FOR TEACHING
+================================================================================
+
+1. POINTERS ARE THE STRUCTURE
+   - The list exists only because of the pointers connecting nodes
+   - Losing a pointer = losing access to all subsequent nodes
+   - Always save a pointer to a node before unlinking it
+   - Draw diagrams — pointer manipulation is error-prone without visuals
+
+2. HEAD IS EVERYTHING (SINGLY LINKED)
+   - The head pointer is the ONLY way to access the list
+   - Losing the head = losing the entire list
+   - All traversals start from head — no shortcuts to the middle
+   - Insert/delete at head is O(1), everywhere else requires traversal
+
+3. O(1) INSERT/DELETE VS O(n) ACCESS
+   - If you HAVE a pointer to a node, insert/delete nearby is O(1)
+   - But FINDING the node requires O(n) traversal from head
+   - Total: O(n) to find + O(1) to modify = O(n) overall
+   - Arrays are the opposite: O(1) access but O(n) shift for insert/delete
+
+4. DOUBLY LINKED ADVANTAGES
+   - Bidirectional traversal (can go forward AND backward)
+   - O(1) tail deletion (singly linked needs O(n) to find second-to-last)
+   - Given any node, can reach both neighbors immediately
+   - Cost: extra pointer per node (more memory)
+
+5. MEMORY MANAGEMENT
+   - Every new/malloc must be matched by delete/free
+   - Setting head = nullptr does NOT free the nodes (memory leak!)
+   - Must traverse and delete each node individually
+   - Dangling pointers: accessing memory after it has been freed
+
+6. EDGE CASES
+   - Empty list (head = nullptr): most operations need a special check
+   - Single node: head = tail, deleting it makes both nullptr
+   - Inserting into empty list: new node becomes both head and tail
+   - Always test with: empty list, one node, two nodes, many nodes
+
+================================================================================
+COMPLEXITY ANALYSIS
+================================================================================
+
+Time Complexity (Singly Linked):
+    Insert at head:          O(1) — no traversal
+    Insert at tail:          O(n) — must traverse to end
+                             O(1) if tail pointer is maintained
+    Insert at position k:    O(k) — traverse to position
+    Delete at head:          O(1) — no traversal
+    Delete at tail:          O(n) — must find second-to-last
+    Delete at position k:    O(k) — traverse to position
+    Search:                  O(n) — may check every node
+    Reverse:                 O(n) — visits each node once
+    Access element k:        O(k) — must traverse k nodes
+
+Time Complexity (Doubly Linked):
+    Insert at head:          O(1) — no traversal
+    Insert at tail:          O(1) — direct access via tail pointer
+    Delete at head:          O(1) — no traversal
+    Delete at tail:          O(1) — direct access via tail and prev
+    Search:                  O(n) — may check every node
+    Access element k:        O(k) — traverse from head or tail
+
+Space Complexity:
+    Singly linked: n * (data + 1 pointer) = O(n)
+    Doubly linked: n * (data + 2 pointers) = O(n)
+    Extra space per operation: O(1)
+
+================================================================================
+WHEN TO USE
+================================================================================
+
+✓ Frequent insertion/deletion at the beginning (stacks, queues)
+✓ Size is unknown or changes frequently
+✓ No random access needed — sequential processing only
+✓ Implementing other data structures (hash table chaining, adjacency lists)
+✓ Need to insert/delete at known positions without shifting
+✗ NOT when random access by index is needed (use arrays)
+✗ NOT when cache performance is critical (nodes scatter in memory)
+✗ NOT when memory overhead per element matters (pointer storage)
+✗ NOT when you need binary search (no random access)
+
+================================================================================
+COMMON MISTAKES TO AVOID
+================================================================================
+
+1. Losing nodes by updating pointers in wrong order
+   - WRONG: head = newNode, then newNode.next = old head (old head is lost!)
+   - RIGHT: newNode.next = head, then head = newNode
+   - Rule: link the new node BEFORE unlinking the old connection
+
+2. Not handling empty list (head = nullptr)
+   - Most operations must check: IF head = nullptr THEN ...
+   - Forgetting this causes null pointer dereference (crash)
+   - Test every function with an empty list
+
+3. Memory leaks — forgetting to delete removed nodes
+   - Every removed node must be freed with delete/free
+   - head = nullptr does NOT delete the nodes it pointed to
+   - To destroy a list: loop through deleting each node
+
+4. Off-by-one in position traversal
+   - To insert at position k, traverse to node at position k-1
+   - Common mistake: traversing to position k (one too far)
+   - Position 0 = head (special case, no traversal needed)
+
+5. Forgetting to update tail pointer (doubly linked)
+   - When the last node is deleted, tail must be updated
+   - When inserting into an empty list, both head AND tail must be set
+   - Single-node list: head = tail, must update both on delete
+
+================================================================================

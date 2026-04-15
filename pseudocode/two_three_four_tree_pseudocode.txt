@@ -1,0 +1,261 @@
+================================================================================
+2-3-4 TREE - Pseudocode
+================================================================================
+Algorithm: 2-3-4 Tree (a.k.a. 2-4 Tree; Multi-Way Search Tree)
+Strategy: Nodes hold 1, 2, or 3 keys (2-node, 3-node, 4-node). All leaves
+          at the same depth. Insertion uses TOP-DOWN PREEMPTIVE SPLITTING:
+          while descending, any 4-node encountered is split BEFORE stepping
+          into it, guaranteeing the parent always has room.
+Complexity: Search O(log n), Insert O(log n)
+Key: Directly isomorphic to red-black trees — the clearest path to
+     understanding how red-black fix-up cases work.
+
+================================================================================
+NODE SHAPES
+================================================================================
+
+    2-node   [ K ]               3-node   [ K1 | K2 ]       4-node   [ K1 | K2 | K3 ]
+             / \                          /    |    \               /   |    |    \
+            L   R                        L     M     R             L   M1   M2    R
+
+During insertion we NEVER let a 4-node become a 5-node. Instead, we look
+one step ahead: if we're about to step into a 4-node, split it FIRST.
+
+All leaves are always at the same depth. Height = O(log n).
+
+================================================================================
+SEARCH
+================================================================================
+
+SEARCH_234(node, key)
+    WHILE node ≠ null DO
+        i ← 0
+        WHILE i < node.numKeys AND key > node.key[i] DO
+            i ← i + 1
+        END WHILE
+        IF i < node.numKeys AND key = node.key[i] THEN
+            RETURN true
+        END IF
+        IF node is leaf THEN
+            RETURN false
+        END IF
+        node ← node.child[i]
+    END WHILE
+    RETURN false
+END SEARCH_234
+
+================================================================================
+SPLIT_CHILD — the only rebalancing primitive
+================================================================================
+
+Precondition: parent.child[i] is a 4-node AND parent is NOT full.
+
+SPLIT_CHILD(parent, i)
+    full  ← parent.child[i]                         // a 4-node
+    right ← new 2-node holding full.key[2]
+
+    IF full is internal THEN
+        right.child[0] ← full.child[2]
+        right.child[1] ← full.child[3]
+    END IF
+
+    promoted ← full.key[1]                          // the middle key
+    full.numKeys ← 1                                // left becomes 2-node with full.key[0]
+
+    Shift parent's keys and child pointers right to open slot at index i.
+    parent.key[i]          ← promoted
+    parent.child[i + 1]    ← right
+    parent.numKeys         ← parent.numKeys + 1
+END SPLIT_CHILD
+
+Visualization:
+
+    parent: [ ... ? ... ]                 parent: [ ... K2 ? ... ]
+                 |                                    /      \
+     [K1 | K2 | K3]            ───▶             [K1]          [K3]
+     /   |    |   \                             /  \          /  \
+    A    B    C    D                           A    B        C    D
+
+K2 is promoted upward; K1 becomes a 2-node LEFT child; K3 becomes a 2-node
+RIGHT child; children A,B go with K1 and C,D go with K3. Because the parent
+was pre-split one step ago, it always has room to absorb K2.
+
+================================================================================
+INSERT — SINGLE TOP-DOWN PASS
+================================================================================
+
+INSERT_234(root, key)
+    IF root = null THEN
+        RETURN new 2-node with key
+    END IF
+
+    // Pre-split the root if it is a 4-node. This is the ONLY place the
+    // tree gains height: a brand-new parent is built above the old root.
+    IF root.numKeys = 3 THEN
+        newRoot ← new empty internal node
+        newRoot.child[0] ← root
+        SPLIT_CHILD(newRoot, 0)
+        INSERT_NON_FULL(newRoot, key)
+        RETURN newRoot
+    END IF
+
+    INSERT_NON_FULL(root, key)
+    RETURN root
+END INSERT_234
+
+
+INSERT_NON_FULL(node, key)
+    // Precondition: node is NOT a 4-node (room for at least one more key).
+
+    IF node is leaf THEN
+        Insert key into node.key[] in sorted order.
+        RETURN
+    END IF
+
+    // Internal node: find the child that key belongs in.
+    i ← node.numKeys - 1
+    WHILE i ≥ 0 AND key < node.key[i] DO
+        i ← i - 1
+    END WHILE
+    i ← i + 1
+
+    // PREEMPTIVE SPLIT: if the child we are about to descend into is full,
+    // split it NOW before descending. This guarantees we never recurse into
+    // a 4-node, so no split can ever cascade back up.
+    IF node.child[i].numKeys = 3 THEN
+        SPLIT_CHILD(node, i)
+        // After split, node.key[i] is the promoted middle key. We may need
+        // to descend into the NEW right half instead.
+        IF key > node.key[i] THEN
+            i ← i + 1
+        END IF
+    END IF
+
+    INSERT_NON_FULL(node.child[i], key)
+END INSERT_NON_FULL
+
+================================================================================
+STEP-BY-STEP EXAMPLE — INSERT 10, 20, 30, 40, 50, 60
+================================================================================
+
+Insert 10:
+    [10]
+
+Insert 20:
+    [10 | 20]
+
+Insert 30:
+    [10 | 20 | 30]                      // 4-node — still legal at rest
+
+Insert 40:
+    Root is a 4-node → pre-split at root level.
+    SPLIT_CHILD creates:
+            [20]
+           /    \
+        [10]    [30]
+    Then descend right (40 > 20), insert into [30]:
+            [20]
+           /    \
+        [10]   [30 | 40]
+
+Insert 50:
+    Root is a 2-node (legal). Right child is [30|40] — still has room.
+    Descend right, insert 50:
+            [20]
+           /    \
+        [10]   [30 | 40 | 50]          // right child is now a 4-node
+
+Insert 60:
+    Root is [20]; its right child is a 4-node. Since we are ABOUT to
+    step into that child, PRE-SPLIT it first:
+            [20 | 40]
+           /    |    \
+        [10]  [30]   [50]
+    Now we re-pick the child. 60 > 40, so step into [50]. Insert 60:
+            [20 | 40]
+           /    |    \
+        [10]  [30]   [50 | 60]
+
+The tree never grew taller except at the root-split step on insert 40.
+Insert was a single downward pass — no return trip, no propagation.
+
+================================================================================
+KEY POINTS FOR TEACHING
+================================================================================
+
+1. PREEMPTIVE (TOP-DOWN) SPLITTING
+   Split a 4-node on the way DOWN, before you step into it. The parent is
+   guaranteed to have room because you already pre-split it in the step
+   above. Insert is a single downward pass.
+
+2. THIS IS WHY SPLITS NEVER CASCADE
+   In a 2-3 tree splits can cascade upward on the return path. In a 2-3-4
+   tree the preemptive rule removes cascades entirely, at the cost of
+   occasionally splitting a node that didn't actually need to be split.
+
+3. HOW TO GROW THE TREE
+   A split replaces one node with two siblings at the SAME depth. The ONLY
+   place the tree gets taller is when the ROOT itself is a 4-node at insert
+   time — we build a new parent above the old root. Same height invariant
+   as the 2-3 tree.
+
+4. RED-BLACK ISOMORPHISM
+   A red-black tree IS a 2-3-4 tree in binary form:
+       2-node → one BLACK node
+       3-node → one BLACK node + ONE RED child
+       4-node → one BLACK node + TWO RED children
+   The preemptive "split a 4-node" step in a 2-3-4 tree corresponds
+   EXACTLY to the "uncle is RED → recolor" case in red-black fix-up.
+   Understanding 2-3-4 trees is the clearest path to red-black trees.
+
+5. 2-3-4 vs 2-3
+   - 2-3:   keys per node ∈ {1, 2}; splits propagate bottom-up.
+   - 2-3-4: keys per node ∈ {1, 2, 3}; splits are preemptive top-down.
+   Both guarantee perfect height balance and O(log n) operations.
+
+================================================================================
+COMPLEXITY ANALYSIS
+================================================================================
+
+Time Complexity:
+    Search:  O(log n)
+    Insert:  O(log n) — single downward pass with at most one split per level
+    Delete:  O(log n) — mirror "merge/fuse" operation on the way down
+
+Space Complexity:
+    O(n). Each node holds up to 3 keys and up to 4 children.
+
+================================================================================
+WHEN TO USE
+================================================================================
+
+✓ Teaching red-black trees — the 2-3-4 view makes the cases obvious
+✓ When a concurrent implementation is needed (top-down splitting makes
+  locking much simpler than bottom-up propagation)
+✗ Rarely used directly in production code — red-black trees are usually
+  preferred because a single bit per node is cheaper than variable fan-out
+
+================================================================================
+COMMON MISTAKES TO AVOID
+================================================================================
+
+1. Forgetting to pre-split the ROOT when it's a 4-node.
+   This is the ONE place the tree grows upward; needs its own special case.
+
+2. After splitting a child on the way down, forgetting to re-check which
+   half to descend into.
+   The promoted middle may equal the key (duplicate), be less than it
+   (descend right half), or be greater than it (descend left half).
+
+3. Splitting by promoting the WRONG key.
+   Always promote the MIDDLE key of the 4-node.
+
+4. Trying to split bottom-up like a 2-3 tree.
+   It works, but defeats the entire point of the 2-3-4 design — you lose
+   the single-pass guarantee and gain nothing.
+
+5. Confusing a 4-node with a 2-3 tree overflow.
+   A 4-node is LEGAL at rest in a 2-3-4 tree. It only becomes a problem
+   when you're about to step INTO it during an insert.
+
+================================================================================

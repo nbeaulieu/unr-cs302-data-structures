@@ -29,14 +29,26 @@ Simply open `index.html` in your web browser. All files are self-contained with 
 
 ```
 .
-├── index.html                      # Main homepage
-├── sorting/
-│   ├── selection_sort.html         # Selection sort visualization
-│   ├── bubble_sort.html            # Bubble sort visualization
-│   └── insertion_sort.html         # Insertion sort visualization
-├── data-structures/
-│   └── binary_search_tree.html     # Binary search tree visualization
-├── .nojekyll                       # GitHub Pages config (no Jekyll)
+├── index.html                      # Main website homepage
+│
+├── sorting/                        # Sorting algorithm visualizations
+│   ├── selection_sort.html
+│   ├── bubble_sort.html
+│   └── insertion_sort.html
+│
+├── data-structures/                # Data structure visualizations
+│   └── binary_search_tree.html
+│
+├── code/                           # C++ code examples for teaching
+│   ├── selection_sort.cpp
+│   └── README.md
+│
+├── docs/                           # Project documentation
+│   ├── DEPLOYMENT.md
+│   ├── GITHUB_PAGES_SETUP.md
+│   └── CHECKLIST.md
+│
+├── .nojekyll                       # GitHub Pages config
 ├── .gitignore                      # Git ignore rules
 └── README.md                       # This file
 ```
@@ -56,6 +68,13 @@ All personal information has been configured:
 2. Add a link in `index.html` under the "Interactive Visualizations" section
 3. Follow the same structure and styling as existing visualizations
 4. Ensure the back link points to `../index.html`
+
+### Add Code Examples
+
+1. Place C++ source files in the `code/` directory
+2. Follow the documentation style of existing examples
+3. Update `code/README.md` with the new example
+4. Ensure code compiles with `-Wall -Wextra` (no warnings)
 
 ## ⌨️ Keyboard Shortcuts
 

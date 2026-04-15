@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Red-Black Tree — Interactive | CS 302</title>
+<meta name="description" content="Interactive visualization of Red-Black trees. Insert values to see recoloring and rotations enforce the five red-black properties.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0B0F1A; color: #fff; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; padding: 20px; min-height: 100vh; }
+  .back-link { font-family: 'Plus Jakarta Sans', system-ui, sans-serif; font-size: 13px; color: #22D3EE; text-decoration: none; display: inline-block; margin-bottom: 10px; transition: color 0.2s; }
+  .back-link:hover, .back-link:focus { color: #818CF8; text-decoration: underline; }
+  .back-link:focus-visible { outline: 2px solid #818CF8; outline-offset: 2px; border-radius: 2px; }
+  h1 { font-size: 24px; margin-bottom: 4px; }
+  .subtitle { color: #818CF8; font-size: 14px; margin-bottom: 16px; line-height: 1.5; }
+  .subtitle .orange { color: #FB923C; font-weight: bold; }
+  .subtitle .red { color: #F87171; font-weight: bold; }
+  .layout { display: flex; gap: 20px; flex-wrap: wrap; }
+  .panel { background: #0F172A; border: 1px solid #334155; border-radius: 10px; padding: 20px; }
+  .panel-controls { width: 280px; flex-shrink: 0; }
+  .panel-tree { flex: 1; min-width: 460px; min-height: 440px; position: relative; }
+  label { font-size: 13px; color: #CBD5E1; display: block; margin-bottom: 4px; }
+  input[type=number] { width: 80px; padding: 6px 10px; border-radius: 5px; border: 1px solid #334155; background: #1E293B; color: #fff; font-size: 14px; font-family: 'Consolas', monospace; }
+  .btn { background: #312E81; color: #A5B4FC; border: 1px solid #4338CA; border-radius: 6px; padding: 7px 16px; font-size: 13px; cursor: pointer; font-family: inherit; transition: all 0.2s; }
+  .btn:hover, .btn:focus { background: #3730A3; }
+  .btn:focus-visible { outline: 2px solid #818CF8; outline-offset: 2px; }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn.primary { background: #6366F1; color: #fff; border-color: #6366F1; font-weight: 600; }
+  .btn.primary:hover { filter: brightness(1.1); }
+  .btn.danger { background: #5A1A1A; color: #FB923C; border-color: #7F1D1D; }
+  .btn.danger:hover { background: #6A2020; }
+  .btn-row { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+  .section-label { font-size: 11px; letter-spacing: 2px; color: #818CF8; text-transform: uppercase; margin: 16px 0 8px; font-weight: 600; }
+  .section-label:first-child { margin-top: 0; }
+  .preset-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+  .preset-btn { font-size: 11px; padding: 4px 10px; background: #1E293B; border: 1px solid #334155; color: #CBD5E1; border-radius: 4px; cursor: pointer; transition: all 0.2s; }
+  .preset-btn:hover, .preset-btn:focus { border-color: #818CF8; color: #818CF8; }
+  .preset-btn:focus-visible { outline: 2px solid #818CF8; outline-offset: 2px; }
+  .log { margin-top: 12px; max-height: 180px; overflow-y: auto; font-size: 12px; line-height: 1.6; padding: 10px; background: #0B0F1A; border-radius: 6px; border: 1px solid #334155; }
+  .log-entry { padding: 2px 0; border-bottom: 1px solid rgba(51,65,85,0.3); }
+  .log-entry:last-child { border-bottom: none; }
+  .log .green { color: #4ADE80; } .log .orange { color: #FB923C; } .log .blue { color: #22D3EE; } .log .muted { color: #94A3B8; } .log .red { color: #F87171; }
+  .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+  .stat { background: #1E293B; border-radius: 6px; padding: 10px; text-align: center; }
+  .stat .val { font-size: 22px; font-weight: 700; color: #818CF8; font-family: 'Consolas', monospace; }
+  .stat .lbl { font-size: 10px; color: #94A3B8; text-transform: uppercase; letter-spacing: 1px; margin-top: 2px; }
+  canvas { display: block; width: 100%; height: 100%; }
+  .legend { display: flex; gap: 14px; margin-top: 10px; flex-wrap: wrap; }
+  .legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: #CBD5E1; }
+  .legend-dot { width: 12px; height: 12px; border-radius: 50%; border: 1.5px solid #fff; }
+  .speed-row { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+  .speed-row input { width: 100px; } .speed-row span { font-size: 12px; color: #94A3B8; }
+  .insight { margin-top: 12px; padding: 10px 12px; background: rgba(129,140,248,0.06); border: 1px solid rgba(129,140,248,0.15); border-radius: 6px; font-size: 12px; color: #CBD5E1; line-height: 1.5; }
+  .insight strong { color: #818CF8; }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+  }
+  @media (max-width: 780px) {
+    body { padding: 16px; }
+    .panel-controls { width: 100%; }
+    .panel-tree { min-width: 100%; }
+    h1 { font-size: 20px; }
+    .subtitle { font-size: 13px; }
+  }
+</style>
+</head>
+<body>
+<a href="../index.html" class="back-link" aria-label="Back to CS 302 Home">← CS 302 Home</a>
+<h1>Red-Black Tree — Interactive</h1>
+<p class="subtitle">
+  Every node is <span class="red">RED</span> or <span style="color:#1F2937;background:#F1F5F9;padding:0 4px;border-radius:2px;font-weight:bold;">BLACK</span>. Five color rules together force the longest root-to-leaf path to be at most twice the shortest, so height stays O(log n). Insert starts the new node RED, then <span class="orange">recolors or rotates</span> to fix any violations.
+</p>
+<div class="layout">
+  <div class="panel panel-controls">
+    <div class="section-label">Insert</div>
+    <div style="display:flex;gap:8px;align-items:end;">
+      <div><label for="insertVal">Value</label><input type="number" id="insertVal" value="25" min="1" max="99"></div>
+      <button class="btn primary" onclick="doInsert()" aria-label="Insert value">Insert</button>
+    </div>
+    <div class="section-label">Search</div>
+    <div style="display:flex;gap:8px;align-items:end;">
+      <div><label for="searchVal">Value</label><input type="number" id="searchVal" value="30" min="1" max="99"></div>
+      <button class="btn" onclick="doSearch()" aria-label="Search for value">Search</button>
+    </div>
+    <div class="section-label">Presets</div>
+    <div class="preset-row">
+      <button class="preset-btn" onclick="loadPreset('ascending')">Ascending</button>
+      <button class="preset-btn" onclick="loadPreset('mixed')">Mixed</button>
+      <button class="preset-btn" onclick="loadPreset('random')">Random 12</button>
+      <button class="preset-btn" onclick="loadPreset('clrs')">CLRS Example</button>
+    </div>
+    <div class="btn-row"><button class="btn danger" onclick="clearTree()" aria-label="Clear tree">Clear Tree</button></div>
+    <div class="speed-row">
+      <label style="margin:0;">Speed:</label>
+      <input type="range" id="speedSlider" min="1" max="5" value="3" aria-label="Animation speed">
+      <span id="speedLabel" aria-live="polite">Normal</span>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="val" id="statNodes">0</div><div class="lbl">Nodes</div></div>
+      <div class="stat"><div class="val" id="statHeight">0</div><div class="lbl">Height</div></div>
+      <div class="stat"><div class="val" id="statBH">—</div><div class="lbl">Black-Height</div></div>
+      <div class="stat"><div class="val" id="statMin">—</div><div class="lbl">Min Possible</div></div>
+    </div>
+    <div class="insight" id="insight">
+      <strong>Try it:</strong> Insert 10, 20, 30, 40, 50 one at a time. Watch how reds flip to black and how rotations straighten zig-zags. Notice the root is always black.
+    </div>
+    <div class="section-label">Log</div>
+    <div class="log" id="log" role="log" aria-label="Operation log" aria-live="polite"></div>
+  </div>
+  <div class="panel panel-tree">
+    <canvas id="treeCanvas" role="img" aria-label="Red-black tree visualization"></canvas>
+    <div class="legend">
+      <div class="legend-item"><div class="legend-dot" style="background:#F87171"></div> Red node</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#1F2937"></div> Black node</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#FB923C"></div> Visiting</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#4ADE80"></div> Found / Inserted</div>
+    </div>
+  </div>
+</div>
+<script>
+// Sentinel NIL — always BLACK, shared by all leaves.
+const NIL = {color:'B', l:null, r:null, p:null, v:null, nil:true};
+NIL.l = NIL.r = NIL.p = NIL;
+
+let root = NIL, animating=false, highlights=new Map();
+
+function cn(n){return n===NIL?0:1+cn(n.l)+cn(n.r);}
+function gh(n){return n===NIL?0:1+Math.max(gh(n.l),gh(n.r));}
+function blackHeight(n){if(n===NIL)return 0;let h=0;let c=n;while(c!==NIL){if(c.color==='B')h++;c=c.l;}return h;}
+function getSpeed(){const v=+document.getElementById('speedSlider').value;const s=[1400,900,550,320,160];const l=['Slow','Medium','Normal','Fast','Very Fast'];document.getElementById('speedLabel').textContent=l[v-1];return s[v-1];}
+document.getElementById('speedSlider').addEventListener('input',getSpeed);
+
+function updateStats(){
+  const n=cn(root),h=gh(root);
+  document.getElementById('statNodes').textContent=n;
+  document.getElementById('statHeight').textContent=h;
+  document.getElementById('statBH').textContent=n>0?blackHeight(root):'—';
+  document.getElementById('statMin').textContent=n>0?Math.ceil(Math.log2(n+1)):'—';
+}
+function addLog(html){const log=document.getElementById('log'),e=document.createElement('div');e.className='log-entry';e.innerHTML=html;log.prepend(e);if(log.children.length>60)log.removeChild(log.lastChild);}
+async function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
+
+// --- Rotations ---
+function leftRotate(x){
+  const y=x.r;
+  x.r=y.l; if(y.l!==NIL)y.l.p=x;
+  y.p=x.p;
+  if(x.p===NIL)root=y;
+  else if(x===x.p.l)x.p.l=y;
+  else x.p.r=y;
+  y.l=x; x.p=y;
+}
+function rightRotate(x){
+  const y=x.l;
+  x.l=y.r; if(y.r!==NIL)y.r.p=x;
+  y.p=x.p;
+  if(x.p===NIL)root=y;
+  else if(x===x.p.r)x.p.r=y;
+  else x.p.l=y;
+  y.r=x; x.p=y;
+}
+
+// --- Insert + fix-up (silent, engine-level) ---
+function rbInsertSilent(key){
+  let y=NIL,x=root;
+  while(x!==NIL){
+    y=x;
+    if(key===x.v)return;
+    x=key<x.v?x.l:x.r;
+  }
+  const z={v:key,color:'R',l:NIL,r:NIL,p:y,nil:false};
+  if(y===NIL)root=z;
+  else if(key<y.v)y.l=z;
+  else y.r=z;
+  fixup(z);
+}
+
+function fixup(z){
+  while(z.p.color==='R'){
+    if(z.p===z.p.p.l){
+      const u=z.p.p.r;
+      if(u.color==='R'){
+        z.p.color='B';u.color='B';z.p.p.color='R';
+        z=z.p.p;
+      } else {
+        if(z===z.p.r){z=z.p;leftRotate(z);}
+        z.p.color='B';z.p.p.color='R';rightRotate(z.p.p);
+      }
+    } else {
+      const u=z.p.p.l;
+      if(u.color==='R'){
+        z.p.color='B';u.color='B';z.p.p.color='R';
+        z=z.p.p;
+      } else {
+        if(z===z.p.l){z=z.p;rightRotate(z);}
+        z.p.color='B';z.p.p.color='R';leftRotate(z.p.p);
+      }
+    }
+  }
+  root.color='B';
+}
+
+function find(v){let c=root;while(c!==NIL){if(v===c.v)return c;c=v<c.v?c.l:c.r;}return null;}
+
+// --- Animated operations ---
+async function doInsert(){
+  if(animating)return;
+  const val=parseInt(document.getElementById('insertVal').value);
+  if(isNaN(val))return;
+  animating=true;highlights.clear();
+
+  if(root===NIL){
+    rbInsertSilent(val);highlights.set(root,'#4ADE80');drawTree();
+    addLog('<span class="green">Inserted '+val+'</span> as root. Recolor to BLACK.');
+    updateStats();await sleep(getSpeed());highlights.clear();drawTree();animating=false;return;
+  }
+
+  // Descent visualization.
+  let cur=root;
+  while(cur!==NIL){
+    if(val===cur.v){
+      highlights.set(cur,'#FB923C');drawTree();
+      addLog('<span class="orange">'+val+' already in tree.</span>');
+      await sleep(getSpeed());highlights.clear();drawTree();animating=false;return;
+    }
+    highlights.set(cur,'#FB923C');drawTree();await sleep(getSpeed());
+    if(val<cur.v){addLog('<span class="blue">'+val+' &lt; '+cur.v+'</span> → go left');cur=cur.l;}
+    else{addLog('<span class="blue">'+val+' &gt; '+cur.v+'</span> → go right');cur=cur.r;}
+  }
+  addLog('<span class="red">Place new RED node, then fix-up any violations.</span>');
+  rbInsertSilent(val);
+  const n=find(val);
+  highlights.clear();
+  if(n)highlights.set(n,'#4ADE80');
+  drawTree();
+  addLog('<span class="green">Insert complete.</span> <span class="muted">Black-height: '+blackHeight(root)+'</span>');
+  updateStats();
+  await sleep(getSpeed()*1.5);highlights.clear();drawTree();animating=false;
+}
+
+async function doSearch(){
+  if(animating)return;
+  const val=parseInt(document.getElementById('searchVal').value);
+  if(isNaN(val))return;
+  animating=true;highlights.clear();let comps=0,cur=root;
+  if(cur===NIL){addLog('<span class="orange">Search '+val+': empty tree.</span>');animating=false;return;}
+  while(cur!==NIL){
+    comps++;highlights.set(cur,'#FB923C');drawTree();await sleep(getSpeed());
+    if(val===cur.v){
+      highlights.set(cur,'#4ADE80');drawTree();
+      addLog('<span class="green">Found '+val+'!</span> <span class="muted">'+comps+' comparisons.</span>');
+      await sleep(getSpeed()*2);highlights.clear();drawTree();animating=false;return;
+    }
+    if(val<cur.v){addLog('<span class="blue">'+val+' &lt; '+cur.v+'</span> → go left');cur=cur.l;}
+    else{addLog('<span class="blue">'+val+' &gt; '+cur.v+'</span> → go right');cur=cur.r;}
+  }
+  addLog('<span class="orange">'+val+' not found.</span> <span class="muted">'+comps+' comparisons.</span>');
+  await sleep(getSpeed()*2);highlights.clear();drawTree();animating=false;
+}
+
+// --- Drawing ---
+function layoutTree(node,x,y,spread,pos){
+  if(node===NIL)return;
+  pos.set(node,{x,y});
+  if(node.l!==NIL)layoutTree(node.l,x-spread,y+64,spread*0.52,pos);
+  if(node.r!==NIL)layoutTree(node.r,x+spread,y+64,spread*0.52,pos);
+}
+
+function drawTree(){
+  const canvas=document.getElementById('treeCanvas');
+  const rect=canvas.parentElement.getBoundingClientRect();
+  const dpr=2;
+  canvas.width=rect.width*dpr;canvas.height=(rect.height-40)*dpr;
+  canvas.style.width=rect.width+'px';canvas.style.height=(rect.height-40)+'px';
+  const ctx=canvas.getContext('2d');ctx.scale(dpr,dpr);
+  const W=rect.width,Hc=rect.height-40;
+  ctx.clearRect(0,0,W,Hc);
+
+  if(root===NIL){ctx.fillStyle='#94A3B8';ctx.font='14px system-ui';ctx.textAlign='center';ctx.fillText('Empty tree. Insert a value or load a preset.',W/2,100);return;}
+
+  const pos=new Map();
+  const h=gh(root),maxDepth=h-1;
+  let geoSum=0,factor=1;for(let k=0;k<maxDepth;k++){geoSum+=factor;factor*=0.52;}
+  const maxSpread=geoSum>0?(W/2-28)/geoSum:W*0.36;
+  const spread=Math.min(maxSpread,W*0.36);
+  layoutTree(root,W/2,36,spread,pos);
+
+  function drawEdges(n){
+    if(n===NIL)return;const p=pos.get(n);
+    [n.l,n.r].forEach(ch=>{if(ch===NIL)return;const cp=pos.get(ch);
+      const hi=highlights.has(n)&&highlights.has(ch);
+      ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(cp.x,cp.y);
+      ctx.strokeStyle=hi?'#FB923C':'#334155';ctx.lineWidth=hi?2.5:1.5;ctx.stroke();
+      drawEdges(ch);});
+  }
+  drawEdges(root);
+
+  function drawNodes(n){
+    if(n===NIL)return;
+    const p=pos.get(n),r=20;
+    const baseFill=n.color==='R'?'#B91C1C':'#1F2937';
+    const baseBorder=n.color==='R'?'#F87171':'#F1F5F9';
+    let fill=baseFill,border=baseBorder;
+    if(highlights.has(n)){const hc=highlights.get(n);fill=hc;border='#fff';}
+    ctx.beginPath();ctx.arc(p.x,p.y,r,0,Math.PI*2);ctx.fillStyle=fill;ctx.fill();
+    ctx.strokeStyle=border;ctx.lineWidth=2;ctx.stroke();
+    ctx.fillStyle='#fff';ctx.font='bold 14px system-ui';
+    ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(String(n.v),p.x,p.y+1);
+    drawNodes(n.l);drawNodes(n.r);
+  }
+  drawNodes(root);
+}
+
+// --- Presets ---
+function clearTree(){if(animating)return;root=NIL;highlights.clear();document.getElementById('log').innerHTML='';drawTree();updateStats();document.getElementById('insight').innerHTML='<strong>Try it:</strong> Insert 10, 20, 30, 40, 50 one at a time. Watch how reds flip to black and rotations straighten zig-zags. The root is always black.';}
+
+function loadPreset(name){
+  if(animating)return;root=NIL;highlights.clear();document.getElementById('log').innerHTML='';
+  let vals=[];
+  if(name==='ascending'){vals=[10,20,30,40,50,60,70,80];addLog('<span class="muted">Ascending: [10..80] — fires all three fix-up cases.</span>');}
+  else if(name==='mixed'){vals=[50,30,70,20,40,60,80,10,25,35,45,55];addLog('<span class="muted">Mixed sequence that stays fairly balanced.</span>');}
+  else if(name==='random'){const p=[];while(p.length<12){const v=Math.floor(Math.random()*90)+5;if(!p.includes(v))p.push(v);}vals=p;addLog('<span class="muted">Random: ['+vals.join(', ')+']</span>');}
+  else if(name==='clrs'){vals=[11,2,14,1,7,15,5,8,4];addLog('<span class="muted">CLRS Fig. 13.1 example — classic textbook tree.</span>');document.getElementById('insight').innerHTML='<strong>CLRS example:</strong> Inserting the classic textbook sequence. Compare your tree against the figure in your algorithms book.';}
+  for(const v of vals)rbInsertSilent(v);
+  drawTree();updateStats();
+}
+
+window.addEventListener('resize',drawTree);
+document.getElementById('insertVal').addEventListener('keydown',e=>{if(e.key==='Enter')doInsert();});
+document.getElementById('searchVal').addEventListener('keydown',e=>{if(e.key==='Enter')doSearch();});
+loadPreset('mixed');
+</script>
+</body>
+</html>

@@ -1,0 +1,396 @@
+================================================================================
+RECURSION - Pseudocode
+================================================================================
+Algorithm: Recursive Problem Solving
+Strategy: Break a problem into smaller subproblems of the same type.
+          Each recursive function has a BASE CASE (stop condition) and a
+          RECURSIVE CASE (call itself on a smaller input).
+Key Rule: Every recursive call MUST move toward the base case.
+Complexity: Varies — factorial O(n), naive fibonacci O(2^n), binary search O(log n)
+Key: Recursion uses the call stack; memoization eliminates redundant work.
+
+================================================================================
+OVERVIEW
+================================================================================
+
+Recursion is when a function calls itself to solve a smaller version of
+the same problem. Every recursive function has two essential parts:
+
+    1. BASE CASE — the simplest version of the problem, solved directly
+       without any recursive call. This is what stops the recursion.
+
+    2. RECURSIVE CASE — breaks the problem into a smaller subproblem and
+       calls the function on that smaller input. Must make progress toward
+       the base case.
+
+    General structure:
+
+    RECURSIVE_FUNCTION(input)
+        IF input is a base case THEN
+            RETURN base case value directly
+        ELSE
+            smaller ← reduce input toward base case
+            RETURN combine( RECURSIVE_FUNCTION(smaller) )
+        END IF
+    END RECURSIVE_FUNCTION
+
+================================================================================
+FACTORIAL
+================================================================================
+
+FACTORIAL(n)
+    // Base case: 0! = 1, 1! = 1
+    IF n <= 1 THEN
+        RETURN 1
+    END IF
+
+    // Recursive case: n! = n * (n-1)!
+    RETURN n * FACTORIAL(n - 1)
+END FACTORIAL
+
+================================================================================
+FIBONACCI (Naive)
+================================================================================
+
+FIBONACCI(n)
+    // Base cases: F(0) = 0, F(1) = 1
+    IF n <= 0 THEN
+        RETURN 0
+    END IF
+    IF n = 1 THEN
+        RETURN 1
+    END IF
+
+    // Recursive case: F(n) = F(n-1) + F(n-2)
+    RETURN FIBONACCI(n - 1) + FIBONACCI(n - 2)
+END FIBONACCI
+
+    WARNING: This makes TWO recursive calls per invocation.
+    The call tree branches exponentially — O(2^n) total calls.
+    See FIBONACCI_MEMO below for the efficient version.
+
+================================================================================
+FIBONACCI_MEMO (Memoized)
+================================================================================
+
+FIBONACCI_MEMO(n, memo)
+    // memo is an array of size n+1, initialized to -1 ("not computed")
+
+    // Base cases
+    IF n <= 0 THEN RETURN 0
+    IF n = 1 THEN RETURN 1
+
+    // Cache check — if already computed, return immediately
+    IF memo[n] ≠ -1 THEN
+        RETURN memo[n]        // O(1) lookup, no recursion needed
+    END IF
+
+    // Compute, cache, and return
+    memo[n] ← FIBONACCI_MEMO(n - 1, memo) + FIBONACCI_MEMO(n - 2, memo)
+    RETURN memo[n]
+END FIBONACCI_MEMO
+
+    Key insight: Each value fib(0) through fib(n) is computed EXACTLY ONCE.
+    All repeat lookups are O(1) from the cache.
+    Total work: O(n) instead of O(2^n).
+
+================================================================================
+BINARY_SEARCH (Recursive)
+================================================================================
+
+BINARY_SEARCH(arr, left, right, target)
+    // Base case: search space is empty
+    IF left > right THEN
+        RETURN -1            // not found
+    END IF
+
+    mid ← left + (right - left) / 2    // avoids integer overflow
+
+    IF arr[mid] = target THEN
+        RETURN mid           // found it
+    ELSE IF target < arr[mid] THEN
+        RETURN BINARY_SEARCH(arr, left, mid - 1, target)    // search left half
+    ELSE
+        RETURN BINARY_SEARCH(arr, mid + 1, right, target)   // search right half
+    END IF
+END BINARY_SEARCH
+
+    Precondition: arr must be sorted in ascending order.
+    Each call eliminates HALF the remaining elements.
+
+================================================================================
+STEP-BY-STEP EXAMPLE — FACTORIAL(5)
+================================================================================
+
+Call chain (winding — going deeper):
+
+    FACTORIAL(5)
+        5 > 1, so compute 5 * FACTORIAL(4)
+    | FACTORIAL(4)
+    |     4 > 1, so compute 4 * FACTORIAL(3)
+    | | FACTORIAL(3)
+    | |     3 > 1, so compute 3 * FACTORIAL(2)
+    | | | FACTORIAL(2)
+    | | |     2 > 1, so compute 2 * FACTORIAL(1)
+    | | | | FACTORIAL(1)
+    | | | |     1 <= 1 → BASE CASE, return 1
+
+Unwinding (returning results back up):
+
+    | | | | FACTORIAL(1) returns 1
+    | | | FACTORIAL(2) returns 2 * 1 = 2
+    | | FACTORIAL(3) returns 3 * 2 = 6
+    | FACTORIAL(4) returns 4 * 6 = 24
+    FACTORIAL(5) returns 5 * 24 = 120
+
+    Result: FACTORIAL(5) = 120
+
+    Stack depth: 5 frames (one per call from 5 down to 1)
+
+================================================================================
+STEP-BY-STEP EXAMPLE — FIBONACCI(5)
+================================================================================
+
+Full call tree (ASCII art):
+
+                            fib(5)
+                           /      \
+                      fib(4)       fib(3)          ← fib(3) computed TWICE
+                     /     \       /    \
+                fib(3)  fib(2)  fib(2)  fib(1)     ← fib(2) computed THREE times
+               /    \    /   \   /   \
+          fib(2) fib(1) f(1) f(0) f(1) f(0)
+          /   \
+        f(1)  f(0)
+
+Execution order (depth-first, left-to-right):
+
+    fib(5) calls fib(4)
+        fib(4) calls fib(3)
+            fib(3) calls fib(2)
+                fib(2) calls fib(1) → returns 1
+                fib(2) calls fib(0) → returns 0
+                fib(2) returns 1 + 0 = 1
+            fib(3) calls fib(1) → returns 1
+            fib(3) returns 1 + 1 = 2
+        fib(4) calls fib(2)                        ← REDUNDANT (already computed above)
+            fib(2) calls fib(1) → returns 1
+            fib(2) calls fib(0) → returns 0
+            fib(2) returns 1 + 0 = 1
+        fib(4) returns 2 + 1 = 3
+    fib(5) calls fib(3)                            ← REDUNDANT (already computed above)
+        fib(3) calls fib(2)                        ← REDUNDANT
+            fib(2) calls fib(1) → returns 1
+            fib(2) calls fib(0) → returns 0
+            fib(2) returns 1 + 0 = 1
+        fib(3) calls fib(1) → returns 1
+        fib(3) returns 1 + 1 = 2
+    fib(5) returns 3 + 2 = 5
+
+    Result: fib(5) = 5
+    Total calls: 15 (but only 6 unique subproblems: fib(0) through fib(5))
+
+    Redundant calls:
+        fib(3): computed 2 times
+        fib(2): computed 3 times
+        fib(1): computed 5 times
+        fib(0): computed 3 times
+
+    With memoization, each would be computed only ONCE → 9 total calls instead of 15.
+
+================================================================================
+STEP-BY-STEP EXAMPLE — BINARY_SEARCH
+================================================================================
+
+Array: [2, 5, 8, 12, 16, 23, 38, 45, 67, 91]
+Index:  0  1  2   3   4   5   6   7   8   9
+Target: 23
+
+Step 1: BINARY_SEARCH(arr, 0, 9, 23)
+    mid = 0 + (9-0)/2 = 4
+    arr[4] = 16
+    16 < 23 → search RIGHT half [5..9]
+    Range: [2, 5, 8, 12, |16|, 23, 38, 45, 67, 91]
+                                 ^^^^^^^^^^^^^^^^^ search here
+
+Step 2: BINARY_SEARCH(arr, 5, 9, 23)
+    mid = 5 + (9-5)/2 = 7
+    arr[7] = 45
+    45 > 23 → search LEFT half [5..6]
+    Range: [. . .  .   .  23, 38, |45|, 67, 91]
+                           ^^^^^^ search here
+
+Step 3: BINARY_SEARCH(arr, 5, 6, 23)
+    mid = 5 + (6-5)/2 = 5
+    arr[5] = 23
+    23 = 23 → FOUND at index 5!
+
+    Result: index 5
+    Total comparisons: 3 (out of 10 elements — much better than linear scan)
+    log₂(10) ≈ 3.3, so 3 steps is expected for O(log n)
+
+Example with target NOT in array (target = 10):
+
+Step 1: BINARY_SEARCH(arr, 0, 9, 10)
+    mid = 4, arr[4] = 16, 16 > 10 → search LEFT [0..3]
+
+Step 2: BINARY_SEARCH(arr, 0, 3, 10)
+    mid = 1, arr[1] = 5, 5 < 10 → search RIGHT [2..3]
+
+Step 3: BINARY_SEARCH(arr, 2, 3, 10)
+    mid = 2, arr[2] = 8, 8 < 10 → search RIGHT [3..3]
+
+Step 4: BINARY_SEARCH(arr, 3, 3, 10)
+    mid = 3, arr[3] = 12, 12 > 10 → search LEFT [3..2]
+
+Step 5: BINARY_SEARCH(arr, 3, 2, 10)
+    left (3) > right (2) → NOT FOUND, return -1
+
+================================================================================
+KEY POINTS FOR TEACHING
+================================================================================
+
+1. BASE CASE
+   - Every recursive function MUST have at least one base case
+   - The base case returns a value directly WITHOUT calling itself
+   - Without a base case → infinite recursion → stack overflow crash
+   - Always ask: "What is the simplest input I can answer directly?"
+   - factorial: n <= 1 returns 1
+   - fibonacci: n = 0 returns 0, n = 1 returns 1
+   - binary search: left > right returns -1 (empty range)
+
+2. REDUNDANT COMPUTATION
+   - Naive fibonacci recomputes the same values exponentially many times
+   - fib(5) computes fib(2) three times and fib(1) five times
+   - This is called "overlapping subproblems"
+   - Recognizing this pattern is the key to optimization
+   - The number of calls for naive fib(n) is approximately 2^n
+   - For n=20: ~21,891 calls; for n=40: ~331 million calls
+
+3. MEMOIZATION
+   - Cache results of function calls to avoid recomputation
+   - Before computing, check: "Have I solved this before?"
+   - If yes → return cached result in O(1)
+   - If no → compute, store in cache, then return
+   - Transforms fibonacci from O(2^n) to O(n)
+   - Uses O(n) extra memory for the cache — a time-space trade-off
+   - This is the top-down approach to dynamic programming
+
+4. STACK DEPTH
+   - Each recursive call adds a frame to the system call stack
+   - Stack frames store: parameters, local variables, return address
+   - Stack has a finite size (typically 1-8 MB)
+   - Too many frames → stack overflow
+   - factorial(n): stack depth = n
+   - fibonacci(n): max stack depth = n (deepest path in the call tree)
+   - binary search: stack depth = log₂(n) (very efficient)
+   - Rule of thumb: worry about stack depth when n > ~10,000
+
+5. RECURSION VS ITERATION
+   - Every recursive algorithm CAN be converted to iteration
+   - Recursion: elegant, mirrors mathematical definitions, uses call stack
+   - Iteration: explicit loops, uses less memory, no stack overflow risk
+   - Recursion is natural for: trees, graphs, divide-and-conquer
+   - Iteration is natural for: simple counting, linear scans
+   - Example: factorial is trivially a for-loop; tree traversal is naturally recursive
+   - When in doubt, write recursive first, convert to iterative if needed
+
+6. TAIL RECURSION
+   - A function is tail-recursive if the recursive call is the LAST operation
+   - tail recursive:     return helper(n-1, n*acc)
+   - NOT tail recursive: return n * factorial(n-1)  (multiplication is last)
+   - Tail recursion can be optimized by the compiler into a loop
+   - This eliminates extra stack frames — O(1) space instead of O(n)
+   - C++ does NOT guarantee this optimization, but gcc/clang may apply it with -O2
+   - Functional languages (Scheme, Haskell) guarantee tail call optimization
+
+================================================================================
+COMPLEXITY ANALYSIS
+================================================================================
+
+FACTORIAL:
+    Time:  O(n) — exactly n recursive calls, O(1) work per call
+    Space: O(n) — n stack frames, no extra data structures
+    Each call does one multiplication and one recursive call.
+
+FIBONACCI (Naive):
+    Time:  O(2^n) — call tree branches at every level
+           More precisely: O(φ^n) where φ ≈ 1.618 (golden ratio)
+           For n=20: about 21,891 calls
+           For n=40: about 331,160,281 calls
+    Space: O(n) — max stack depth is n (deepest path in the tree)
+           Even though there are ~2^n total calls, at most n are active at once.
+
+FIBONACCI (Memoized):
+    Time:  O(n) — each of the n+1 subproblems computed at most once
+           All cache lookups are O(1)
+    Space: O(n) — memo table of size n+1, plus O(n) stack depth
+
+BINARY SEARCH:
+    Time:  O(log n) — search space halves with each recursive call
+           For n=1,000,000: at most ~20 comparisons
+    Space: O(log n) — recursion stack depth equals the number of halvings
+           Iterative binary search achieves O(1) space
+
+================================================================================
+WHEN TO USE RECURSION
+================================================================================
+
+✓ Tree traversals (inorder, preorder, postorder)
+    — Trees are inherently recursive structures
+✓ Divide-and-conquer algorithms (merge sort, quick sort)
+    — Split problem in half, solve each half, combine
+✓ Backtracking problems (N-queens, sudoku, maze solving)
+    — Try a choice, recurse, undo if it fails
+✓ Graph traversal (DFS)
+    — Depth-first search is naturally recursive
+✓ Problems with overlapping subproblems (with memoization)
+    — Fibonacci, shortest paths, edit distance
+✓ Mathematical definitions that are recursive
+    — Factorial, combinations (n choose k), Tower of Hanoi
+
+✗ Simple loops (summing an array, counting elements)
+    — Iteration is simpler and uses O(1) space
+✗ Very deep recursion without memoization (n > 10,000)
+    — Risk of stack overflow; convert to iteration
+✗ Problems where iterative solution is equally clear
+    — No benefit from recursion, just extra overhead
+✗ Performance-critical code in tight loops
+    — Function call overhead matters at scale
+
+================================================================================
+COMMON MISTAKES TO AVOID
+================================================================================
+
+1. Missing or wrong base case
+   - Forgetting the base case → infinite recursion → stack overflow
+   - Wrong base case value → incorrect results for all inputs
+   - Example: factorial returning 0 instead of 1 for n=0
+     makes factorial(n) = 0 for ALL n
+
+2. Not progressing toward the base case
+   - Each recursive call MUST reduce the problem
+   - Example bug: factorial(n) calling factorial(n) instead of factorial(n-1)
+   - Example bug: binary search not adjusting left/right boundaries
+   - Ask: "Is the subproblem strictly smaller than the original?"
+
+3. Ignoring exponential blowup
+   - Naive fibonacci is O(2^n) — unusable for n > ~40
+   - Always check: does my recursion recompute the same subproblems?
+   - If yes → add memoization or convert to dynamic programming
+   - Two recursive calls without caching = likely exponential
+
+4. Stack overflow on large inputs
+   - Each call uses stack space; deep recursion exhausts the stack
+   - factorial(100000) will crash on most systems
+   - Solutions: convert to iteration, increase stack size, use tail recursion
+   - Binary search is safe (O(log n) depth) but factorial/fibonacci are not
+
+5. Confusing the recursive leap of faith
+   - You do NOT need to trace every recursive call to understand correctness
+   - Trust that the recursive call returns the correct answer for the subproblem
+   - Focus on: (a) is the base case correct? (b) does the recursive case
+     correctly combine the subproblem result?
+   - If both are correct, the whole function is correct by induction
+
+================================================================================

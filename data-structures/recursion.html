@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Recursion — Interactive | CS 302</title>
+<meta name="description" content="Interactive visualization of recursion. Watch call stacks grow and unwind, see recursion trees for Factorial, Fibonacci, and Binary Search algorithms.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0B0F1A; color: #fff; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; padding: 20px; min-height: 100vh; }
+  .back-link { font-family: 'Plus Jakarta Sans', system-ui, sans-serif; font-size: 13px; color: #22D3EE; text-decoration: none; display: inline-block; margin-bottom: 10px; transition: color 0.2s; }
+  .back-link:hover, .back-link:focus { color: #818CF8; text-decoration: underline; }
+  .back-link:focus-visible { outline: 2px solid #818CF8; outline-offset: 2px; border-radius: 2px; }
+  h1 { font-size: 24px; margin-bottom: 4px; }
+  .subtitle { color: #818CF8; font-size: 14px; margin-bottom: 16px; line-height: 1.5; }
+  .subtitle .orange { color: #FB923C; font-weight: bold; }
+  .layout { display: flex; gap: 20px; flex-wrap: wrap; }
+  .panel { background: #0F172A; border: 1px solid #334155; border-radius: 10px; padding: 20px; }
+  .panel-controls { width: 280px; flex-shrink: 0; overflow: hidden; }
+  .panel-viz { flex: 1; min-width: 600px; min-height: 500px; display: flex; gap: 0; position: relative; }
+  .viz-stack { width: 40%; min-width: 180px; border-right: 1px solid #334155; padding: 12px; display: flex; flex-direction: column; }
+  .viz-tree { width: 60%; padding: 12px; display: flex; flex-direction: column; }
+  .viz-section-label { font-size: 11px; letter-spacing: 2px; color: #818CF8; text-transform: uppercase; font-weight: 600; margin-bottom: 8px; }
+  label { font-size: 13px; color: #CBD5E1; display: block; margin-bottom: 4px; }
+  /* Improved contrast: #CBD5E1 on #0B0F1A = 11.5:1 WCAG AA */
+  input[type=number], input[type=text], select { width: 100%; padding: 6px 10px; border-radius: 5px; border: 1px solid #334155; background: #1E293B; color: #fff; font-size: 14px; font-family: 'JetBrains Mono', 'Consolas', monospace; }
+  select { cursor: pointer; }
+  .btn { background: #312E81; color: #A5B4FC; border: 1px solid #4338CA; border-radius: 6px; padding: 7px 16px; font-size: 13px; cursor: pointer; font-family: inherit; transition: all 0.2s; }
+  .btn:hover, .btn:focus { background: #3730A3; }
+  .btn:focus-visible { outline: 2px solid #818CF8; outline-offset: 2px; }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn.primary { background: #6366F1; color: #fff; border-color: #6366F1; font-weight: 600; }
+  .btn.primary:hover { filter: brightness(1.1); }
+  .btn.danger { background: #5A1A1A; color: #FB923C; border-color: #7F1D1D; }
+  .btn.danger:hover { background: #6A2020; }
+  .btn-row { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+  .section-label { font-size: 11px; letter-spacing: 2px; color: #818CF8; text-transform: uppercase; margin: 16px 0 8px; font-weight: 600; }
+  .section-label:first-child { margin-top: 0; }
+  .log { margin-top: 12px; max-height: 180px; overflow-y: auto; font-size: 12px; line-height: 1.6; padding: 10px; background: #0B0F1A; border-radius: 6px; border: 1px solid #334155; }
+  .log-entry { padding: 2px 0; border-bottom: 1px solid rgba(51,65,85,0.3); }
+  .log-entry:last-child { border-bottom: none; }
+  .log .green { color: #4ADE80; } .log .orange { color: #FB923C; } .log .blue { color: #22D3EE; } .log .muted { color: #94A3B8; }
+  /* Log colors: Green (#4ADE80) 10.2:1, Orange (#FB923C) 7.2:1, Blue (#22D3EE) 9.6:1, Muted (#94A3B8) 6.4:1 - All WCAG AA compliant */
+  .stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 12px; }
+  .stat { background: #1E293B; border-radius: 6px; padding: 10px; text-align: center; }
+  .stat .val { font-size: 22px; font-weight: 700; color: #818CF8; font-family: 'JetBrains Mono', 'Consolas', monospace; }
+  .stat .lbl { font-size: 10px; color: #94A3B8; text-transform: uppercase; letter-spacing: 1px; margin-top: 2px; }
+  /* Improved contrast: #94A3B8 on #1E293B = 4.6:1 WCAG AA */
+  canvas { display: block; width: 100%; flex: 1; }
+  .legend { display: flex; gap: 14px; margin-top: 10px; flex-wrap: wrap; }
+  .legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: #CBD5E1; }
+  .legend-dot { width: 12px; height: 12px; border-radius: 50%; border: 1.5px solid #4338CA; }
+  .speed-row { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+  .speed-row input { width: 100px; } .speed-row span { font-size: 12px; color: #94A3B8; }
+  .insight { margin-top: 12px; padding: 10px 12px; background: rgba(129,140,248,0.06); border: 1px solid rgba(129,140,248,0.15); border-radius: 6px; font-size: 12px; color: #CBD5E1; line-height: 1.5; }
+  .insight strong { color: #818CF8; }
+
+  /* Call stack frames */
+  .stack-container { flex: 1; overflow-y: auto; display: flex; flex-direction: column; justify-content: flex-end; gap: 4px; padding-top: 8px; }
+  .stack-frame { padding: 8px 10px; border-radius: 5px; font-family: 'JetBrains Mono', 'Consolas', monospace; font-size: 12px; color: #fff; transition: all 0.3s ease; animation: slideIn 0.25s ease-out; }
+  .stack-frame.active { background: #6366F1; border: 1px solid #818CF8; }
+  .stack-frame.waiting { background: #312E81; border: 1px solid #4338CA; color: #A5B4FC; }
+  .stack-frame.returning { background: #166534; border: 1px solid #4ADE80; color: #4ADE80; }
+  .stack-frame .return-val { font-weight: 700; margin-left: 6px; }
+  .stack-empty { color: #94A3B8; font-size: 12px; text-align: center; padding: 20px 0; }
+
+  /* Binary search array display */
+  .bs-array { display: flex; gap: 0; margin-bottom: 8px; flex-wrap: wrap; justify-content: center; }
+  .bs-cell { width: 38px; text-align: center; }
+  .bs-cell .cell-val { width: 36px; height: 36px; line-height: 36px; background: #1E293B; border: 1px solid #334155; color: #fff; font-size: 13px; font-family: 'JetBrains Mono', 'Consolas', monospace; font-weight: 600; border-radius: 4px; margin: 0 auto; transition: all 0.3s; }
+  .bs-cell .cell-idx { font-size: 9px; color: #94A3B8; margin-top: 2px; font-family: 'JetBrains Mono', 'Consolas', monospace; }
+  .bs-cell .cell-marker { font-size: 9px; color: #FB923C; font-weight: 700; height: 14px; margin-bottom: 2px; text-align: center; }
+  .bs-cell .cell-val.in-range { border-color: #6366F1; }
+  .bs-cell .cell-val.mid { background: #FB923C; border-color: #FB923C; color: #000; }
+  .bs-cell .cell-val.found { background: #4ADE80; border-color: #4ADE80; color: #000; }
+  .bs-cell .cell-val.out-of-range { opacity: 0.3; }
+
+  @keyframes slideIn {
+    from { transform: translateY(-20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+
+  /* Reduced motion support for accessibility (WCAG 2.3.3) */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+
+  @media (max-width: 900px) {
+    body { padding: 16px; }
+    .panel-controls { width: 100%; }
+    .panel-viz { min-width: 100%; flex-direction: column; }
+    .viz-stack { width: 100%; border-right: none; border-bottom: 1px solid #334155; max-height: 200px; }
+    .viz-tree { width: 100%; }
+    h1 { font-size: 20px; }
+    .subtitle { font-size: 13px; }
+  }
+</style>
+</head>
+<body>
+<a href="../index.html" class="back-link" aria-label="Back to CS 302 Home">&larr; CS 302 Home</a>
+<h1>Recursion &mdash; Interactive</h1>
+<p class="subtitle">
+  Visualize how recursive algorithms build a <span class="orange">call stack</span> and form recursion trees. Step through Factorial, Fibonacci, and Binary Search to see base cases, recursive calls, and return values propagate.
+</p>
+<div class="layout">
+  <div class="panel panel-controls">
+    <div class="section-label" style="margin-top:0;">Algorithm</div>
+    <select id="algoSelect" aria-label="Select algorithm" onchange="onAlgoChange()">
+      <option value="factorial">Factorial</option>
+      <option value="fibonacci">Fibonacci</option>
+      <option value="binarySearch">Binary Search</option>
+    </select>
+
+    <div class="section-label">Input</div>
+    <div>
+      <label for="inputVal" id="inputLabel">n</label>
+      <input type="number" id="inputVal" value="5" min="0" max="10" aria-label="Input value">
+    </div>
+    <div id="bsTargetRow" style="display:none;margin-top:8px;">
+      <label for="bsTarget">Search for</label>
+      <input type="number" id="bsTarget" value="23" aria-label="Binary search target value">
+    </div>
+
+    <div class="section-label">Controls</div>
+    <div class="btn-row">
+      <button class="btn primary" id="btnPlay" onclick="doPlay()" aria-label="Play animation">Play</button>
+      <button class="btn" id="btnStep" onclick="doStep()" aria-label="Step through one frame">Step</button>
+      <button class="btn danger" id="btnReset" onclick="doReset()" aria-label="Reset visualization">Reset</button>
+    </div>
+    <div class="speed-row">
+      <label style="margin:0;">Speed:</label>
+      <input type="range" id="speedSlider" min="1" max="5" value="3" aria-label="Animation speed">
+      <span id="speedLabel" aria-live="polite">Normal</span>
+    </div>
+
+    <div class="stats">
+      <div class="stat"><div class="val" id="statCalls">0</div><div class="lbl">Calls</div></div>
+      <div class="stat"><div class="val" id="statMaxDepth">0</div><div class="lbl">Max Depth</div></div>
+      <div class="stat"><div class="val" id="statCurDepth">0</div><div class="lbl">Cur Depth</div></div>
+    </div>
+
+    <div class="insight" id="insight">
+      <strong>Try it:</strong> Press Play to watch fact(5) build a call stack 5 levels deep, hit the base case, and unwind multiplying as it returns.
+    </div>
+
+    <div class="section-label">Log</div>
+    <div class="log" id="log" role="log" aria-label="Operation log" aria-live="polite"></div>
+  </div>
+
+  <div class="panel panel-viz">
+    <div class="viz-stack">
+      <div class="viz-section-label">Call Stack</div>
+      <div class="stack-container" id="stackContainer">
+        <div class="stack-empty">Press Play or Step to begin.</div>
+      </div>
+    </div>
+    <div class="viz-tree">
+      <div class="viz-section-label">Recursion Tree</div>
+      <div id="bsArrayContainer" style="display:none;"></div>
+      <canvas id="treeCanvas" role="img" aria-label="Recursion tree visualization"></canvas>
+      <div class="legend">
+        <div class="legend-item"><div class="legend-dot" style="background:#334155"></div> Pending</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#FB923C"></div> Active</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#4ADE80"></div> Returned</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#F472B6"></div> Duplicate</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── State ──────────────────────────────────────────────────────────────
+let animating = false, paused = false, stepping = false;
+let callsMade = 0, maxStackDepth = 0, currentDepth = 0;
+let callStack = []; // visual stack frames
+let treeRoot = null; // recursion tree
+let allNodes = []; // flat list of all tree nodes for rendering
+let animSteps = []; // pre-computed animation steps
+let stepIndex = 0;
+let resolveStep = null; // for step-by-step
+let abortController = null;
+
+// Binary search array
+const BS_ARRAY = [5, 10, 15, 20, 23, 30, 35, 40];
+let bsHighlight = { left: -1, right: -1, mid: -1, found: -1 };
+
+// ─── Tree Node ──────────────────────────────────────────────────────────
+function makeNode(label, parent, depth) {
+  const node = {
+    id: allNodes.length,
+    label: label,
+    parent: parent,
+    children: [],
+    depth: depth,
+    state: 'pending', // pending, active, returned
+    returnVal: null,
+    x: 0, y: 0, // computed during layout
+    isDuplicate: false,
+  };
+  allNodes.push(node);
+  if (parent) parent.children.push(node);
+  return node;
+}
+
+// ─── Pre-compute full tree structure ────────────────────────────────────
+function buildFactorialTree(n, parent, depth) {
+  const node = makeNode('fact(' + n + ')', parent, depth);
+  if (n <= 0) return node;
+  buildFactorialTree(n - 1, node, depth + 1);
+  return node;
+}
+
+function buildFibonacciTree(n, parent, depth, seen) {
+  const node = makeNode('fib(' + n + ')', parent, depth);
+  const key = 'fib(' + n + ')';
+  if (seen.has(key)) {
+    node.isDuplicate = true;
+  }
+  seen.add(key);
+  if (n <= 1) return node;
+  buildFibonacciTree(n - 1, node, depth + 1, seen);
+  buildFibonacciTree(n - 2, node, depth + 1, seen);
+  return node;
+}
+
+function buildBinarySearchTree(arr, target, lo, hi, parent, depth) {
+  if (lo > hi) {
+    const node = makeNode('bs(' + lo + ',' + hi + ')', parent, depth);
+    return node;
+  }
+  const mid = Math.floor((lo + hi) / 2);
+  const node = makeNode('bs(' + lo + ',' + hi + ')', parent, depth);
+  if (arr[mid] === target) return node;
+  if (target < arr[mid]) {
+    buildBinarySearchTree(arr, target, lo, mid - 1, node, depth + 1);
+  } else {
+    buildBinarySearchTree(arr, target, mid + 1, hi, node, depth + 1);
+  }
+  return node;
+}
+
+// ─── Pre-compute animation steps ────────────────────────────────────────
+function computeFactorialSteps(n, node) {
+  animSteps.push({ type: 'call', node: node, label: 'fact(' + n + ')', depth: node.depth });
+  if (n <= 0) {
+    animSteps.push({ type: 'return', node: node, value: 1, label: 'fact(0) = 1' });
+    return 1;
+  }
+  const childResult = computeFactorialSteps(n - 1, node.children[0]);
+  const result = n * childResult;
+  animSteps.push({ type: 'return', node: node, value: result, label: 'fact(' + n + ') = ' + n + ' * ' + childResult + ' = ' + result });
+  return result;
+}
+
+function computeFibonacciSteps(n, node) {
+  animSteps.push({ type: 'call', node: node, label: 'fib(' + n + ')', depth: node.depth });
+  if (n <= 0) {
+    animSteps.push({ type: 'return', node: node, value: 0, label: 'fib(0) = 0' });
+    return 0;
+  }
+  if (n === 1) {
+    animSteps.push({ type: 'return', node: node, value: 1, label: 'fib(1) = 1' });
+    return 1;
+  }
+  const left = computeFibonacciSteps(n - 1, node.children[0]);
+  const right = computeFibonacciSteps(n - 2, node.children[1]);
+  const result = left + right;
+  animSteps.push({ type: 'return', node: node, value: result, label: 'fib(' + n + ') = ' + left + ' + ' + right + ' = ' + result });
+  return result;
+}
+
+function computeBinarySearchSteps(arr, target, lo, hi, node) {
+  animSteps.push({ type: 'call', node: node, label: 'bs(' + lo + ',' + hi + ')', depth: node.depth, bsInfo: { lo, hi, mid: -1 } });
+  if (lo > hi) {
+    animSteps.push({ type: 'return', node: node, value: -1, label: 'Not in range [' + lo + ',' + hi + ']' });
+    return -1;
+  }
+  const mid = Math.floor((lo + hi) / 2);
+  animSteps.push({ type: 'check', node: node, label: 'Check arr[' + mid + '] = ' + arr[mid] + ' vs ' + target, bsInfo: { lo, hi, mid } });
+  if (arr[mid] === target) {
+    animSteps.push({ type: 'return', node: node, value: mid, label: 'Found ' + target + ' at index ' + mid + '!', bsInfo: { lo, hi, mid, found: mid } });
+    return mid;
+  }
+  if (target < arr[mid]) {
+    animSteps.push({ type: 'narrow', node: node, label: target + ' < ' + arr[mid] + ', go left [' + lo + ',' + (mid - 1) + ']', bsInfo: { lo, hi: mid - 1, mid } });
+    const result = computeBinarySearchSteps(arr, target, lo, mid - 1, node.children[0]);
+    animSteps.push({ type: 'return', node: node, value: result, label: 'bs(' + lo + ',' + hi + ') = ' + result });
+    return result;
+  } else {
+    animSteps.push({ type: 'narrow', node: node, label: target + ' > ' + arr[mid] + ', go right [' + (mid + 1) + ',' + hi + ']', bsInfo: { lo: mid + 1, hi, mid } });
+    const result = computeBinarySearchSteps(arr, target, mid + 1, hi, node.children[0]);
+    animSteps.push({ type: 'return', node: node, value: result, label: 'bs(' + lo + ',' + hi + ') = ' + result });
+    return result;
+  }
+}
+
+// ─── Tree Layout ────────────────────────────────────────────────────────
+function layoutTree(root, canvasW, canvasH) {
+  if (!root) return;
+  // First: assign horizontal positions using a modified Reingold-Tilford-like approach
+  // Count leaves to determine spacing
+  let leafCount = 0;
+  function countLeaves(n) {
+    if (n.children.length === 0) { leafCount++; return; }
+    n.children.forEach(countLeaves);
+  }
+  countLeaves(root);
+
+  // Find max depth
+  let maxDepth = 0;
+  function findMaxDepth(n) {
+    if (n.depth > maxDepth) maxDepth = n.depth;
+    n.children.forEach(findMaxDepth);
+  }
+  findMaxDepth(root);
+
+  const levelGap = Math.min(65, Math.max(40, (canvasH - 80) / Math.max(maxDepth + 1, 1)));
+  const nodeRadius = 20;
+  const padding = 30;
+
+  // Assign x positions: leaves get evenly spaced positions, parents center over children
+  let leafIndex = 0;
+  const leafSpacing = Math.max(50, (canvasW - 2 * padding) / Math.max(leafCount, 1));
+
+  function assignPositions(n) {
+    if (n.children.length === 0) {
+      n.x = padding + leafIndex * leafSpacing + leafSpacing / 2;
+      n.y = 30 + n.depth * levelGap;
+      leafIndex++;
+      return;
+    }
+    n.children.forEach(assignPositions);
+    // Center parent over children
+    const firstChild = n.children[0];
+    const lastChild = n.children[n.children.length - 1];
+    n.x = (firstChild.x + lastChild.x) / 2;
+    n.y = 30 + n.depth * levelGap;
+  }
+  assignPositions(root);
+}
+
+// ─── Rendering ──────────────────────────────────────────────────────────
+function getSpeed() {
+  const v = +document.getElementById('speedSlider').value;
+  const s = [1200, 800, 500, 300, 150];
+  const l = ['Slow', 'Medium', 'Normal', 'Fast', 'Very Fast'];
+  document.getElementById('speedLabel').textContent = l[v - 1];
+  return s[v - 1];
+}
+document.getElementById('speedSlider').addEventListener('input', getSpeed);
+
+function updateStats() {
+  document.getElementById('statCalls').textContent = callsMade;
+  document.getElementById('statMaxDepth').textContent = maxStackDepth;
+  document.getElementById('statCurDepth').textContent = currentDepth;
+}
+
+function addLog(html) {
+  const log = document.getElementById('log');
+  const e = document.createElement('div');
+  e.className = 'log-entry';
+  e.innerHTML = html;
+  log.prepend(e);
+  if (log.children.length > 50) log.removeChild(log.lastChild);
+}
+
+function renderStack() {
+  const container = document.getElementById('stackContainer');
+  container.innerHTML = '';
+  if (callStack.length === 0) {
+    container.innerHTML = '<div class="stack-empty">Stack is empty.</div>';
+    return;
+  }
+  // Render bottom to top (bottom of stack first in DOM, top last visually at top)
+  for (let i = 0; i < callStack.length; i++) {
+    const frame = callStack[i];
+    const div = document.createElement('div');
+    div.className = 'stack-frame ' + frame.state;
+    let html = frame.label;
+    if (frame.returnVal !== null && frame.returnVal !== undefined) {
+      html += '<span class="return-val">= ' + frame.returnVal + '</span>';
+    }
+    div.innerHTML = html;
+    container.prepend(div); // prepend so top of stack is at top of container
+  }
+}
+
+function renderBsArray() {
+  const container = document.getElementById('bsArrayContainer');
+  if (getCurrentAlgo() !== 'binarySearch') {
+    container.style.display = 'none';
+    return;
+  }
+  container.style.display = 'flex';
+  container.className = 'bs-array';
+  container.innerHTML = '';
+  for (let i = 0; i < BS_ARRAY.length; i++) {
+    const cell = document.createElement('div');
+    cell.className = 'bs-cell';
+    // Marker row
+    const marker = document.createElement('div');
+    marker.className = 'cell-marker';
+    if (i === bsHighlight.mid && bsHighlight.found === -1) marker.textContent = 'mid';
+    else if (i === bsHighlight.found) marker.textContent = 'found';
+    else if (i === bsHighlight.left) marker.textContent = 'L';
+    else if (i === bsHighlight.right) marker.textContent = 'R';
+    cell.appendChild(marker);
+    // Value
+    const val = document.createElement('div');
+    val.className = 'cell-val';
+    val.textContent = BS_ARRAY[i];
+    if (bsHighlight.found >= 0 && i === bsHighlight.found) {
+      val.classList.add('found');
+    } else if (i === bsHighlight.mid) {
+      val.classList.add('mid');
+    } else if (bsHighlight.left >= 0 && bsHighlight.right >= 0) {
+      if (i >= bsHighlight.left && i <= bsHighlight.right) {
+        val.classList.add('in-range');
+      } else {
+        val.classList.add('out-of-range');
+      }
+    }
+    cell.appendChild(val);
+    // Index
+    const idx = document.createElement('div');
+    idx.className = 'cell-idx';
+    idx.textContent = i;
+    cell.appendChild(idx);
+    container.appendChild(cell);
+  }
+}
+
+function drawTree() {
+  const canvas = document.getElementById('treeCanvas');
+  const vizTree = canvas.parentElement;
+  const rect = vizTree.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 2;
+
+  // Account for other elements in the viz-tree panel
+  const bsContainer = document.getElementById('bsArrayContainer');
+  const bsH = (getCurrentAlgo() === 'binarySearch' && bsContainer.offsetHeight) ? bsContainer.offsetHeight + 8 : 0;
+  const legendH = 40;
+  const labelH = 30;
+  const canvasH = Math.max(250, rect.height - bsH - legendH - labelH - 24);
+  const canvasW = rect.width - 24;
+
+  canvas.width = canvasW * dpr;
+  canvas.height = canvasH * dpr;
+  canvas.style.width = canvasW + 'px';
+  canvas.style.height = canvasH + 'px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  ctx.clearRect(0, 0, canvasW, canvasH);
+
+  if (!treeRoot || allNodes.length === 0) {
+    ctx.fillStyle = '#94A3B8';
+    ctx.font = '14px "Plus Jakarta Sans", system-ui';
+    ctx.textAlign = 'center';
+    ctx.fillText('Press Play or Step to begin.', canvasW / 2, canvasH / 2);
+    return;
+  }
+
+  layoutTree(treeRoot, canvasW, canvasH);
+
+  const r = 20;
+
+  // Draw edges
+  for (const node of allNodes) {
+    for (const child of node.children) {
+      ctx.beginPath();
+      ctx.moveTo(node.x, node.y);
+      ctx.lineTo(child.x, child.y);
+      const isActive = child.state === 'active' || node.state === 'active';
+      ctx.strokeStyle = isActive ? '#FB923C' : '#334155';
+      ctx.lineWidth = isActive ? 2 : 1.5;
+      ctx.stroke();
+    }
+  }
+
+  // Draw nodes
+  for (const node of allNodes) {
+    if (node.state === 'pending' && node !== treeRoot) {
+      // Draw pending nodes semi-transparent
+      ctx.globalAlpha = 0.4;
+    }
+
+    let fill = '#334155', border = '#475569';
+    if (node.state === 'active') { fill = '#FB923C'; border = '#FDBA74'; }
+    else if (node.state === 'returned') { fill = '#166534'; border = '#4ADE80'; }
+    if (node.isDuplicate && node.state === 'pending') { fill = '#831843'; border = '#F472B6'; }
+    if (node.isDuplicate && node.state === 'returned') { fill = '#166534'; border = '#4ADE80'; }
+
+    ctx.beginPath();
+    ctx.arc(node.x, node.y, r, 0, Math.PI * 2);
+    ctx.fillStyle = fill;
+    ctx.fill();
+    ctx.strokeStyle = border;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // Label
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 11px "JetBrains Mono", monospace';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    // Extract short label
+    let shortLabel = node.label;
+    const m = shortLabel.match(/\((.+)\)/);
+    if (m) shortLabel = m[1];
+
+    if (node.state === 'returned' && node.returnVal !== null) {
+      // Show call arg above center, return value below
+      ctx.font = '9px "JetBrains Mono", monospace';
+      ctx.fillText(shortLabel, node.x, node.y - 6);
+      ctx.font = 'bold 12px "JetBrains Mono", monospace';
+      ctx.fillStyle = '#4ADE80';
+      ctx.fillText(String(node.returnVal), node.x, node.y + 7);
+    } else {
+      ctx.fillText(shortLabel, node.x, node.y + 1);
+    }
+
+    ctx.globalAlpha = 1.0;
+  }
+}
+
+function render() {
+  renderStack();
+  renderBsArray();
+  drawTree();
+  updateStats();
+}
+
+// ─── Algorithm Selection ────────────────────────────────────────────────
+function getCurrentAlgo() {
+  return document.getElementById('algoSelect').value;
+}
+
+function onAlgoChange() {
+  doReset();
+  const algo = getCurrentAlgo();
+  const inputVal = document.getElementById('inputVal');
+  const inputLabel = document.getElementById('inputLabel');
+  const bsRow = document.getElementById('bsTargetRow');
+
+  if (algo === 'factorial') {
+    inputLabel.textContent = 'n';
+    inputVal.value = 5;
+    inputVal.max = 10;
+    inputVal.min = 0;
+    bsRow.style.display = 'none';
+    setInsight('factorial');
+  } else if (algo === 'fibonacci') {
+    inputLabel.textContent = 'n';
+    inputVal.value = 5;
+    inputVal.max = 8;
+    inputVal.min = 0;
+    bsRow.style.display = 'none';
+    setInsight('fibonacci');
+  } else if (algo === 'binarySearch') {
+    inputLabel.textContent = 'Array size';
+    inputVal.style.display = 'none';
+    bsRow.style.display = 'block';
+    setInsight('binarySearch');
+  }
+  if (algo !== 'binarySearch') {
+    inputVal.style.display = '';
+  }
+}
+
+function setInsight(algo) {
+  const el = document.getElementById('insight');
+  if (algo === 'factorial') {
+    el.innerHTML = '<strong>Insight:</strong> Notice the call stack grows to depth n. Each frame waits for the one below to return.';
+  } else if (algo === 'fibonacci') {
+    el.innerHTML = '<strong>Insight:</strong> Notice how fib(3) is computed twice! This is why naive Fibonacci is O(2<sup>n</sup>) &mdash; and why we need memoization.';
+  } else if (algo === 'binarySearch') {
+    el.innerHTML = '<strong>Insight:</strong> Each call halves the search space. The tree has at most log&#8322;(n) levels &mdash; that\'s O(log n)!';
+  }
+}
+
+// ─── Build & Animate ────────────────────────────────────────────────────
+function buildAll() {
+  const algo = getCurrentAlgo();
+  allNodes = [];
+  animSteps = [];
+  stepIndex = 0;
+  callStack = [];
+  callsMade = 0;
+  maxStackDepth = 0;
+  currentDepth = 0;
+  bsHighlight = { left: -1, right: -1, mid: -1, found: -1 };
+
+  if (algo === 'factorial') {
+    let n = parseInt(document.getElementById('inputVal').value);
+    if (isNaN(n) || n < 0) n = 0;
+    if (n > 10) n = 10;
+    document.getElementById('inputVal').value = n;
+    treeRoot = buildFactorialTree(n, null, 0);
+    computeFactorialSteps(n, treeRoot);
+  } else if (algo === 'fibonacci') {
+    let n = parseInt(document.getElementById('inputVal').value);
+    if (isNaN(n) || n < 0) n = 0;
+    if (n > 8) n = 8;
+    document.getElementById('inputVal').value = n;
+    const seen = new Set();
+    treeRoot = buildFibonacciTree(n, null, 0, seen);
+    computeFibonacciSteps(n, treeRoot);
+  } else if (algo === 'binarySearch') {
+    let target = parseInt(document.getElementById('bsTarget').value);
+    if (isNaN(target)) target = 23;
+    document.getElementById('bsTarget').value = target;
+    treeRoot = buildBinarySearchTree(BS_ARRAY, target, 0, BS_ARRAY.length - 1, null, 0);
+    computeBinarySearchSteps(BS_ARRAY, target, 0, BS_ARRAY.length - 1, treeRoot);
+  }
+}
+
+function processStep(step) {
+  if (step.type === 'call') {
+    step.node.state = 'active';
+    callsMade++;
+    currentDepth = step.node.depth + 1;
+    if (currentDepth > maxStackDepth) maxStackDepth = currentDepth;
+    // Push frame
+    callStack.push({ label: step.label, state: 'active', returnVal: null });
+    // Mark previous top as waiting
+    if (callStack.length > 1) {
+      callStack[callStack.length - 2].state = 'waiting';
+    }
+    addLog('<span class="blue">Call ' + step.label + '</span> <span class="muted">(depth ' + (step.node.depth + 1) + ')</span>');
+    // BS array highlight
+    if (step.bsInfo) {
+      bsHighlight.left = step.bsInfo.lo;
+      bsHighlight.right = step.bsInfo.hi;
+      bsHighlight.mid = -1;
+      bsHighlight.found = -1;
+    }
+  } else if (step.type === 'check') {
+    if (step.bsInfo) {
+      bsHighlight.left = step.bsInfo.lo;
+      bsHighlight.right = step.bsInfo.hi;
+      bsHighlight.mid = step.bsInfo.mid;
+      bsHighlight.found = -1;
+    }
+    addLog('<span class="orange">' + step.label + '</span>');
+  } else if (step.type === 'narrow') {
+    if (step.bsInfo) {
+      bsHighlight.left = step.bsInfo.lo;
+      bsHighlight.right = step.bsInfo.hi;
+      bsHighlight.mid = step.bsInfo.mid;
+    }
+    addLog('<span class="muted">' + step.label + '</span>');
+  } else if (step.type === 'return') {
+    step.node.state = 'returned';
+    step.node.returnVal = step.value;
+    // Update stack frame
+    if (callStack.length > 0) {
+      const top = callStack[callStack.length - 1];
+      top.state = 'returning';
+      top.returnVal = step.value;
+    }
+    addLog('<span class="green">Return ' + step.label + '</span>');
+    // BS found highlight
+    if (step.bsInfo && step.bsInfo.found >= 0) {
+      bsHighlight.found = step.bsInfo.found;
+      bsHighlight.mid = -1;
+    }
+  }
+}
+
+function popReturnedFrame() {
+  // Pop the returned frame and activate the one below
+  if (callStack.length > 0 && callStack[callStack.length - 1].state === 'returning') {
+    callStack.pop();
+    currentDepth = callStack.length;
+    if (callStack.length > 0) {
+      callStack[callStack.length - 1].state = 'active';
+    }
+  }
+}
+
+async function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+async function waitForStep() {
+  return new Promise(resolve => {
+    resolveStep = resolve;
+  });
+}
+
+async function doPlay() {
+  if (animating && !paused) return;
+
+  if (paused) {
+    // Resume
+    paused = false;
+    document.getElementById('btnPlay').textContent = 'Pause';
+    if (resolveStep) { resolveStep(); resolveStep = null; }
+    return;
+  }
+
+  // Start fresh
+  buildAll();
+  render();
+
+  animating = true;
+  paused = false;
+  stepping = false;
+  document.getElementById('btnPlay').textContent = 'Pause';
+  document.getElementById('btnStep').disabled = false;
+
+  abortController = new AbortController();
+
+  for (stepIndex = 0; stepIndex < animSteps.length; stepIndex++) {
+    if (abortController.signal.aborted) break;
+
+    // Check for pause
+    if (paused) {
+      await waitForStep();
+      if (abortController.signal.aborted) break;
+    }
+
+    const step = animSteps[stepIndex];
+    processStep(step);
+    render();
+    await sleep(getSpeed());
+
+    // After return step, pop frame with a slight delay
+    if (step.type === 'return') {
+      await sleep(getSpeed() * 0.5);
+      popReturnedFrame();
+      render();
+    }
+
+    if (abortController.signal.aborted) break;
+  }
+
+  animating = false;
+  paused = false;
+  document.getElementById('btnPlay').textContent = 'Play';
+  if (callStack.length === 0) {
+    addLog('<span class="green">Recursion complete!</span>');
+  }
+  render();
+}
+
+function doPause() {
+  if (animating && !paused) {
+    paused = true;
+    document.getElementById('btnPlay').textContent = 'Play';
+  }
+}
+
+// Clicking Play toggles between play and pause
+const origDoPlay = doPlay;
+doPlay = function() {
+  if (animating && !paused) {
+    doPause();
+  } else {
+    origDoPlay();
+  }
+};
+
+async function doStep() {
+  if (!animating) {
+    // Start fresh in step mode
+    buildAll();
+    render();
+    animating = true;
+    paused = true;
+    stepping = true;
+    stepIndex = 0;
+    document.getElementById('btnPlay').textContent = 'Play';
+  }
+
+  if (stepIndex >= animSteps.length) {
+    animating = false;
+    paused = false;
+    stepping = false;
+    document.getElementById('btnPlay').textContent = 'Play';
+    addLog('<span class="green">Recursion complete!</span>');
+    render();
+    return;
+  }
+
+  const step = animSteps[stepIndex];
+  processStep(step);
+  render();
+
+  // After return step, schedule frame pop
+  if (step.type === 'return') {
+    setTimeout(function() {
+      popReturnedFrame();
+      render();
+    }, 300);
+  }
+
+  stepIndex++;
+
+  // If we were in play mode and paused, resume
+  if (resolveStep) { resolveStep(); resolveStep = null; }
+}
+
+function doReset() {
+  if (abortController) abortController.abort();
+  animating = false;
+  paused = false;
+  stepping = false;
+  callStack = [];
+  treeRoot = null;
+  allNodes = [];
+  animSteps = [];
+  stepIndex = 0;
+  callsMade = 0;
+  maxStackDepth = 0;
+  currentDepth = 0;
+  bsHighlight = { left: -1, right: -1, mid: -1, found: -1 };
+  resolveStep = null;
+  document.getElementById('btnPlay').textContent = 'Play';
+  document.getElementById('btnStep').disabled = false;
+  document.getElementById('log').innerHTML = '';
+  document.getElementById('stackContainer').innerHTML = '<div class="stack-empty">Press Play or Step to begin.</div>';
+  render();
+}
+
+// ─── Window resize ──────────────────────────────────────────────────────
+window.addEventListener('resize', function() { drawTree(); renderBsArray(); });
+
+// ─── Init ───────────────────────────────────────────────────────────────
+getSpeed();
+setInsight('factorial');
+render();
+</script>
+</body>
+</html>

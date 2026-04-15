@@ -1,0 +1,290 @@
+================================================================================
+RED-BLACK TREE - Pseudocode
+================================================================================
+Algorithm: Red-Black Tree (Self-Balancing Binary Search Tree via node colors)
+Strategy: Every node is RED or BLACK. Five color rules together guarantee
+          the longest root-to-leaf path is at most twice the shortest.
+          Insert the new node RED, then fix up violations using three cases.
+Complexity: Search O(log n), Insert O(log n), Delete O(log n)
+Key: Fewer rotations than AVL at the cost of looser balance — the standard
+     backing for std::map, java.util.TreeMap, and Linux's CFS scheduler.
+
+================================================================================
+THE FIVE RED-BLACK PROPERTIES
+================================================================================
+
+    1. Every node is either RED or BLACK.
+    2. The root is BLACK.
+    3. Every leaf (the conceptual NIL sentinel) is BLACK.
+    4. If a node is RED, both its children are BLACK.    (No two reds in a row.)
+    5. For every node, every path from that node down to a NIL leaf contains
+       the same number of BLACK nodes. (This is the "black-height".)
+
+Consequences:
+    - Property 4 says you cannot have two RED nodes in a row.
+    - Property 5 says every root-to-leaf path has the same black-height.
+    - Together: the longest root-to-leaf path ≤ 2× the shortest.
+    - Height ≤ 2·log₂(n+1), so all operations are O(log n).
+
+================================================================================
+THE SENTINEL NIL
+================================================================================
+
+Instead of null, every leaf child and the root's parent point to a SHARED
+sentinel node NIL that is permanently BLACK. This removes a flood of
+null-checks from the fix-up code and satisfies property 3 "for free."
+
+    NIL.color   ← BLACK
+    NIL.left    ← NIL
+    NIL.right   ← NIL
+    NIL.parent  ← NIL
+
+Never inspect NIL.key. Never change NIL.color.
+
+================================================================================
+ROTATIONS (mechanically identical to AVL, but also update parent pointers)
+================================================================================
+
+LEFT_ROTATE(T, x)
+    y ← x.right                          x                      y
+    x.right ← y.left                    / \                    / \
+    IF y.left ≠ NIL THEN                A   y      ────▶      x   C
+        y.left.parent ← x                  / \                / \
+    END IF                                B   C              A   B
+    y.parent ← x.parent
+    IF x.parent = NIL THEN
+        T.root ← y
+    ELSE IF x = x.parent.left THEN
+        x.parent.left ← y
+    ELSE
+        x.parent.right ← y
+    END IF
+    y.left ← x
+    x.parent ← y
+END LEFT_ROTATE
+
+
+RIGHT_ROTATE(T, x)                    // mirror image of LEFT_ROTATE
+    y ← x.left
+    x.left ← y.right
+    IF y.right ≠ NIL THEN
+        y.right.parent ← x
+    END IF
+    y.parent ← x.parent
+    IF x.parent = NIL THEN
+        T.root ← y
+    ELSE IF x = x.parent.right THEN
+        x.parent.right ← y
+    ELSE
+        x.parent.left ← y
+    END IF
+    y.right ← x
+    x.parent ← y
+END RIGHT_ROTATE
+
+================================================================================
+RED-BLACK INSERT
+================================================================================
+
+RB_INSERT(T, key)
+    // --- Standard BST insert, but the new node starts RED ---
+    y ← NIL
+    x ← T.root
+    WHILE x ≠ NIL DO
+        y ← x
+        IF key = x.key THEN RETURN         // ignore duplicates
+        IF key < x.key THEN x ← x.left ELSE x ← x.right
+    END WHILE
+
+    z ← new Node(key)
+    z.parent ← y
+    z.left   ← NIL
+    z.right  ← NIL
+    z.color  ← RED
+
+    IF y = NIL THEN
+        T.root ← z                          // tree was empty
+    ELSE IF key < y.key THEN
+        y.left ← z
+    ELSE
+        y.right ← z
+    END IF
+
+    RB_INSERT_FIXUP(T, z)
+END RB_INSERT
+
+Why insert RED?
+    A RED leaf adds 0 BLACK nodes to every path through it, so property 5
+    automatically holds. The only property that might break is property 4
+    (no two reds in a row), and RB_INSERT_FIXUP is built specifically to
+    fix that.
+
+================================================================================
+RB_INSERT_FIXUP — THE HEART OF THE ALGORITHM
+================================================================================
+
+RB_INSERT_FIXUP(T, z)
+    WHILE z.parent.color = RED DO
+        IF z.parent = z.parent.parent.left THEN
+            // --- Parent is a LEFT child of grandparent ---
+            uncle ← z.parent.parent.right
+
+            IF uncle.color = RED THEN
+                // CASE 1: recolor and move up
+                z.parent.color         ← BLACK
+                uncle.color            ← BLACK
+                z.parent.parent.color  ← RED
+                z ← z.parent.parent
+            ELSE
+                IF z = z.parent.right THEN
+                    // CASE 2: zig-zag — rotate to straighten
+                    z ← z.parent
+                    LEFT_ROTATE(T, z)
+                END IF
+                // CASE 3: straight line — recolor and rotate at grandparent
+                z.parent.color         ← BLACK
+                z.parent.parent.color  ← RED
+                RIGHT_ROTATE(T, z.parent.parent)
+            END IF
+        ELSE
+            // --- Parent is a RIGHT child of grandparent (mirror) ---
+            uncle ← z.parent.parent.left
+
+            IF uncle.color = RED THEN
+                z.parent.color         ← BLACK
+                uncle.color            ← BLACK
+                z.parent.parent.color  ← RED
+                z ← z.parent.parent
+            ELSE
+                IF z = z.parent.left THEN
+                    z ← z.parent
+                    RIGHT_ROTATE(T, z)
+                END IF
+                z.parent.color         ← BLACK
+                z.parent.parent.color  ← RED
+                LEFT_ROTATE(T, z.parent.parent)
+            END IF
+        END IF
+    END WHILE
+    // Property 2: the root must always be BLACK.
+    T.root.color ← BLACK
+END RB_INSERT_FIXUP
+
+================================================================================
+STEP-BY-STEP EXAMPLE — INSERT 10, 20, 30
+================================================================================
+
+Insert 10:
+    Tree is empty. Create node 10, color RED.
+    RB_INSERT_FIXUP: z is root, z.parent = NIL (BLACK), loop doesn't run.
+    Final: root ← BLACK.
+        [B]10
+
+Insert 20:
+    BST descent: right of 10. New node z=20, RED.
+        [B]10
+              \
+             [R]20
+    z.parent = 10 is BLACK → fix-up loop doesn't run. Root stays BLACK.
+
+Insert 30:
+    BST descent: right of 10, then right of 20. New node z=30, RED.
+        [B]10
+              \
+             [R]20
+                  \
+                 [R]30
+    Violation: z.parent (20) is RED.
+    parent is RIGHT child of grandparent (10).
+    uncle = grandparent.left = NIL → BLACK.
+    z = grandparent.right → NOT the zig-zag case → skip CASE 2.
+    CASE 3: recolor parent BLACK and grandparent RED, then LEFT_ROTATE at grandparent.
+
+    After recolor:
+        [R]10
+              \
+             [B]20
+                  \
+                 [R]30
+    After LEFT_ROTATE(10):
+            [B]20
+           /      \
+        [R]10    [R]30
+    Loop exits (z.parent is now BLACK root). Root.color ← BLACK (no-op).
+
+================================================================================
+KEY POINTS FOR TEACHING
+================================================================================
+
+1. WHY HEIGHT IS O(log n)
+   Property 5 gives a uniform black-height b. Property 4 means the longest
+   path (alternating red/black) is at most 2b. Combined: height ≤ 2·log₂(n+1).
+
+2. WHY NEW NODES ARE RED
+   A RED leaf preserves property 5 automatically. Only property 4 can break,
+   and the fix-up procedure targets exactly that.
+
+3. THE THREE CASES
+   - Case 1 (uncle RED): just recolor, move up — cheap, no rotations.
+   - Case 2 (uncle BLACK, zig-zag): rotate at parent to convert into Case 3.
+   - Case 3 (uncle BLACK, straight): recolor + rotate at grandparent, DONE.
+
+4. RED-BLACK ↔ 2-3-4 TREES
+   Every red-black tree corresponds to a 2-3-4 tree where:
+       one BLACK node + its RED children = one 2-3-4 node.
+   The "uncle is RED" case is exactly a 2-3-4 4-node split. Understanding
+   2-3-4 trees makes red-black trees click.
+
+5. RED-BLACK vs AVL
+   - AVL: |height difference| ≤ 1. Tighter balance → faster reads.
+   - R-B: longest ≤ 2× shortest. Looser balance → fewer rotations → faster writes.
+   std::map, java.util.TreeMap, and Linux's CFS scheduler use R-B trees.
+
+================================================================================
+COMPLEXITY ANALYSIS
+================================================================================
+
+Time Complexity:
+    Search: O(log n)    — just a BST search, height is O(log n)
+    Insert: O(log n)    — BST insert O(log n) + fix-up O(log n) case-1 steps
+                          + at most 2 rotations total (cases 2 and 3)
+    Delete: O(log n)    — harder to implement, similar bound
+
+Space Complexity:
+    O(n) — one color bit + one parent pointer per node
+    One global NIL sentinel shared by all leaves
+
+================================================================================
+WHEN TO USE
+================================================================================
+
+✓ Ordered maps / sets in standard libraries
+✓ Write-heavy workloads where low rotation count matters
+✓ Any case where worst-case O(log n) is required
+✗ NOT when unordered O(1) average is acceptable — use a hash table
+
+================================================================================
+COMMON MISTAKES TO AVOID
+================================================================================
+
+1. Forgetting to color the root BLACK at the end of fix-up
+   - Case 1 can propagate red all the way up to the root.
+   - The final `root.color ← BLACK` is what restores property 2.
+
+2. Forgetting to update parent pointers during rotation
+   - Unlike AVL, red-black rotations MUST maintain the parent pointer on
+     three nodes: the rotated pair and the one "orphaned" child.
+
+3. Confusing Case 2 (zig-zag) with Case 3 (straight line)
+   - Case 2 rotates at the PARENT to straighten. It then falls through
+     to Case 3, which rotates at the GRANDPARENT.
+
+4. Treating NIL as a normal null pointer
+   - Use one shared sentinel object and never inspect its key.
+   - Every leaf child AND the root's parent point to NIL.
+
+5. Mixing up the LEFT-child and RIGHT-child mirror cases
+   - There are really SIX cases (3 × 2 mirrors). Keep the two sides
+     parallel and test both.
+
+================================================================================

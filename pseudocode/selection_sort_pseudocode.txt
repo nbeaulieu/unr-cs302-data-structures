@@ -1,0 +1,137 @@
+================================================================================
+SELECTION SORT - Pseudocode
+================================================================================
+Algorithm: Selection Sort (Maximum-to-End Variant)
+Strategy: Find the largest element in unsorted region, swap to end
+Sorted Region: Grows from RIGHT TO LEFT
+Complexity: O(n²) all cases, O(n) swaps
+
+================================================================================
+BASIC ALGORITHM
+================================================================================
+
+SELECTION_SORT(array, n)
+    // Edge case: empty or single element is already sorted
+    IF n <= 1 THEN
+        RETURN
+    END IF
+    
+    // Outer loop: (n-1) passes needed
+    // After (n-1) elements are sorted, the last is automatically correct
+    FOR pass = 0 TO n - 2 DO
+        
+        // Find the index of the LARGEST element in unsorted region
+        // Unsorted region: indices [0] to [n - 1 - pass]
+        indexOfLargest ← 0
+        
+        // Scan through unsorted region to find maximum
+        FOR i = 1 TO n - 1 - pass DO
+            IF array[i] > array[indexOfLargest] THEN
+                indexOfLargest ← i
+            END IF
+        END FOR
+        
+        // Swap largest element to end of unsorted region
+        // Rightmost unsorted position: n - 1 - pass
+        rightmostUnsortedIndex ← n - 1 - pass
+        
+        IF indexOfLargest ≠ rightmostUnsortedIndex THEN
+            SWAP(array[indexOfLargest], array[rightmostUnsortedIndex])
+        END IF
+        
+        // At this point, array[rightmostUnsortedIndex] is in final position
+        // Sorted region has grown by one element (right to left)
+    END FOR
+    
+    // Array is now completely sorted
+END SELECTION_SORT
+
+================================================================================
+STEP-BY-STEP EXAMPLE
+================================================================================
+
+Initial: [29, 10, 14, 37, 13]
+         Unsorted: [29, 10, 14, 37, 13]  Sorted: []
+
+Pass 1:
+    Find largest in [29, 10, 14, 37, 13] → 37 at index 3
+    Swap 37 with element at index 4 (end of unsorted)
+    Result: [29, 10, 14, 13, 37]
+    Unsorted: [29, 10, 14, 13]  Sorted: [37]
+
+Pass 2:
+    Find largest in [29, 10, 14, 13] → 29 at index 0
+    Swap 29 with element at index 3 (end of unsorted)
+    Result: [13, 10, 14, 29, 37]
+    Unsorted: [13, 10, 14]  Sorted: [29, 37]
+
+Pass 3:
+    Find largest in [13, 10, 14] → 14 at index 2
+    Already at end → no swap needed
+    Result: [13, 10, 14, 29, 37]
+    Unsorted: [13, 10]  Sorted: [14, 29, 37]
+
+Pass 4:
+    Find largest in [13, 10] → 13 at index 0
+    Swap 13 with element at index 1 (end of unsorted)
+    Result: [10, 13, 14, 29, 37]
+    Unsorted: []  Sorted: [10, 13, 14, 29, 37]
+
+Final: [10, 13, 14, 29, 37] ✓
+
+================================================================================
+KEY POINTS FOR TEACHING
+================================================================================
+
+1. FIND MAXIMUM, NOT MINIMUM
+   - We find the LARGEST element in unsorted region
+   - We swap it to the END (right side)
+   - This is the "maximum-to-end" variant
+
+2. SORTED REGION GROWS RIGHT-TO-LEFT
+   - Unlike Insertion Sort (left-to-right)
+   - After each pass, rightmost unsorted element is in final position
+
+3. ALWAYS O(n²) COMPARISONS
+   - No early termination possible
+   - Always performs n(n-1)/2 comparisons
+   - Best case = Worst case = Average case
+
+4. MINIMUM SWAPS
+   - At most (n-1) swaps needed
+   - More efficient than Bubble Sort in terms of swaps
+
+5. NOT STABLE
+   - Equal elements may change relative order
+   - Example: [3₁, 3₂, 1] → [1, 3₂, 3₁]
+
+================================================================================
+COMPLEXITY ANALYSIS
+================================================================================
+
+Time Complexity:
+    Outer loop: (n-1) iterations
+    Inner loop: (n-1), (n-2), (n-3), ..., 1 iterations
+    Total comparisons: (n-1) + (n-2) + ... + 1 = n(n-1)/2 = O(n²)
+    
+    Swaps: At most (n-1) swaps
+    
+    Best case:  O(n²) comparisons, O(n) swaps
+    Worst case: O(n²) comparisons, O(n) swaps
+    Average:    O(n²) comparisons, O(n) swaps
+
+Space Complexity:
+    O(1) - only uses variables: pass, i, indexOfLargest
+    Sorts "in-place" - no extra memory needed
+
+================================================================================
+WHEN TO USE
+================================================================================
+
+✓ Teaching/learning purposes (simple to understand)
+✓ Small datasets where O(n²) is acceptable
+✓ When minimizing writes is important
+✗ NOT recommended for large datasets
+✗ NOT recommended for production code
+
+================================================================================

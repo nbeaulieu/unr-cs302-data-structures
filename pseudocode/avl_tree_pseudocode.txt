@@ -1,0 +1,277 @@
+================================================================================
+AVL TREE - Pseudocode
+================================================================================
+Algorithm: AVL Tree (Self-Balancing Binary Search Tree)
+Strategy: Standard BST insertion, then walk back up updating heights. If any
+          ancestor's balance factor goes outside [-1, +1], apply one of four
+          rotation cases (LL, RR, LR, RL) to restore balance.
+Invariant: For every node, |height(left) - height(right)| <= 1
+Complexity: Search O(log n), Insert O(log n), Delete O(log n)
+Key: Worst-case O(log n) achieved via strict height balance and rotations.
+
+================================================================================
+AVL INVARIANT
+================================================================================
+
+For every node n in the tree:
+
+    balanceFactor(n) = height(n.left) - height(n.right)
+
+must satisfy:
+
+    -1 <= balanceFactor(n) <= +1
+
+If an insertion causes some ancestor's balance factor to become +2 or -2,
+we apply exactly ONE of four rotation cases to that ancestor to bring it
+back to a legal value. Each case is O(1) work.
+
+    height(null) = 0
+    height(leaf) = 1
+    height(n)    = 1 + max(height(n.left), height(n.right))
+
+================================================================================
+ROTATIONS
+================================================================================
+
+ROTATE_RIGHT(y)                       RIGHT rotation fixes a LEFT-heavy y.
+    x ← y.left
+    B ← x.right                            y                      x
+    x.right ← y                           / \                    / \
+    y.left  ← B                          x   C    ────▶         A   y
+    updateHeight(y)                     / \                        / \
+    updateHeight(x)                    A   B                      B   C
+    RETURN x
+END ROTATE_RIGHT
+
+
+ROTATE_LEFT(x)                        LEFT rotation fixes a RIGHT-heavy x.
+    y ← x.right
+    B ← y.left                             x                      y
+    y.left  ← x                           / \                    / \
+    x.right ← B                          A   y    ────▶         x   C
+    updateHeight(x)                         / \                / \
+    updateHeight(y)                        B   C              A   B
+    RETURN y
+END ROTATE_LEFT
+
+
+Rotations preserve the in-order (sorted) traversal:
+    before: A < x < B < y < C
+    after:  A < x < B < y < C         (unchanged)
+
+================================================================================
+AVL INSERT
+================================================================================
+
+AVL_INSERT(node, key)
+    // --- Step 1: standard BST insert ---
+    IF node = null THEN
+        RETURN new Node(key)   // height = 1
+    END IF
+    IF key < node.key THEN
+        node.left ← AVL_INSERT(node.left, key)
+    ELSE IF key > node.key THEN
+        node.right ← AVL_INSERT(node.right, key)
+    ELSE
+        RETURN node            // duplicate — no change
+    END IF
+
+    // --- Step 2: update height of this ancestor ---
+    updateHeight(node)
+
+    // --- Step 3: check balance and rotate if needed ---
+    bf ← balanceFactor(node)
+
+    // Case 1: LEFT-LEFT — left-heavy, new key went LEFT of left child
+    IF bf > 1 AND key < node.left.key THEN
+        RETURN ROTATE_RIGHT(node)
+    END IF
+
+    // Case 2: RIGHT-RIGHT — right-heavy, new key went RIGHT of right child
+    IF bf < -1 AND key > node.right.key THEN
+        RETURN ROTATE_LEFT(node)
+    END IF
+
+    // Case 3: LEFT-RIGHT — zig-zag, left-heavy with new key on right side of left child
+    IF bf > 1 AND key > node.left.key THEN
+        node.left ← ROTATE_LEFT(node.left)
+        RETURN ROTATE_RIGHT(node)
+    END IF
+
+    // Case 4: RIGHT-LEFT — mirror zig-zag
+    IF bf < -1 AND key < node.right.key THEN
+        node.right ← ROTATE_RIGHT(node.right)
+        RETURN ROTATE_LEFT(node)
+    END IF
+
+    RETURN node   // already balanced
+END AVL_INSERT
+
+================================================================================
+AVL SEARCH
+================================================================================
+
+AVL_CONTAINS(node, key)
+    WHILE node ≠ null DO
+        IF key = node.key THEN
+            RETURN true
+        ELSE IF key < node.key THEN
+            node ← node.left
+        ELSE
+            node ← node.right
+        END IF
+    END WHILE
+    RETURN false
+END AVL_CONTAINS
+
+Search is just a plain BST search — the AVL invariant does not change the
+algorithm, only the guarantee on how many steps it takes (O(log n) always).
+
+================================================================================
+STEP-BY-STEP EXAMPLE — ASCENDING INSERT 10, 20, 30, 40, 50
+================================================================================
+
+Without balancing, inserting in ascending order produces a right-linked list
+of height 5. AVL keeps the tree at height 3 by rotating along the way.
+
+Insert 10:
+    Tree:  (10 h=1 bf=0)
+    Balanced — no rotation.
+
+Insert 20:
+    Insert as right child of 10.
+    Tree:  (10 h=2 bf=-1)
+             \
+              (20 h=1 bf=0)
+    bf(10) = -1 → still legal.
+
+Insert 30:
+    Insert as right child of 20.
+    Before rotation:
+           (10 h=3 bf=-2)
+              \
+               (20 h=2 bf=-1)
+                  \
+                   (30 h=1 bf=0)
+    bf(10) = -2 AND 30 > 20 → RIGHT-RIGHT → ROTATE_LEFT(10).
+
+    After ROTATE_LEFT(10):
+           (20 h=2 bf=0)
+          /    \
+       (10)    (30)
+
+Insert 40:
+    Insert as right child of 30.
+    Tree:      (20 h=3 bf=-1)
+              /    \
+           (10)    (30 h=2 bf=-1)
+                     \
+                      (40 h=1 bf=0)
+    All ancestors legal — no rotation.
+
+Insert 50:
+    Insert as right child of 40.
+    Before rotation:
+               (20 h=4 bf=-2)
+              /    \
+           (10)    (30 h=3 bf=-2)
+                     \
+                      (40 h=2 bf=-1)
+                         \
+                          (50 h=1 bf=0)
+    Walking back up, node 30 is the FIRST ancestor with bf = -2.
+    50 > 40 → RIGHT-RIGHT at 30 → ROTATE_LEFT(30).
+
+    After ROTATE_LEFT(30):
+               (20 h=3 bf=-1)
+              /    \
+           (10)    (40 h=2 bf=0)
+                   /    \
+                (30)    (50)
+
+    Height of 20 is now 3 → bf(20) = -1 → legal, done.
+
+Final height: 3 (a plain BST would be 5).
+
+================================================================================
+KEY POINTS FOR TEACHING
+================================================================================
+
+1. HEIGHT-BALANCED
+   For every node, |height(left) - height(right)| ≤ 1. This is a STRONGER
+   invariant than red-black trees (which allow ≤ 2×) but not as strong as
+   the perfect balance of a 2-3 tree.
+
+2. WHY WE UPDATE HEIGHTS ON THE WAY UP
+   Insertion only changes heights along the path from the root to the new
+   leaf. Walking back up the recursion visits exactly those ancestors.
+
+3. THE FOUR CASES
+   - LL (left-left): one ROTATE_RIGHT on the unbalanced node
+   - RR (right-right): one ROTATE_LEFT on the unbalanced node
+   - LR (left-right): ROTATE_LEFT on left child, then ROTATE_RIGHT on node
+   - RL (right-left): ROTATE_RIGHT on right child, then ROTATE_LEFT on node
+   The LR and RL cases exist because a single rotation cannot fix a zig-zag.
+
+4. WHICH CASE IS IT?
+   Compare the new key to the child. If left-heavy and new key < left.key,
+   it's LL; if new key > left.key, it's LR. Mirror for right-heavy.
+
+5. ROTATIONS ARE LOCAL AND CONSTANT-TIME
+   A rotation only reassigns a handful of pointers and updates two heights.
+   It preserves BST order, so in-order traversal is unchanged.
+
+6. HEIGHT BOUND
+   An AVL tree with n nodes has height at most about 1.44·log₂(n+2), so
+   search is ≤ ~1.44·log₂ n comparisons — very close to optimal.
+
+================================================================================
+COMPLEXITY ANALYSIS
+================================================================================
+
+Time Complexity:
+    Search:   O(log n) — tree height is O(log n)
+    Insert:   O(log n) — O(log n) to descend + at most O(log n) height updates
+                         + at most 2 rotations total (only one "site" can need
+                         rotation after a single insert)
+    Delete:   O(log n) — similar to insert; may require O(log n) rotations
+                         on the path back up
+
+Space Complexity:
+    O(n) — one node per key, plus a small constant (height) per node.
+    Recursion stack is O(log n).
+
+================================================================================
+WHEN TO USE
+================================================================================
+
+✓ Dictionaries where you need worst-case O(log n) search and updates
+✓ Read-heavy workloads (AVL is slightly taller-avoidant than red-black)
+✓ Teaching balanced-tree concepts (rotations are the most direct example)
+✗ NOT when you want constant-time amortized operations (use a hash table)
+✗ NOT the first choice for write-heavy code (red-black has fewer rotations)
+
+================================================================================
+COMMON MISTAKES TO AVOID
+================================================================================
+
+1. Forgetting to update heights after a rotation
+   - After any rotation, recompute heights of BOTH nodes that moved.
+   - Update the lower node first, then the upper one.
+
+2. Confusing LL with LR (or RR with RL)
+   - Compare the new key to the child node, not the grandchild.
+   - "LR" means "LEFT subtree, RIGHT side of left subtree" — zig-zag shape.
+
+3. Returning the wrong node after a rotation
+   - ROTATE_RIGHT and ROTATE_LEFT return the NEW subtree root.
+   - The caller must reassign its child pointer to that return value.
+
+4. Not handling duplicates
+   - Decide up front: ignore duplicates, or store a count per node.
+
+5. Rebalancing too aggressively
+   - After an insert, only ONE ancestor will ever need rotation. Once you
+     apply it, you can stop — the heights above don't change.
+
+================================================================================

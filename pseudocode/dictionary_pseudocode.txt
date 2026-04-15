@@ -1,0 +1,867 @@
+================================================================================
+DICTIONARY (HASH TABLE) — Pseudocode
+Four Collision Resolution Strategies
+================================================================================
+Algorithm: Hash Table with three collision resolution approaches
+Strategy: Map keys to array indices using a hash function. Resolve collisions
+          using (1) Separate Chaining, (2) Linear Probing, or (3) Quadratic Probing.
+Hash Function: index = hash(key) % capacity
+Complexity: Insert O(1) avg, Search O(1) avg, Delete O(1) avg
+Key: Fast key-value lookup via hashing — O(1) on average
+
+================================================================================
+HASH TABLE STRUCTURE
+================================================================================
+
+A hash table stores key-value pairs in an array of slots (buckets).
+A hash function converts each key into a slot index.
+
+    Components:
+        table[]:        Array of slots
+        capacity:       Number of slots in the array
+        numEntries:     Number of key-value pairs currently stored
+        loadFactor:     numEntries / capacity (how full the table is)
+
+    The COLLISION PROBLEM:
+        Two different keys can hash to the same index.
+        Example: hash("banana") % 7 = 3 and hash("cherry") % 7 = 3
+        Both want slot 3 — this is a collision!
+
+    Three strategies to resolve this:
+
+    ┌─────────────────────────────────────────────────────────────┐
+    │ 1. CHAINING   — Store a linked list at each slot           │
+    │ 2. LINEAR     — Probe index+1, index+2, index+3, ...      │
+    │ 3. QUADRATIC  — Probe index+1², index+2², index+3², ...    │
+    │ 4. DOUBLE     — Probe index+h2, index+2·h2, index+3·h2    │
+    └─────────────────────────────────────────────────────────────┘
+
+================================================================================
+HASH FUNCTION 1: MODULAR HASHING (integer keys)
+================================================================================
+
+MODULAR_HASH(key, capacity)
+    RETURN key MOD capacity
+END MODULAR_HASH
+
+    The simplest hash function. Works directly on numeric keys.
+    The result is always in [0, capacity - 1].
+
+    Example (capacity = 7):
+        10 MOD 7 = 3
+        15 MOD 7 = 1
+        22 MOD 7 = 1   ← COLLISION with 15!
+        29 MOD 7 = 1   ← COLLISION again!
+
+    Why? 15, 22, 29 differ by 7 (= capacity).
+    Keys that are multiples of capacity apart ALWAYS collide.
+
+    WHY CAPACITY SHOULD BE PRIME:
+
+        Bad: capacity = 10 with keys that are multiples of 5:
+            5 MOD 10 = 5,  10 MOD 10 = 0,  15 MOD 10 = 5,  20 MOD 10 = 0
+            Only slots 0 and 5 are used — terrible distribution!
+
+        Good: capacity = 7 (prime) with same keys:
+            5 MOD 7 = 5,  10 MOD 7 = 3,  15 MOD 7 = 1,  20 MOD 7 = 6
+            Four different slots — much better spread.
+
+        A prime capacity has no common factors with typical key patterns,
+        so the modulo distributes keys more uniformly.
+
+================================================================================
+HASH FUNCTION 2: HORNER'S RULE (string keys)
+================================================================================
+
+HORNERS_HASH(key, capacity)
+    // Evaluate the string as a polynomial in base R (R = 31)
+    // hash(s) = c₀·R^(k-1) + c₁·R^(k-2) + ... + cₖ₋₂·R + cₖ₋₁
+    //
+    // Horner's rule rewrites this to avoid computing powers:
+    // hash = (...((c₀ · R + c₁) · R + c₂) · R + ... + cₖ₋₁)
+
+    hashValue ← 0
+    FOR each character c IN key DO
+        hashValue ← hashValue * R + ASCII(c)    // multiply by R, add next char
+    END FOR
+    RETURN hashValue MOD capacity
+END HORNERS_HASH
+
+    Step-by-step for "cat" (R = 31, capacity = 7):
+
+        Characters: 'c' = 99,  'a' = 97,  't' = 116
+
+        Step 1: hashValue = 0   × 31 + 99  = 99
+        Step 2: hashValue = 99  × 31 + 97  = 3166
+        Step 3: hashValue = 3166 × 31 + 116 = 98262
+
+        index = 98262 MOD 7 = 3
+        → "cat" goes into slot 3
+
+    Step-by-step for "act" (same letters, different order):
+
+        Characters: 'a' = 97,  'c' = 99,  't' = 116
+
+        Step 1: hashValue = 0   × 31 + 97  = 97
+        Step 2: hashValue = 97  × 31 + 99  = 3106
+        Step 3: hashValue = 3106 × 31 + 116 = 96402
+
+        index = 96402 MOD 7 = 5
+        → "act" goes into slot 5
+
+        "cat" → slot 3,  "act" → slot 5
+        Anagrams hash DIFFERENTLY because character order matters.
+        Each character is multiplied by a different power of R.
+
+    WHY HORNER'S RULE?
+
+        The polynomial for "cat" is:  99·31² + 97·31 + 116
+
+        Naive approach: compute 31², multiply by 99, compute 31¹, multiply by 97, add...
+        → Requires computing powers of R (expensive, can overflow)
+
+        Horner's rule: ((99 · 31 + 97) · 31 + 116)
+        → Just multiply-and-add at each step. O(k) time, no power function.
+        → Each step naturally incorporates all previous characters.
+
+    WHY R = 31?
+
+        - Prime: avoids patterns with even character codes
+        - Small enough to delay overflow, large enough for good spread
+        - Widely used in practice (Java's String.hashCode() uses 31)
+
+    COLLISION EXAMPLE:
+
+        With 7 buckets, these fruit names distribute as:
+            "apple"      → slot 1
+            "banana"     → slot 3
+            "cherry"     → slot 3   ← collision with "banana"
+            "elderberry" → slot 3   ← collision with both!
+            "date"       → slot 4
+            "fig"        → slot 6
+            "grape"      → slot 5
+
+        3 keys map to slot 3 — these collisions must be resolved
+        by chaining, linear probing, or quadratic probing.
+
+
+================================================================================
+================================================================================
+  STRATEGY 1: SEPARATE CHAINING
+================================================================================
+================================================================================
+
+Each slot holds a linked list (chain). Colliding entries are appended.
+
+    Visual:
+        Slot 0: []
+        Slot 1: [("apple", 5)]
+        Slot 2: []
+        Slot 3: [("banana", 3) → ("cherry", 8)]   ← collision: both hash to 3
+        Slot 4: [("date", 12)]
+        Slot 5: []
+        Slot 6: []
+
+================================================================================
+CHAINING — ADD
+================================================================================
+
+CHAINING_ADD(table, key, value)
+    index ← HASH(key, table.capacity)
+
+    // Walk the chain looking for existing key
+    FOR each entry IN table[index] DO
+        IF entry.key = key THEN
+            entry.value ← value    // Update existing
+            RETURN
+        END IF
+    END FOR
+
+    // Not found — append to chain
+    table[index].append( {key, value} )
+    numEntries ← numEntries + 1
+END CHAINING_ADD
+
+================================================================================
+CHAINING — GET
+================================================================================
+
+CHAINING_GET(table, key)
+    index ← HASH(key, table.capacity)
+
+    // Walk the chain
+    FOR each entry IN table[index] DO
+        IF entry.key = key THEN
+            RETURN entry.value    // Found
+        END IF
+    END FOR
+
+    RETURN NOT_FOUND
+END CHAINING_GET
+
+================================================================================
+CHAINING — REMOVE
+================================================================================
+
+CHAINING_REMOVE(table, key)
+    index ← HASH(key, table.capacity)
+
+    FOR each entry IN table[index] DO
+        IF entry.key = key THEN
+            table[index].remove(entry)    // Unlink from chain
+            numEntries ← numEntries - 1
+            RETURN true
+        END IF
+    END FOR
+
+    RETURN false
+END CHAINING_REMOVE
+
+================================================================================
+CHAINING — STEP-BY-STEP EXAMPLE
+================================================================================
+
+Empty table, capacity = 7:
+
+add("apple", 5):   hash % 7 = 1 → Slot 1 empty → append
+    Slot 1: [("apple", 5)]
+
+add("banana", 3):  hash % 7 = 3 → Slot 3 empty → append
+    Slot 3: [("banana", 3)]
+
+add("cherry", 8):  hash % 7 = 3 → COLLISION with "banana"!
+    Walk chain: check "banana" — not our key → end of chain → append
+    Slot 3: [("banana", 3) → ("cherry", 8)]
+
+get("cherry"):     hash % 7 = 3
+    Walk chain: "banana" ≠ "cherry" → "cherry" = "cherry" → FOUND → 8
+
+remove("banana"):  hash % 7 = 3
+    Walk chain: "banana" = "banana" → unlink
+    Slot 3: [("cherry", 8)]
+
+
+================================================================================
+================================================================================
+  STRATEGY 2: LINEAR PROBING (Open Addressing)
+================================================================================
+================================================================================
+
+All entries stored directly in the array. No linked lists.
+On collision, check the NEXT slot, then the next, etc.
+
+    Probe sequence: index + 0, index + 1, index + 2, index + 3, ...
+                    (wrapping around with MOD capacity)
+
+    Visual:
+        add("apple", 5)  → hash = 1 → slot 1 empty     → place at 1
+        add("banana", 3) → hash = 3 → slot 3 empty     → place at 3
+        add("cherry", 8) → hash = 3 → slot 3 OCCUPIED  → try 4 → empty → place at 4
+        add("date", 12)  → hash = 4 → slot 4 OCCUPIED  → try 5 → empty → place at 5
+
+        Slot: [  0  ][  1  ][  2  ][  3  ][  4  ][  5  ][  6  ]
+              [     ][ apl ][     ][ ban ][ chr ][ dat ][     ]
+                                     ↑      ↑      ↑
+                                   home   probed  probed
+                                  for ban  from 3  from 4
+
+        PRIMARY CLUSTERING: Consecutive filled slots form a cluster.
+        Any key hashing into the cluster must probe to the end.
+
+    Slot states:
+        EMPTY    — never been used (search stops here)
+        OCCUPIED — holds an active key-value pair
+        DELETED  — previously occupied, now removed (search probes past)
+
+================================================================================
+LINEAR PROBING — ADD
+================================================================================
+
+LINEAR_ADD(table, key, value)
+    home ← HASH(key, table.capacity)
+    firstDeleted ← NONE    // Remember first DELETED slot for reuse
+
+    FOR probe ← 0 TO capacity - 1 DO
+        slot ← (home + probe) MOD capacity
+
+        IF table[slot].state = EMPTY THEN
+            // Key is definitely not in the table — insert
+            IF firstDeleted ≠ NONE THEN
+                slot ← firstDeleted    // Reuse the earlier DELETED slot
+            END IF
+            table[slot] ← {key, value, OCCUPIED}
+            numEntries ← numEntries + 1
+            RETURN
+        END IF
+
+        IF table[slot].state = DELETED THEN
+            // Remember this slot, but keep probing — key may exist beyond it
+            IF firstDeleted = NONE THEN
+                firstDeleted ← slot
+            END IF
+            // Do NOT insert here yet! Must check if key exists further along.
+        ELSE IF table[slot].key = key THEN
+            // Key exists — update value
+            table[slot].value ← value
+            RETURN
+        END IF
+
+        // Collision — continue to next slot (linear: +1 each time)
+    END FOR
+
+    // All slots checked — insert at saved DELETED slot if we have one
+    IF firstDeleted ≠ NONE THEN
+        table[firstDeleted] ← {key, value, OCCUPIED}
+        numEntries ← numEntries + 1
+        RETURN
+    END IF
+
+    ERROR "Table is full"
+END LINEAR_ADD
+
+================================================================================
+LINEAR PROBING — GET
+================================================================================
+
+LINEAR_GET(table, key)
+    index ← HASH(key, table.capacity)
+
+    FOR probe ← 0 TO capacity - 1 DO
+        slot ← (index + probe) MOD capacity
+
+        IF table[slot].state = EMPTY THEN
+            RETURN NOT_FOUND    // Empty = never used = key is not beyond here
+        END IF
+
+        IF table[slot].state = OCCUPIED AND table[slot].key = key THEN
+            RETURN table[slot].value
+        END IF
+
+        // OCCUPIED (wrong key) or DELETED → keep probing
+    END FOR
+
+    RETURN NOT_FOUND
+END LINEAR_GET
+
+    IMPORTANT: Do NOT stop at DELETED slots!
+    The key may have been inserted past a now-deleted entry.
+    Only stop at EMPTY (never been used).
+
+================================================================================
+LINEAR PROBING — REMOVE (Lazy Deletion)
+================================================================================
+
+LINEAR_REMOVE(table, key)
+    index ← HASH(key, table.capacity)
+
+    FOR probe ← 0 TO capacity - 1 DO
+        slot ← (index + probe) MOD capacity
+
+        IF table[slot].state = EMPTY THEN
+            RETURN false    // Not found
+        END IF
+
+        IF table[slot].state = OCCUPIED AND table[slot].key = key THEN
+            table[slot].state ← DELETED    // Do NOT set to EMPTY!
+            numEntries ← numEntries - 1
+            RETURN true
+        END IF
+    END FOR
+
+    RETURN false
+END LINEAR_REMOVE
+
+    WHY DELETED instead of EMPTY?
+
+    Scenario: "banana" at slot 3, "cherry" probed to slot 4.
+
+    If we EMPTY slot 3 (delete "banana"):
+        get("cherry"): hash = 3, slot 3 is EMPTY → "not found"
+        But "cherry" IS at slot 4! We broke the probe chain.
+
+    If we mark slot 3 as DELETED:
+        get("cherry"): hash = 3, slot 3 is DELETED → keep probing
+        → slot 4 is OCCUPIED, key = "cherry" → FOUND!
+
+================================================================================
+LINEAR PROBING — STEP-BY-STEP EXAMPLE
+================================================================================
+
+Table capacity = 7, all slots EMPTY:
+
+add("banana", 3):  hash % 7 = 3
+    Probe 0: slot 3 → EMPTY → insert
+    [     ][     ][     ][ ban ][     ][     ][     ]
+
+add("cherry", 8):  hash % 7 = 3
+    Probe 0: slot 3 → OCCUPIED ("banana") → probe next
+    Probe 1: slot 4 → EMPTY → insert
+    [     ][     ][     ][ ban ][ chr ][     ][     ]
+
+add("elderberry", 1):  hash % 7 = 3
+    Probe 0: slot 3 → OCCUPIED ("banana") → probe next
+    Probe 1: slot 4 → OCCUPIED ("cherry") → probe next
+    Probe 2: slot 5 → EMPTY → insert
+    [     ][     ][     ][ ban ][ chr ][ eld ][     ]
+
+remove("cherry"):
+    Probe 0: slot 3 → "banana" ≠ "cherry" → probe
+    Probe 1: slot 4 → "cherry" = "cherry" → mark DELETED
+    [     ][     ][     ][ ban ][ DEL ][ eld ][     ]
+
+get("elderberry"):
+    Probe 0: slot 3 → "banana" ≠ "elderberry" → probe
+    Probe 1: slot 4 → DELETED → keep probing (do NOT stop!)
+    Probe 2: slot 5 → "elderberry" = "elderberry" → FOUND → 1
+
+
+================================================================================
+================================================================================
+  STRATEGY 3: QUADRATIC PROBING (Open Addressing)
+================================================================================
+================================================================================
+
+Like linear probing, all entries in the array. But the probe step GROWS:
+    Probe sequence: index + 0², index + 1², index + 2², index + 3², ...
+    Which is:       index + 0, index + 1, index + 4, index + 9, ...
+
+    This jumps over clusters instead of walking through them.
+
+    Visual comparison (both hash to slot 3, capacity = 11):
+
+    Linear:     try 3, 4, 5, 6, 7, 8, ...   (consecutive — builds clusters)
+    Quadratic:  try 3, 4, 7, 12→1, ...       (spreading — breaks clusters)
+
+================================================================================
+QUADRATIC PROBING — ADD
+================================================================================
+
+QUADRATIC_ADD(table, key, value)
+    home ← HASH(key, table.capacity)
+    firstDeleted ← NONE
+
+    FOR probe ← 0 TO capacity - 1 DO
+        slot ← (home + probe * probe) MOD capacity    // ← key difference: probe²
+
+        IF table[slot].state = EMPTY THEN
+            IF firstDeleted ≠ NONE THEN
+                slot ← firstDeleted
+            END IF
+            table[slot] ← {key, value, OCCUPIED}
+            numEntries ← numEntries + 1
+            RETURN
+        END IF
+
+        IF table[slot].state = DELETED THEN
+            IF firstDeleted = NONE THEN
+                firstDeleted ← slot
+            END IF
+        ELSE IF table[slot].key = key THEN
+            table[slot].value ← value
+            RETURN
+        END IF
+    END FOR
+
+    IF firstDeleted ≠ NONE THEN
+        table[firstDeleted] ← {key, value, OCCUPIED}
+        numEntries ← numEntries + 1
+        RETURN
+    END IF
+
+    ERROR "Could not insert (table full or probe cycle)"
+END QUADRATIC_ADD
+
+================================================================================
+QUADRATIC PROBING — GET
+================================================================================
+
+QUADRATIC_GET(table, key)
+    home ← HASH(key, table.capacity)
+
+    FOR probe ← 0 TO capacity - 1 DO
+        slot ← (home + probe * probe) MOD capacity
+
+        IF table[slot].state = EMPTY THEN
+            RETURN NOT_FOUND
+        END IF
+
+        IF table[slot].state = OCCUPIED AND table[slot].key = key THEN
+            RETURN table[slot].value
+        END IF
+    END FOR
+
+    RETURN NOT_FOUND
+END QUADRATIC_GET
+
+================================================================================
+QUADRATIC PROBING — REMOVE
+================================================================================
+
+QUADRATIC_REMOVE(table, key)
+    home ← HASH(key, table.capacity)
+
+    FOR probe ← 0 TO capacity - 1 DO
+        slot ← (home + probe * probe) MOD capacity
+
+        IF table[slot].state = EMPTY THEN
+            RETURN false
+        END IF
+
+        IF table[slot].state = OCCUPIED AND table[slot].key = key THEN
+            table[slot].state ← DELETED
+            numEntries ← numEntries - 1
+            RETURN true
+        END IF
+    END FOR
+
+    RETURN false
+END QUADRATIC_REMOVE
+
+================================================================================
+QUADRATIC PROBING — STEP-BY-STEP EXAMPLE
+================================================================================
+
+Table capacity = 7, all slots EMPTY:
+
+add("banana", 3):  hash % 7 = 3
+    Probe 0: slot (3 + 0²) % 7 = 3 → EMPTY → insert
+    [     ][     ][     ][ ban ][     ][     ][     ]
+
+add("cherry", 8):  hash % 7 = 3
+    Probe 0: slot (3 + 0²) % 7 = 3 → OCCUPIED → probe
+    Probe 1: slot (3 + 1²) % 7 = 4 → EMPTY → insert
+    [     ][     ][     ][ ban ][ chr ][     ][     ]
+
+add("elderberry", 1):  hash % 7 = 3
+    Probe 0: slot (3 + 0²) % 7 = 3 → OCCUPIED → probe
+    Probe 1: slot (3 + 1²) % 7 = 4 → OCCUPIED → probe
+    Probe 2: slot (3 + 2²) % 7 = (3 + 4) % 7 = 0 → EMPTY → insert
+    [ eld ][     ][     ][ ban ][ chr ][     ][     ]
+      ↑                    ↑
+    landed               home (jumped from 3 to 0 via +4)
+
+    Compare with linear: "elderberry" would go to slot 5 (right next to the cluster).
+    Quadratic jumped to slot 0, BREAKING the cluster apart.
+
+get("elderberry"):  hash % 7 = 3
+    Probe 0: slot 3 → "banana" ≠ "elderberry"
+    Probe 1: slot 4 → "cherry" ≠ "elderberry"
+    Probe 2: slot 0 → "elderberry" = "elderberry" → FOUND → 1
+
+
+================================================================================
+================================================================================
+  STRATEGY 4: DOUBLE HASHING (Open Addressing)
+================================================================================
+================================================================================
+
+Uses a SECOND hash function to compute each key's probe step size.
+Keys that collide at the same home slot follow DIFFERENT probe sequences.
+This eliminates BOTH primary clustering (linear) and secondary clustering
+(quadratic).
+
+    Probe sequence:
+        slot = (h1(key) + i · h2(key)) MOD capacity,  for i = 0, 1, 2, ...
+
+    Second hash function:
+        h2(key) = PRIME2 - (hash(key) MOD PRIME2)
+        where PRIME2 < capacity (e.g., PRIME2 = 5 for capacity = 7)
+
+    h2 is always in [1, PRIME2] — NEVER zero (zero step = infinite loop!)
+
+    KEY INSIGHT:
+        Linear:    all keys at slot 3 probe 3, 4, 5, 6, ...  (same path)
+        Quadratic: all keys at slot 3 probe 3, 4, 7, 12, ... (same path)
+        Double:    "cherry" at slot 3 with step 2 probes 3, 5, 0, 2, ...
+                   "elder"  at slot 3 with step 3 probes 3, 6, 2, 5, ...
+                   → DIFFERENT paths! Each key's step is unique.
+
+================================================================================
+DOUBLE HASHING — ADD
+================================================================================
+
+DOUBLE_ADD(table, key, value)
+    home ← H1(key)           // = hash(key) MOD capacity
+    step ← H2(key)           // = PRIME2 - (hash(key) MOD PRIME2)
+    firstDeleted ← NONE
+
+    FOR probe ← 0 TO capacity - 1 DO
+        slot ← (home + probe · step) MOD capacity
+
+        IF table[slot].state = EMPTY THEN
+            IF firstDeleted ≠ NONE THEN
+                slot ← firstDeleted
+            END IF
+            table[slot] ← {key, value, OCCUPIED}
+            numEntries ← numEntries + 1
+            RETURN
+        END IF
+
+        IF table[slot].state = DELETED THEN
+            IF firstDeleted = NONE THEN
+                firstDeleted ← slot
+            END IF
+        ELSE IF table[slot].key = key THEN
+            table[slot].value ← value
+            RETURN
+        END IF
+    END FOR
+
+    IF firstDeleted ≠ NONE THEN
+        table[firstDeleted] ← {key, value, OCCUPIED}
+        numEntries ← numEntries + 1
+        RETURN
+    END IF
+
+    ERROR "Table is full"
+END DOUBLE_ADD
+
+================================================================================
+DOUBLE HASHING — GET
+================================================================================
+
+DOUBLE_GET(table, key)
+    home ← H1(key)
+    step ← H2(key)
+
+    FOR probe ← 0 TO capacity - 1 DO
+        slot ← (home + probe · step) MOD capacity
+
+        IF table[slot].state = EMPTY THEN
+            RETURN NOT_FOUND
+        END IF
+
+        IF table[slot].state = OCCUPIED AND table[slot].key = key THEN
+            RETURN table[slot].value
+        END IF
+    END FOR
+
+    RETURN NOT_FOUND
+END DOUBLE_GET
+
+================================================================================
+DOUBLE HASHING — REMOVE
+================================================================================
+
+DOUBLE_REMOVE(table, key)
+    home ← H1(key)
+    step ← H2(key)
+
+    FOR probe ← 0 TO capacity - 1 DO
+        slot ← (home + probe · step) MOD capacity
+
+        IF table[slot].state = EMPTY THEN
+            RETURN false
+        END IF
+
+        IF table[slot].state = OCCUPIED AND table[slot].key = key THEN
+            table[slot].state ← DELETED
+            numEntries ← numEntries - 1
+            RETURN true
+        END IF
+    END FOR
+
+    RETURN false
+END DOUBLE_REMOVE
+
+================================================================================
+DOUBLE HASHING — STEP-BY-STEP EXAMPLE
+================================================================================
+
+Table capacity = 7, PRIME2 = 5, all slots EMPTY:
+
+add("banana", 3):
+    h1 = hash("banana") % 7 = 3
+    h2 = 5 - (hash("banana") % 5) = step
+    Probe 0: slot 3 → EMPTY → insert
+    [     ][     ][     ][ ban ][     ][     ][     ]
+
+add("cherry", 8):
+    h1 = 3 (same home as "banana"!)
+    h2 = 5 - (hash("cherry") % 5) = 2  (cherry's unique step)
+    Probe 0: slot 3 → OCCUPIED → probe
+    Probe 1: slot (3 + 1·2) % 7 = 5 → EMPTY → insert
+    [     ][     ][     ][ ban ][     ][ chr ][     ]
+
+add("elderberry", 1):
+    h1 = 3 (same home again!)
+    h2 = 5 - (hash("elderberry") % 5) = 3  (elder's unique step — different from cherry!)
+    Probe 0: slot 3 → OCCUPIED → probe
+    Probe 1: slot (3 + 1·3) % 7 = 6 → EMPTY → insert
+    [     ][     ][     ][ ban ][     ][ chr ][ eld ]
+
+    Compare all three keys starting at slot 3:
+        "banana":     step = ?  → placed at slot 3 (no collision)
+        "cherry":     step = 2  → probed to slot 5
+        "elderberry": step = 3  → probed to slot 6
+
+    With linear probing, cherry → 4, elder → 5 (consecutive cluster).
+    With quadratic, cherry → 4, elder → 0 (same jump pattern).
+    With double hashing, each key has its OWN step — best spread!
+
+get("elderberry"):
+    h1 = 3, h2 = 3
+    Probe 0: slot 3 → "banana" ≠ "elderberry"
+    Probe 1: slot (3 + 3) = 6 → "elderberry" = "elderberry" → FOUND → 1
+
+================================================================================
+COMPARISON: CHAINING vs LINEAR vs QUADRATIC vs DOUBLE
+================================================================================
+
+    ┌──────────────┬──────────────┬──────────────┬──────────────┬──────────────┐
+    │              │  Chaining    │   Linear     │  Quadratic   │   Double     │
+    ├──────────────┼──────────────┼──────────────┼──────────────┼──────────────┤
+    │ Storage      │ Array of     │ Flat array   │ Flat array   │ Flat array   │
+    │              │ linked lists │              │              │              │
+    ├──────────────┼──────────────┼──────────────┼──────────────┼──────────────┤
+    │ On collision │ Append to    │ Try +1, +2,  │ Try +1²,+2², │ Try +h2,     │
+    │              │ chain        │ +3, ...      │ +3², ...     │ +2·h2, ...   │
+    ├──────────────┼──────────────┼──────────────┼──────────────┼──────────────┤
+    │ Clustering   │ None         │ PRIMARY      │ Secondary    │ NONE         │
+    │              │              │ (long runs)  │ (same-home   │ (unique step │
+    │              │              │              │  same path)  │  per key)    │
+    ├──────────────┼──────────────┼──────────────┼──────────────┼──────────────┤
+    │ Deletion     │ Unlink from  │ Lazy delete  │ Lazy delete  │ Lazy delete  │
+    │              │ linked list  │ (DELETED)    │ (DELETED)    │ (DELETED)    │
+    ├──────────────┼──────────────┼──────────────┼──────────────┼──────────────┤
+    │ Load factor  │ Can exceed   │ Must stay    │ Must stay    │ Must stay    │
+    │              │ 1.0          │ < 1.0        │ < 0.5*       │ < 1.0        │
+    ├──────────────┼──────────────┼──────────────┼──────────────┼──────────────┤
+    │ Memory       │ Extra        │ Compact      │ Compact      │ Compact      │
+    │              │ pointers     │              │              │              │
+    ├──────────────┼──────────────┼──────────────┼──────────────┼──────────────┤
+    │ Cache perf.  │ Poor         │ Excellent    │ Good         │ Good         │
+    │              │ (ptr chase)  │ (sequential) │ (some jumps) │ (varied)     │
+    └──────────────┴──────────────┴──────────────┴──────────────┴──────────────┘
+
+    * Quadratic probing guarantees finding an empty slot if:
+      load factor < 0.5 AND capacity is prime.
+
+    Double hashing visits all slots when capacity and h2 are coprime
+    (both prime guarantees this).
+
+================================================================================
+KEY POINTS FOR TEACHING
+================================================================================
+
+1. HASH FUNCTION IS THE KEY IDEA
+   - Converts any key type into an array index
+   - Must be deterministic: same key → same hash, always
+   - Good hash functions distribute keys uniformly
+   - A bad hash function = everything in one bucket = O(n)
+
+2. COLLISIONS ARE INEVITABLE
+   - Pigeonhole principle: if n keys > capacity, at least one slot has 2+ entries
+   - Even with n < capacity, the birthday paradox makes collisions likely
+   - The question is not IF collisions happen, but HOW we handle them
+
+3. CHAINING: SIMPLEST APPROACH
+   - Each slot holds a linked list — just append on collision
+   - Load factor can exceed 1.0 (chains just grow longer)
+   - Extra memory for pointers; poor cache performance (pointer chasing)
+
+4. LINEAR PROBING: CACHE-FRIENDLY BUT CLUSTERS
+   - Sequential memory access → CPU cache loves it
+   - PRIMARY CLUSTERING: filled slots clump together
+   - A cluster of size k means the NEXT collision takes k+1 probes
+   - Clusters grow and merge, making the problem worse
+
+5. QUADRATIC PROBING: BALANCES THE TRADE-OFFS
+   - Jumps over clusters with increasing step sizes
+   - Avoids primary clustering but has "secondary clustering"
+     (keys with the same home slot follow the same probe sequence)
+   - May fail to find empty slots if load factor > 0.5
+   - Use a prime capacity to guarantee all slots are visited
+
+6. DOUBLE HASHING: THE BEST OPEN ADDRESSING STRATEGY
+   - Uses a second hash function for the step: h2(key) = prime2 - (hash % prime2)
+   - Each key gets its OWN unique step — no clustering of any kind
+   - Eliminates both primary clustering (linear) and secondary clustering (quadratic)
+   - Requires capacity and prime2 to both be prime for full slot coverage
+   - Slightly more computation per probe (two hash evaluations)
+
+7. LAZY DELETION IN OPEN ADDRESSING
+   - Cannot set a slot to EMPTY — it breaks the probe chain
+   - Mark as DELETED instead: search probes past it, insert reuses it
+   - This is THE most common mistake students make
+   - Chaining doesn't have this problem (just unlink from the list)
+
+8. LOAD FACTOR DETERMINES PERFORMANCE
+   - loadFactor = numEntries / capacity
+   - Chaining: works well up to ~1.0, degrades gradually after
+   - Linear probing: keep below ~0.7 to avoid long clusters
+   - Quadratic probing: keep below ~0.5 for guaranteed insertion
+   - Double hashing: works well up to ~0.7-0.8
+   - Rehash (double capacity, re-insert all) when threshold exceeded
+
+9. REHASHING
+   - Double the capacity and re-insert every entry
+   - Each key gets a new index: hash(key) % newCapacity
+   - Individual rehash is O(n), but amortized O(1) per insert
+
+================================================================================
+COMPLEXITY ANALYSIS
+================================================================================
+
+Time Complexity (n = entries, m = capacity, α = n/m = load factor):
+
+    ┌────────────┬────────────────────┬────────────────────┐
+    │ Operation  │   Average Case     │   Worst Case       │
+    ├────────────┼────────────────────┼────────────────────┤
+    │ Add        │ O(1)               │ O(n)               │
+    │ Get        │ O(1)               │ O(n)               │
+    │ Remove     │ O(1)               │ O(n)               │
+    │ Rehash     │ O(n) total         │ O(n) total         │
+    │            │ O(1) amortized     │                    │
+    └────────────┴────────────────────┴────────────────────┘
+
+    More precisely (average successful search):
+        Chaining:     O(1 + α/2)
+        Linear:       O(½ · (1 + 1/(1-α)))
+        Quadratic:    O(-1/α · ln(1-α))
+
+Space Complexity:
+    All strategies: O(n + m)
+    Chaining has additional pointer overhead per entry.
+
+================================================================================
+WHEN TO USE
+================================================================================
+
+✓ Fast key-value lookup (configuration, caching, memoization)
+✓ Counting frequencies (word count, histogram, vote tallying)
+✓ Detecting duplicates (seen-set, visited-set)
+✓ Grouping by category (students by major, orders by customer)
+✓ Implementing sets (keys with no values)
+✗ NOT when you need sorted order (use BST or sorted array)
+✗ NOT when keys don't have a good hash function
+✗ NOT when worst-case O(1) is required (use balanced BST for O(log n) guaranteed)
+
+================================================================================
+COMMON MISTAKES TO AVOID
+================================================================================
+
+1. Setting removed slots to EMPTY in open addressing
+   - This breaks the probe chain! Use DELETED marker instead.
+   - THE most common mistake on exams.
+
+2. Stopping search at DELETED slots
+   - DELETED means "keep probing" — the key may be beyond this slot.
+   - Only stop at EMPTY (never been used).
+
+3. Forgetting to rehash when load factor is high
+   - Chains grow long (chaining) or clusters form (probing) → O(n)
+   - Always check load factor after each insert.
+
+4. Using a bad hash function
+   - If everything hashes to the same slot, all strategies become O(n).
+
+5. Confusing primary and secondary clustering
+   - Primary (linear): all keys in same region collide, regardless of hash.
+   - Secondary (quadratic): only keys with same HOME slot follow same probes.
+
+6. Forgetting that quadratic probing can fail
+   - If load factor > 0.5 with non-prime capacity, probing can cycle
+     without finding an empty slot, even when empty slots exist.
+
+================================================================================
